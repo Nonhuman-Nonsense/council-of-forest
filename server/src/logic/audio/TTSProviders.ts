@@ -4,6 +4,7 @@ import { withNetworkRetry } from "@utils/NetworkUtils.js";
 import { Word } from "@utils/textUtils.js";
 import { AudioSystemOptions, Speaker } from "./AudioTypes.js";
 import { getGoogleLanguageCode } from "./AudioUtils.js";
+import { InworldPronunciationUtils } from "@utils/InworldPronunciationUtils.js";
 
 interface GenerateParams {
     text: string;
@@ -13,7 +14,12 @@ interface GenerateParams {
     services?: { getOpenAI: () => OpenAI }; // For OpenAI
 }
 
-export async function generateGeminiAudio(params: GenerateParams): Promise<Buffer> {
+export interface AudioResult {
+    audio: Buffer;
+    words?: Word[];
+}
+
+export async function generateGeminiAudio(params: GenerateParams): Promise<AudioResult> {
     const { text, speaker, options, auth } = params;
     if (!auth) throw new Error("GoogleAuth required for Gemini TTS");
 
@@ -62,13 +68,13 @@ export async function generateGeminiAudio(params: GenerateParams): Promise<Buffe
 
     const data = await response.json();
     if (data.audioContent) {
-        return Buffer.from(data.audioContent, 'base64');
+        return { audio: Buffer.from(data.audioContent, 'base64') };
     } else {
         throw new Error("No audio content returned from Google TTS");
     }
 }
 
-export async function generateOpenAIAudio(params: GenerateParams): Promise<Buffer> {
+export async function generateOpenAIAudio(params: GenerateParams): Promise<AudioResult> {
     const { text, speaker, options, services } = params;
     if (!services) throw new Error("Services required for OpenAI TTS");
 
@@ -81,12 +87,15 @@ export async function generateOpenAIAudio(params: GenerateParams): Promise<Buffe
         instructions: speaker.voiceInstruction,
         response_format: "opus"
     }));
-    return Buffer.from(await mp3.arrayBuffer());
+    return { audio: Buffer.from(await mp3.arrayBuffer()) };
 }
 
-export async function generateInworldAudio(params: GenerateParams): Promise<Buffer> {
+export async function generateInworldAudio(params: GenerateParams): Promise<AudioResult> {
     const { text, speaker, options } = params;
     const apiKey = process.env.INWORLD_API_KEY;
+
+    // 1. Process text for IPA substitutions
+    const { processedText, replacedWords } = InworldPronunciationUtils.processTextWithIPA(text);
 
     const url = 'https://api.inworld.ai/tts/v1/voice';
 
@@ -97,10 +106,11 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Buff
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            text: text,
+            text: processedText, // Use processed text
             voice_id: speaker.voice,
             model_id: options.inworldVoiceModel,
             temperature: speaker.voiceTemperature || 1.0,
+            timestampType: "WORD",
             audio_config: {
                 audio_encoding: "OGG_OPUS",
                 speaking_rate: options.audio_speed
@@ -115,7 +125,25 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Buff
 
     const data: any = await response.json();
     if (data.audioContent) {
-        return Buffer.from(data.audioContent, 'base64');
+        const buffer = Buffer.from(data.audioContent, 'base64');
+        let words: Word[] | undefined;
+
+        if (data.timestampInfo?.wordAlignment) {
+            const wa = data.timestampInfo.wordAlignment;
+            if (Array.isArray(wa.words) && Array.isArray(wa.wordStartTimeSeconds) && Array.isArray(wa.wordEndTimeSeconds)) {
+                words = wa.words.map((word: string, i: number) => {
+                    // Restore original word if it was replaced with IPA
+                    const original = replacedWords.get(word);
+                    return {
+                        word: original || word,
+                        start: wa.wordStartTimeSeconds[i],
+                        end: wa.wordEndTimeSeconds[i]
+                    };
+                });
+            }
+        }
+
+        return { audio: buffer, words };
     } else {
         throw new Error("No audio content returned from Inworld TTS");
     }
