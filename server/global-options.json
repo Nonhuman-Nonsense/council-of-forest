@@ -2,7 +2,7 @@
   "gptModel": "gpt-4o",
   "voiceModel": "gpt-4o-mini-tts",
   "geminiVoiceModel": "gemini-2.5-flash-tts",
-  "inworldVoiceModel": "inworld-tts-1.5-mini",
+  "inworldVoiceModel": "inworld-tts-1.5-max",
   "temperature": 1,
   "maxTokens": 170,
   "chairMaxTokens": 220,
