@@ -71,10 +71,10 @@ describe('SelectFoods Component', () => {
         expect(passedFoods).toHaveLength(3); // River, Salmon, Pine
 
         // Check Chair's prompt injection
-        // Using real text from foods_en.json: "Todays participants are: [FOODS].[HUMANS]"
-        // Expected replacement: "Todays participants are: Salmon, Pine."
+        // Using real text from foods_en.json: "Briefly welcome the participants: [FOODS].[HUMANS]"
+        // Expected replacement: "Briefly welcome the participants: Salmon, Pine."
 
-        expect(passedFoods[0].prompt).toContain("Todays participants are: Salmon, Pine.");
+        expect(passedFoods[0].prompt).toContain("Briefly welcome the participants: Salmon, Pine.");
     });
 
     it('should handle Human Panelists injection into prompt', async () => {
