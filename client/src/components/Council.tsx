@@ -67,7 +67,7 @@ function Council({
     isPaused,
     setPaused,
     // setAudioPaused is optional, we don't pass it here so Hook handles valid suspension via ref
-    baseUrl: (AVAILABLE_LANGUAGES.length === 1) ? `/${routes.meeting}` : `/${lang}/${routes.meeting}`
+    baseUrl: ((AVAILABLE_LANGUAGES as readonly string[]).length === 1) ? `/${routes.meeting}` : `/${lang}/${routes.meeting}`
   });
 
   const {
