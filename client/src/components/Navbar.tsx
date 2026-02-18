@@ -6,6 +6,8 @@ import { capitalizeFirstLetter, useMobile, useMobileXs, usePortrait } from "@/ut
 import Lottie from "react-lottie-player";
 import hamburger from "@animations/hamburger.json";
 import councilLogo from "@assets/logos/council_logo_white.svg";
+import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages";
+import routes from "@/routes.json";
 
 interface NavbarProps {
   lang: string;
@@ -175,22 +177,33 @@ function Navbar({ lang, topic, hamburgerOpen, setHamburgerOpen }: NavbarProps): 
             <NavItem
               key={item}
               name={item}
-              show={showMenu && (item !== 'settings' || location.pathname.substring(4).startsWith('meeting'))}
+              show={showMenu && (item !== 'settings' || location.pathname.includes(routes.meeting))}
               isActive={activeMenuItem === `#${item}`} // Determine active state
               onNavigate={handleOnNavigate}
             />
           ))}
-          <h3 style={{
-            margin: "0",
-            marginLeft: "19px",
-            padding: "0",
-            opacity: showMenu ? "1" : "0",
-            transition: "opacity 1s 0.2s"
-          }}>
-            <Link style={{ ...languageStyle, textDecoration: lang === 'en' ? "underline" : "none", pointerEvents: showMenu ? "auto" : "none" }} to={`/en/${location.pathname.substring(4)}${location.hash}`} onClick={() => { if (isMobile) { setHamburgerOpen(false); } }} >{t('en').toUpperCase()}</Link>
-            /
-            <Link style={{ ...languageStyle, textDecoration: lang === 'sv' ? "underline" : "none", pointerEvents: showMenu ? "auto" : "none" }} to={`/sv/${location.pathname.substring(4)}${location.hash}`} onClick={() => { if (isMobile) { setHamburgerOpen(false); } }} >{t('sv').toUpperCase()}</Link>
-          </h3>
+          {AVAILABLE_LANGUAGES.length > 1 && (
+            <h3 style={{
+              margin: "0",
+              marginLeft: "19px",
+              padding: "0",
+              opacity: showMenu ? "1" : "0",
+              transition: "opacity 1s 0.2s"
+            }}>
+              {AVAILABLE_LANGUAGES.map((l, index) => (
+                <span key={l}>
+                  <Link
+                    style={{ ...languageStyle, textDecoration: lang === l ? "underline" : "none", pointerEvents: showMenu ? "auto" : "none" }}
+                    to={`/${l}/${location.pathname.replace(/^\/(en|sv)/, '').replace(/^\//, '')}${location.hash}`} // Replaces existing lang prefix or root slash
+                    onClick={() => { if (isMobile) { setHamburgerOpen(false); } }}
+                  >
+                    {t(l).toUpperCase()}
+                  </Link>
+                  {index < AVAILABLE_LANGUAGES.length - 1 && " / "}
+                </span>
+              ))}
+            </h3>
+          )}
           {isMobile && (
             <div
               style={hamburgerStyle}
