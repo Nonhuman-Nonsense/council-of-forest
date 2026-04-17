@@ -1,4 +1,4 @@
-import type { Character, Topic } from "@shared/ModelTypes";
+import type { Character, Meeting, Topic } from "@shared/ModelTypes";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import Overlay from "./Overlay";
@@ -10,10 +10,12 @@ import HumanInput from "./HumanInput";
 import { useDocumentVisibility } from "@/utils";
 import { useCouncilMachine } from "@hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
-import type { Meeting } from "@shared/ModelTypes";
 
 interface CouncilProps {
   creatorKey: string | null;
+  setCreatorKey: (key: string) => void;
+  topic: Topic | null;
+  setTopic: (topic: Topic) => void;
   setUnrecoverableError: (error: boolean) => void;
   setConnectionError: (error: boolean) => void;
   connectionError: boolean;
@@ -28,6 +30,9 @@ interface CouncilProps {
 
 function Council({
   creatorKey,
+  setCreatorKey,
+  topic,
+  setTopic,
   setUnrecoverableError,
   setConnectionError,
   connectionError,
@@ -45,12 +50,12 @@ function Council({
 
   const currentMeetingId = Number(meetingId);
 
-  const [topic, setTopic] = useState<Topic | null>(null);
   const [participants, setParticipants] = useState<Character[]>([]);
+  const [replayManifest, setReplayManifest] = useState<Meeting | null>(null);
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
-    if (!creatorKey || !meetingId || !/^\d+$/.test(meetingId)) {
+    if (!meetingId || !/^\d+$/.test(meetingId)) {
       navigate("/");
       return;
     }
@@ -58,12 +63,15 @@ function Council({
     const ac = new AbortController();
     void (async () => {
       try {
-        const meeting: Meeting = await getMeeting({
+        const meeting = await getMeeting({
           meetingId: currentMeetingId,
           creatorKey,
           signal: ac.signal,
         });
         if (ac.signal.aborted) return;
+        if (!creatorKey) {
+          setReplayManifest(meeting);
+        }
         setTopic(meeting.topic);
         setParticipants(meeting.characters);
       } catch (error) {
@@ -72,7 +80,6 @@ function Council({
         setUnrecoverableError(true);
       }
     })();
-
     return () => ac.abort();
   }, [creatorKey, meetingId, currentMeetingId, navigate, setUnrecoverableError]);
 
@@ -80,6 +87,8 @@ function Council({
   const { state, actions } = useCouncilMachine({
     currentMeetingId,
     creatorKey: creatorKey ?? undefined,
+    setCreatorKey,
+    replayManifest: creatorKey ? null : replayManifest,
     topic,
     participants,
     audioContext,
@@ -117,6 +126,7 @@ function Council({
     handleOnSkipForward,
     handleOnSubmitHumanMessage,
     handleOnContinueMeetingLonger,
+    handleOnAttemptResume,
     handleOnGenerateSummary,
     handleHumanNameEntered,
     handleOnRaiseHand,
@@ -184,9 +194,9 @@ function Council({
     <>
       {councilState === 'loading' && <Loading />}
       <>
-        {(councilState === 'human_input' || councilState === 'human_panelist') && (
+        {creatorKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
           <HumanInput
-            creatorKey={creatorKey!}
+            creatorKey={creatorKey}
             isPanelist={councilState === "human_panelist"}
             currentSpeakerName={participants.find((p) => p.id === currentSpeakerId)?.name || ""}
             onSubmitHumanMessage={handleOnSubmitHumanMessage}
@@ -228,6 +238,7 @@ function Council({
           <CouncilOverlays
             activeOverlay={activeOverlay}
             onContinue={handleOnContinueMeetingLonger}
+            onAttemptResume={handleOnAttemptResume}
             onWrapItUp={handleOnGenerateSummary}
             proceedWithHumanName={handleHumanNameEntered}
             canExtendMeeting={canExtendMeeting}

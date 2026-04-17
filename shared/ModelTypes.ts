@@ -22,9 +22,8 @@ export interface Topic {
     prompt: string;
 }
 
-export interface Meeting {
+export interface BaseMeeting {
     _id: number; // Sequence ID
-    creatorKey: string;
     date: string; // ISO String
     topic: Topic;
     characters: Character[];
@@ -33,6 +32,12 @@ export interface Meeting {
     conversation: Message[];
     audio: string[]; // List of Audio IDs
     summary?: Message; // To be defined strictly later
+    maximumPlayedIndex?: number | null;
+}
+
+export interface Meeting extends BaseMeeting {
+    /** This property must NOT exist on a public Meeting object */
+    creatorKey?: never; 
 }
 
 export interface PlaybackState {
@@ -41,7 +46,7 @@ export interface PlaybackState {
 
 export interface ConversationState {
     alreadyInvited: boolean;
-    humanName: string | undefined;
+    humanName?: string;
 }
 
 export interface Character {
@@ -57,8 +62,16 @@ export interface Character {
     voiceSpeed?: number;
 }
 
+// For Zod validation
+export const MessageTypeValues = ["message", "human", "panelist", "summary", "response", "invitation", "interjection"] as const;
+export const SyntheticMessageTypeValues = ["skipped", "awaiting_human_question", "awaiting_human_panelist", "meeting_incomplete"] as const;
+
+// Derive the types from the arrays
+export type MessageType = (typeof MessageTypeValues)[number];
+export type SyntheticMessageType = (typeof SyntheticMessageTypeValues)[number];
+
 export interface Message {
-    type: string;
+    type: MessageType | SyntheticMessageType;
     id?: string;
     text?: string;
     sentences?: string[];

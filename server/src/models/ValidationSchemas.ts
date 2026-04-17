@@ -1,11 +1,11 @@
 import { GlobalOptionsSchema } from "@logic/GlobalOptions.js";
 import { z } from "zod";
-import { type Character, AVAILABLE_VOICES, AVAILABLE_VOICES_GEMINI } from "@shared/ModelTypes.js";
+import { type Character, type Message, AVAILABLE_VOICES, AVAILABLE_VOICES_GEMINI, MessageTypeValues, SyntheticMessageTypeValues } from "@shared/ModelTypes.js";
 import type {
-    HumanMessage,
     InjectionMessage,
     HandRaisedOptions,
     ReconnectionOptions,
+    ReportMaximumPlayedIndexPayload,
     WrapUpMessage,
     SetupOptions,
     CreateMeetingBody
@@ -76,12 +76,12 @@ export const SetupOptionsSchema: z.ZodType<SetupOptions> = z.object({
 });
 
 // 2. submit_human_message & submit_human_panelist
-export const HumanMessageSchema: z.ZodType<HumanMessage> = z.object({
+export const MessageSchema: z.ZodType<Message> = z.object({
     text: z.string().min(1),
     askParticular: z.string().optional(),
     speaker: z.string().optional(),
     id: z.string().optional(),
-    type: z.string().optional(),
+    type: z.enum([...MessageTypeValues, ...SyntheticMessageTypeValues]),
     sentences: z.array(z.string()).optional(),
 });
 
@@ -94,8 +94,14 @@ export const HandRaisedOptionsSchema: z.ZodType<HandRaisedOptions> = z.object({
 // 4. attempt_reconnection
 export const ReconnectionOptionsSchema: z.ZodType<ReconnectionOptions> = z.object({
     meetingId: z.number(),
+    creatorKey: z.string().min(1),
     handRaised: z.boolean().optional(),
     conversationMaxLength: z.number().optional(),
+});
+
+// 4b. report_maximum_played_index (live session playback progress)
+export const ReportMaximumPlayedIndexSchema: z.ZodType<ReportMaximumPlayedIndexPayload> = z.object({
+    index: z.number().int(),
 });
 
 // 5. submit_injection

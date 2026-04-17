@@ -197,7 +197,10 @@ export default function Main(props: MainProps) {
               element={
                 <Council
                   key={stripLanguagePrefix(location.pathname)}
+                  topic={topicSelection}
+                  setTopic={setTopicSelection}
                   creatorKey={meetingCreatorKey}
+                  setCreatorKey={setMeetingCreatorKey}
                   setUnrecoverableError={setUnrecoverableError}
                   connectionError={connectionError}
                   setConnectionError={setConnectionError}
