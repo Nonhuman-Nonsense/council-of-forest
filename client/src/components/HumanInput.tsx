@@ -1,4 +1,3 @@
-import type { Character } from "@shared/ModelTypes";
 import React, { useState, useEffect, useRef } from "react";
 import ConversationControlIcon from "./ConversationControlIcon";
 import TextareaAutosize from 'react-textarea-autosize';
@@ -20,7 +19,6 @@ interface InputAudioTranscriptionCompletedEvent {
 type OpenAIRealtimeEvent = InputAudioTranscriptionCompletedEvent; // Union with other events if needed
 
 interface HumanInputProps {
-  foods: Character[];
   isPanelist: boolean;
   currentSpeakerName: string;
   onSubmitHumanMessage: (text: string, askParticular: string) => void;
@@ -40,7 +38,7 @@ type TextareaStyle = Omit<React.CSSProperties, 'height'> & { height?: number };
  * - **Text Input**: Provides a fallback manual text entry.
  * - **Targeting**: Should allow selection of specific characters to address (logic partially implemented via `askParticular`).
  */
-function HumanInput({ foods, isPanelist, currentSpeakerName, onSubmitHumanMessage, liveKey }: HumanInputProps): React.ReactElement {
+function HumanInput({ isPanelist, currentSpeakerName, onSubmitHumanMessage, liveKey }: HumanInputProps): React.ReactElement {
   const [clientKey, setClientKey] = useState<string | null>(null);
   const [recordingState, setRecordingState] = useState<"idle" | "loading" | "recording">("idle");
   const [canContinue, setCanContinue] = useState<boolean>(false);

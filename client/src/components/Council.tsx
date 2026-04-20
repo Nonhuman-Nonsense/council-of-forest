@@ -195,7 +195,7 @@ function Council({
       {councilState === 'loading' && <Loading />}
       <>
         {liveKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
-          <HumanInput liveKey={liveKey} foods={foods} isPanelist={(councilState === 'human_panelist')} currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""} onSubmitHumanMessage={handleOnSubmitHumanMessage} />
+          <HumanInput liveKey={liveKey} isPanelist={(councilState === 'human_panelist')} currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""} onSubmitHumanMessage={handleOnSubmitHumanMessage} />
         )}
         <Output
           textMessages={textMessages}
