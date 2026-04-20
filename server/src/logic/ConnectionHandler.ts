@@ -51,24 +51,26 @@ export class ConnectionHandler {
                 return false;
             }
 
-            if (existingMeeting.creatorKey !== options.creatorKey) {
+            if (existingMeeting.liveKey !== options.liveKey) {
                 manager.broadcaster.broadcastError("Forbidden", 403);
-                Logger.warn(`meeting ${options.meetingId}`, "attempt_reconnection creatorKey mismatch");
+                Logger.warn(`meeting ${options.meetingId}`, "attempt_reconnection liveKey mismatch");
                 return false;
             }
 
             manager.meeting = existingMeeting as StoredMeeting;
             manager.handRaised = options.handRaised ?? false;
 
-            const baseMax = manager.serverOptions.conversationMaxLength;
-            const clientMax = options.conversationMaxLength ?? baseMax;
-            manager.extraMessageCount = Math.max(0, clientMax - baseMax);
+            // TODO, check how the server stores extraMessageCount
+            // const baseMax = manager.serverOptions.conversationMaxLength;
+            // const clientMax = options.conversationMaxLength ?? baseMax;
+            // manager.extraMessageCount = Math.max(0, clientMax - baseMax);
 
             // Missing audio regen logic
             const missingAudio: Message[] = [];
             for (let i = 0; i < existingMeeting.conversation.length; i++) {
                 if (existingMeeting.conversation[i].type === 'awaiting_human_panelist') continue;
                 if (existingMeeting.conversation[i].type === 'awaiting_human_question') continue;
+                if (existingMeeting.conversation[i].type === 'max_reached') continue;
                 const msgId = existingMeeting.conversation[i].id;
                 if (msgId && existingMeeting.audio.indexOf(msgId) === -1) {
                     missingAudio.push(existingMeeting.conversation[i]);

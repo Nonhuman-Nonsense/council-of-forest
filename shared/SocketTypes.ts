@@ -21,9 +21,8 @@ export interface WrapUpMessage {
 
 export interface ReconnectionOptions {
     meetingId: number;
-    creatorKey: string;
+    liveKey: string;
     handRaised?: boolean;
-    conversationMaxLength?: number;
 }
 
 /** Live session only: persist furthest played conversation index (`$max` on server). */
@@ -39,12 +38,12 @@ export interface CreateMeetingBody {
 
 export interface ResumeMeetingResponse {
     meeting: Meeting;
-    creatorKey: string;
+    liveKey: string;
 }
 
 export interface SetupOptions {
     meetingId: number;
-    creatorKey: string;
+    liveKey: string;
     serverOptions?: any; //This is global options object on prototype
 }
 

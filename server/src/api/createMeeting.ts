@@ -8,9 +8,9 @@ import { InternalServerError } from "@models/Errors.js";
  * Create a new meeting record (DB only).
  *
  * This is the *only* creation path: HTTP `POST /api/meetings`.
- * The conversation loop starts when the client connects and emits `start_conversation` with `meetingId` and `creatorKey`.
+ * The conversation loop starts when the client connects and emits `start_conversation` with `meetingId` and `liveKey`.
  */
-export async function createMeeting(rawBody: unknown, _environment: string): Promise<{ meetingId: string, creatorKey: string }> {
+export async function createMeeting(rawBody: unknown, _environment: string): Promise<{ meetingId: string, liveKey: string }> {
     const setup = CreateMeetingSchema.parse(rawBody);
 
     //Initial meeting record in DB
@@ -20,16 +20,17 @@ export async function createMeeting(rawBody: unknown, _environment: string): Pro
         language: setup.language,
         audio: [],
         conversation: [],
-        creatorKey: uuidv4(),
+        liveKey: uuidv4(),
         date: new Date().toISOString(),
         state: {
             alreadyInvited: false,
             humanName: null,
         },
         maximumPlayedIndex: 0,
+        conversationExtraSlots: 0,
     };
 
     const result = await insertMeeting(meeting);
     if (result.insertedId == null) throw new InternalServerError("Meeting insert did not return an id");
-    return { meetingId: result.insertedId.toString(), creatorKey: meeting.creatorKey };
+    return { meetingId: result.insertedId.toString(), liveKey: meeting.liveKey };
 }

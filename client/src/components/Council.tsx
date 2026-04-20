@@ -12,8 +12,8 @@ import { useCouncilMachine } from "@hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
 
 interface CouncilProps {
-  creatorKey: string | null;
-  setCreatorKey: (key: string) => void;
+  liveKey: string | null;
+  setliveKey: (key: string) => void;
   topic: Topic | null;
   setTopic: (topic: Topic) => void;
   setUnrecoverableError: (error: boolean) => void;
@@ -29,8 +29,8 @@ interface CouncilProps {
 }
 
 function Council({
-  creatorKey,
-  setCreatorKey,
+  liveKey,
+  setliveKey,
   topic,
   setTopic,
   setUnrecoverableError,
@@ -65,11 +65,11 @@ function Council({
       try {
         const meeting = await getMeeting({
           meetingId: currentMeetingId,
-          creatorKey,
+          liveKey,
           signal: ac.signal,
         });
         if (ac.signal.aborted) return;
-        if (!creatorKey) {
+        if (!liveKey) {
           setReplayManifest(meeting);
         }
         setTopic(meeting.topic);
@@ -81,14 +81,14 @@ function Council({
       }
     })();
     return () => ac.abort();
-  }, [creatorKey, meetingId, currentMeetingId, navigate, setUnrecoverableError]);
+  }, [liveKey, meetingId, currentMeetingId, navigate, setUnrecoverableError]);
 
   // Hook Logic
   const { state, actions } = useCouncilMachine({
     currentMeetingId,
-    creatorKey: creatorKey ?? undefined,
-    setCreatorKey,
-    replayManifest: creatorKey ? null : replayManifest,
+    liveKey: liveKey ?? undefined,
+    setliveKey,
+    replayManifest: liveKey ? null : replayManifest,
     topic,
     participants,
     audioContext,
@@ -130,7 +130,7 @@ function Council({
     handleOnGenerateSummary,
     handleHumanNameEntered,
     handleOnRaiseHand,
-    removeOverlay,
+    cancelOverlay,
     setCurrentSnippetIndex,
     toggleMute,
     // setSentencesLength
@@ -194,13 +194,8 @@ function Council({
     <>
       {councilState === 'loading' && <Loading />}
       <>
-        {creatorKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
-          <HumanInput
-            creatorKey={creatorKey}
-            isPanelist={councilState === "human_panelist"}
-            currentSpeakerName={participants.find((p) => p.id === currentSpeakerId)?.name || ""}
-            onSubmitHumanMessage={handleOnSubmitHumanMessage}
-          />
+        {liveKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
+          <HumanInput liveKey={liveKey} foods={foods} isPanelist={(councilState === 'human_panelist')} currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""} onSubmitHumanMessage={handleOnSubmitHumanMessage} />
         )}
         <Output
           textMessages={textMessages}
@@ -242,7 +237,7 @@ function Council({
             onWrapItUp={handleOnGenerateSummary}
             proceedWithHumanName={handleHumanNameEntered}
             canExtendMeeting={canExtendMeeting}
-            removeOverlay={removeOverlay}
+            cancelOverlay={cancelOverlay}
             summary={{ text: summary?.text || "" }}
             meetingId={currentMeetingId}
             participants={participants}

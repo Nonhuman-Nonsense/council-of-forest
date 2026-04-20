@@ -55,6 +55,7 @@ export const MockFactory = {
             show_trimmed: false,
             skipAudio: false,
             conversationMaxLength: 20,
+            meetingVeryMaxLength: 30,
             raiseHandPrompt: { en: "Raise Hand" },
             raiseHandInvitationLength: 50,
             finalizeMeetingPrompt: { en: "Finalize" },
@@ -74,7 +75,7 @@ export const MockFactory = {
         };
         const defaults: StoredMeeting = {
             _id: 123,
-            creatorKey: "test-creator-key",
+            liveKey: "test-live-key",
             date: new Date().toISOString(),
             topic,
             characters: [
@@ -86,13 +87,14 @@ export const MockFactory = {
             state: { alreadyInvited: false, humanName: "Frank" },
             conversation: [],
             audio: [],
+            conversationExtraSlots: 0,
         };
         return { ...defaults, ...restOverrides, topic };
     },
 
     createMeeting: (overrides: Partial<Meeting> = {}): Meeting => {
         const storedMeeting = MockFactory.createStoredMeeting();
-        const { creatorKey, ...meeting } = storedMeeting;
+        const { liveKey, ...meeting } = storedMeeting;
         return { ...meeting, ...overrides };
     },
 
