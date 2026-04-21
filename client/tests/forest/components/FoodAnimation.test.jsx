@@ -16,7 +16,6 @@ describe('FoodAnimation Compatibility', () => {
     it('accepts Forest-specific props without crashing', () => {
         const { container } = render(
             <FoodAnimation
-                type="transparent"
                 character={{ id: "river" }}
                 isPaused={false}
                 currentSpeakerId=""
@@ -29,7 +28,6 @@ describe('FoodAnimation Compatibility', () => {
     it('handles legacy Foods props gracefully (ignores emotion)', () => {
         const { container } = render(
             <FoodAnimation
-                type="transparent"
                 character={{ id: "river", emotion: "happy" }}
                 isPaused={false}
                 currentSpeakerId=""

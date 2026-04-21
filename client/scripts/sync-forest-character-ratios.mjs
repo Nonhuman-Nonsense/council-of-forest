@@ -1,10 +1,10 @@
 /**
  * Reads forest character image/video dimensions from client/src/assets/characters,
- * verifies all transparent video variants share one aspect ratio, and writes
+ * verifies all video encodes share one aspect ratio, and writes
  * src/generated/forestCharacterRatios.ts
  *
- * River is measured from root-level river-* files; other transparent characters
- * use large/ and small/ encodes. Image-type characters use images/*.avif.
+ * Video-type characters use large/ and small/ encodes (HEVC + VP9). Image-type
+ * characters use images/*.avif.
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -135,7 +135,7 @@ function main() {
       continue;
     }
 
-    if (entry.type === "transparent") {
+    if (entry.type === "video") {
       const rels = [
         join("large", `${fn}-vp9-chrome.webm`),
         join("large", `${fn}-hevc-safari.mp4`),

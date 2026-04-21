@@ -30,16 +30,6 @@ const smallVp9Glob = import.meta.glob("/src/assets/characters/small/*-vp9-chrome
     import: "default",
 }) as Record<string, string>;
 
-const largePlainWebmGlob = import.meta.glob("/src/assets/characters/large/*.webm", {
-    eager: true,
-    import: "default",
-}) as Record<string, string>;
-
-const smallPlainWebmGlob = import.meta.glob("/src/assets/characters/small/*.webm", {
-    eager: true,
-    import: "default",
-}) as Record<string, string>;
-
 const imageAvifGlob = import.meta.glob("/src/assets/characters/images/*.avif", {
     eager: true,
     import: "default",
@@ -84,19 +74,6 @@ function mapDirCodec(
     return out;
 }
 
-function mapPlainWebm(paths: Record<string, string>, subdir: "large" | "small"): Record<string, string> {
-    const out: Record<string, string> = {};
-    for (const [p, url] of Object.entries(paths)) {
-        const normalized = p.replace(/\\/g, "/");
-        if (!normalized.includes(`/characters/${subdir}/`)) continue;
-        const base = normalized.split("/").pop() ?? "";
-        if (base.includes("-vp9-chrome") || base.includes("-hevc-safari")) continue;
-        const m = base.match(/^(.+)\.webm$/);
-        if (m) out[m[1]] = url;
-    }
-    return out;
-}
-
 function mapImages(paths: Record<string, string>): Record<string, string> {
     const out: Record<string, string> = {};
     for (const [p, url] of Object.entries(paths)) {
@@ -135,16 +112,13 @@ const largeVp9ById = mapDirCodec(largeVp9Glob, "large", "vp9");
 const smallHevcById = mapDirCodec(smallHevcGlob, "small", "hevc");
 const smallVp9ById = mapDirCodec(smallVp9Glob, "small", "vp9");
 
-const largePlainWebmById = mapPlainWebm(largePlainWebmGlob, "large");
-const smallPlainWebmById = mapPlainWebm(smallPlainWebmGlob, "small");
-
 export const characterImageAvifByBasename = mapImages(imageAvifGlob);
 export const characterIconWebpByBasename = mapIcons(iconWebpGlob);
 const characterMp3ByBasename = mapAudio(audioMp3Glob);
 
 export const characterAmbienceUrl = firstUrl(ambienceGlob, "ambience.mp3");
 
-/** HEVC + VP9 URLs for transparent characters; river uses root files, others use large/ or small/. */
+/** HEVC + VP9 URLs for alpha video; river uses root files, others use large/ or small/. */
 export function characterTransparentVideoUrls(
     characterId: string,
     isMobile: boolean,
@@ -160,24 +134,10 @@ export function characterTransparentVideoUrls(
     if (!hevc || !vp9) {
         const folder = isMobile ? "small" : "large";
         throw new Error(
-            `Missing transparent video pair for "${characterId}" (expected src/assets/characters/${folder}/${fn}-hevc-safari.mp4 and …-vp9-chrome.webm)`,
+            `Missing alpha video pair for "${characterId}" (expected src/assets/characters/${folder}/${fn}-hevc-safari.mp4 and …-vp9-chrome.webm)`,
         );
     }
     return { hevc, vp9 };
-}
-
-/** Single WebM for non-transparent / legacy `type !== "transparent"` animations. */
-export function characterOpaqueVideoUrl(characterId: string, isMobile: boolean): string {
-    const fn = toAssetBasename(characterId);
-    const map = isMobile ? smallPlainWebmById : largePlainWebmById;
-    const url = map[fn];
-    if (!url) {
-        const folder = isMobile ? "small" : "large";
-        throw new Error(
-            `Missing opaque video for "${characterId}" (expected src/assets/characters/${folder}/${fn}.webm)`,
-        );
-    }
-    return url;
 }
 
 export function characterImageAvifUrl(characterId: string): string {

@@ -51,7 +51,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -72,7 +71,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -89,7 +87,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -103,7 +100,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -119,7 +115,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -131,7 +126,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId="lichen"
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -146,7 +140,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -158,7 +151,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId="reindeer"
                 isPaused={true}
-                type="transparent"
             />
         );
 
@@ -174,7 +166,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 

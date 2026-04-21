@@ -1,27 +1,20 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useMobile } from "../utils";
-import {
-    characterOpaqueVideoUrl,
-    characterTransparentVideoUrls,
-} from "@assets/characters/characterData";
+import { characterTransparentVideoUrls } from "@assets/characters/characterData";
 
 interface FoodAnimationProps {
   character: { id: string };
-  type: string;
   styles: CSSProperties;
   isPaused: boolean;
   always_on?: boolean;
   currentSpeakerId: string;
 }
 
-function FoodAnimation({ character, type, styles, isPaused, always_on, currentSpeakerId }: FoodAnimationProps) {
+function FoodAnimation({ character, styles, isPaused, always_on, currentSpeakerId }: FoodAnimationProps) {
   const isMobile = useMobile();
   const video = useRef<HTMLVideoElement>(null);
   const [vidLoaded, setVidLoaded] = useState(false);
   const hasCharacter = Boolean(character?.id);
-
-  // Forest: selectable beings use alpha videos (HEVC+VP9). JSON often omits `type`, so FoodItem defaults to "food".
-  const useDualCodecVideo = type === "transparent" || type === "food";
 
   useEffect(() => {
     async function startVid() {
@@ -50,25 +43,14 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
 
   if (!hasCharacter) return null;
 
-  if (useDualCodecVideo) {
-    const urls = characterTransparentVideoUrls(character.id, isMobile);
-    return (
-      <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
-        <source
-          src={urls.hevc}
-          type={'video/mp4; codecs="hvc1"'} />
-        <source
-          src={urls.vp9}
-          type={"video/webm"} />
-      </video>
-    );
-  }
-
-  const opaqueUrl = characterOpaqueVideoUrl(character.id, isMobile);
+  const urls = characterTransparentVideoUrls(character.id, isMobile);
   return (
     <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
       <source
-        src={opaqueUrl}
+        src={urls.hevc}
+        type={'video/mp4; codecs="hvc1"'} />
+      <source
+        src={urls.vp9}
         type={"video/webm"} />
     </video>
   );

@@ -149,7 +149,7 @@ function FoodItem({ food, index, total, currentSpeakerId, isPaused, zoomIn }: Fo
 
   return (
     <div style={containerStyle}>
-      <FoodAnimation character={food} type={food.type || "food"} styles={responsiveStyle} currentSpeakerId={currentSpeakerId} isPaused={isPaused} />
+      <FoodAnimation character={food} styles={responsiveStyle} currentSpeakerId={currentSpeakerId} isPaused={isPaused} />
     </div>
   );
 }

@@ -16,7 +16,7 @@ function includesAsset(keys: string[], fragment: string): boolean {
 }
 
 describe("Character video integrity", () => {
-    it("foods_en selectable characters have full transparent video sets (or river root)", () => {
+    it("foods_en selectable characters have full alpha video codec sets (or river root)", () => {
         const largeHevcKeys = Object.keys(largeHevc);
         const largeVp9Keys = Object.keys(largeVp9);
         const smallHevcKeys = Object.keys(smallHevc);
@@ -44,13 +44,13 @@ describe("Character video integrity", () => {
         }
     });
 
-    it("forest_characters transparent entries have full large+small codec pairs", () => {
+    it("forest_characters video entries have full large+small codec pairs", () => {
         const largeHevcKeys = Object.keys(largeHevc);
         const largeVp9Keys = Object.keys(largeVp9);
         const smallHevcKeys = Object.keys(smallHevc);
         const smallVp9Keys = Object.keys(smallVp9);
         for (const entry of forestCharacters) {
-            if (entry.type !== "transparent") continue;
+            if (entry.type !== "video") continue;
             const fn = filename(entry.id);
             expect(
                 includesAsset(largeHevcKeys, `large/${fn}-hevc-safari.mp4`),
