@@ -55,6 +55,13 @@
     "3": "Ja, vi sammanfattar!",
     "4": "Nej, fortsätt lite till."
   },
+  "incomplete": {
+    "title": "Ofullständigt möte",
+    "1": "Åh, det verkar som att det här mötet aldrig avslutades.",
+    "2": "Vill du återuppta mötet nu?",
+    "3": "Ja, vi fortsätter!",
+    "4": "Nej, strunta i det."
+  },
   "summary": {
     "download": "Ladda ned PDF"
   },
@@ -70,6 +77,7 @@
   "error": {
     "title": "ERROR",
     "1": "Något gick snett...",
+    "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
     "reconnecting": "Försöker återansluta..."
   },
@@ -88,6 +96,10 @@
     "humandesc": "Beskriv människan...",
     "human": "1 människa: ",
     "twohumans": " människor: "
+  },
+  "replayModeBanner": {
+    "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
+    "click": "Klicka här för att starta ett nytt möte."
   },
   "selectissue": "välj ett ämne för dagens discussion",
   "writetopic": "Skriv ett eget ämne...",
