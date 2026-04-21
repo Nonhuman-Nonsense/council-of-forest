@@ -236,7 +236,6 @@ function Council({
             meeting={replayManifest}
             isPaused={isPaused}
             visible={!liveKey}
-            onStartNewMeeting={() => navigate("/")}
           />
         )}
       </div>
