@@ -212,10 +212,6 @@ function TextOutput({
   const textStyle: React.CSSProperties = {
     maxWidth: isMobile ? "85%" : "70%",
     backgroundColor: "rgba(0,0,0,0.6)",
-    position: "absolute",
-    bottom: isMobile ? "40px" : "50px",
-    left: "50%",
-    transform: "translateX(-50%)",
     zIndex: "3",
     pointerEvents: 'auto'
   };
