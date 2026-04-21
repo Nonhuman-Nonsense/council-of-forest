@@ -6,7 +6,8 @@
     {
       "src": "favicon.webp",
       "sizes": "100x100",
-      "type": "image/webp"
+      "type": "image/webp",
+      "purpose": "any"
     }
   ],
   "start_url": ".",

@@ -12,7 +12,7 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                 _id: 123,
                 language: "sv",
                 characters: [{ id: "mock-char", name: "Mock Char" }],
-                conversation: [],
+                conversation: [{ type: "max_reached" }],
                 state: {},
             },
             environment: "test",
