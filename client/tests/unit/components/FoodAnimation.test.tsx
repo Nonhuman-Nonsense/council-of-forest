@@ -3,16 +3,16 @@ import { render, screen, act } from '@testing-library/react';
 import FoodAnimation from '../../../src/components/FoodAnimation';
 import { Food } from '../../../src/components/settings/SelectFoods';
 
-// Mock utils at top level
-vi.mock('../../../src/utils', () => ({
-    useMobile: vi.fn(),
-    filename: (str: string) => str.toLowerCase()
-}));
+vi.mock('../../../src/utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../src/utils')>();
+    return {
+        ...actual,
+        useMobile: vi.fn(),
+    };
+});
 
-// Import helper to set mock value
 import { useMobile } from '../../../src/utils';
 
-// Mock video play/pause
 const originalPlay = window.HTMLMediaElement.prototype.play;
 const originalPause = window.HTMLMediaElement.prototype.pause;
 
@@ -25,6 +25,7 @@ describe('FoodAnimation', () => {
         pauseMock = vi.fn();
         window.HTMLMediaElement.prototype.play = playMock;
         window.HTMLMediaElement.prototype.pause = pauseMock;
+        vi.mocked(useMobile).mockReturnValue(false);
     });
 
     afterEach(() => {
@@ -34,24 +35,22 @@ describe('FoodAnimation', () => {
     });
 
     const mockFood: Food = {
-        id: 'banana',
+        id: 'reindeer',
         size: 1,
-        name: 'Banana',
-        description: 'A yellow fruit',
-        type: 'fruit',
+        name: 'Reindeer',
+        description: 'Test',
+        type: 'food',
         voice: 'alloy',
     };
     const mockStyles = { width: '100px' };
 
     it('renders video element with correct sources', () => {
-        vi.mocked(useMobile).mockReturnValue(false);
         render(
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
@@ -61,9 +60,8 @@ describe('FoodAnimation', () => {
 
         const sources = video.querySelectorAll('source');
         expect(sources).toHaveLength(2);
-        // Folder logic: not river, not mobile -> "large/"
-        expect(sources[0]).toHaveAttribute('src', '/characters/large/banana-hevc-safari.mp4');
-        expect(sources[1]).toHaveAttribute('src', '/characters/large/banana-vp9-chrome.webm');
+        expect(sources[0].getAttribute('src')).toContain('reindeer-hevc-safari');
+        expect(sources[1].getAttribute('src')).toContain('reindeer-vp9-chrome');
     });
 
     it('pauses video initially after mount (safari fix)', async () => {
@@ -73,14 +71,10 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        // The component plays then immediately pauses on mount
-        await act(async () => {
-            // Wait for useEffect
-        });
+        await act(async () => {});
 
         expect(playMock).toHaveBeenCalled();
         expect(pauseMock).toHaveBeenCalled();
@@ -93,27 +87,23 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        // Wait for initial mount logic
-        await act(async () => { });
+        await act(async () => {});
         playMock.mockClear();
         pauseMock.mockClear();
 
-        // Update to be active speaker
         rerender(
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
-                currentSpeakerId="banana"
+                currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        await act(async () => { });
+        await act(async () => {});
         expect(playMock).toHaveBeenCalled();
         expect(pauseMock).not.toHaveBeenCalled();
     });
@@ -123,26 +113,23 @@ describe('FoodAnimation', () => {
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
-                currentSpeakerId="banana"
+                currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        await act(async () => { });
+        await act(async () => {});
 
-        // Update to different speaker
         rerender(
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
-                currentSpeakerId="apple"
+                currentSpeakerId="lichen"
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        await act(async () => { });
+        await act(async () => {});
         expect(pauseMock).toHaveBeenCalled();
     });
 
@@ -151,25 +138,23 @@ describe('FoodAnimation', () => {
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
-                currentSpeakerId="banana"
+                currentSpeakerId="reindeer"
                 isPaused={false}
-                type="transparent"
             />
         );
 
-        await act(async () => { });
+        await act(async () => {});
 
         rerender(
             <FoodAnimation
                 character={mockFood}
                 styles={mockStyles}
-                currentSpeakerId="banana"
+                currentSpeakerId="reindeer"
                 isPaused={true}
-                type="transparent"
             />
         );
 
-        await act(async () => { });
+        await act(async () => {});
         expect(pauseMock).toHaveBeenCalled();
     });
 
@@ -181,7 +166,6 @@ describe('FoodAnimation', () => {
                 styles={mockStyles}
                 currentSpeakerId=""
                 isPaused={false}
-                type="transparent"
             />
         );
 

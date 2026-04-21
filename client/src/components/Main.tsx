@@ -39,10 +39,10 @@ interface MainProps {
 
 export default function Main(props: MainProps) {
   const [topicSelection, setTopicSelection] = useState<Topic | null>(null);
-
-  const [unrecoverabeError, setUnrecoverableError] = useState(false);
+  
+  const [unrecoverableErrorMessage, setUnrecoverableErrorMessage] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState(false);
-  const [meetingCreatorKey, setMeetingCreatorKey] = useState<string | null>(null);
+  const [meetingliveKey, setMeetingliveKey] = useState<string | null>(null);
 
   //Had to lift up navbar state to this level to be able to close it from main overlay
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
@@ -90,7 +90,7 @@ export default function Main(props: MainProps) {
       }
     }
 
-    if (isMeetingPath(location.pathname) && meetingCreatorKey) {
+    if (isMeetingPath(location.pathname) && meetingliveKey) {
       navigate({ hash: "warning" });
     }
   }, [props.lang]);
@@ -105,7 +105,7 @@ export default function Main(props: MainProps) {
   useEffect(() => {
     const withoutLang = stripLanguagePrefix(location.pathname);
     if (withoutLang === `/${routes.newMeeting}` || isRootPath(location.pathname)) {
-      setMeetingCreatorKey(null);
+      setMeetingliveKey(null);
     }
   }, [location.pathname]);
 
@@ -156,7 +156,7 @@ export default function Main(props: MainProps) {
     <>
       <Forest currentSpeakerId={currentSpeakerId} isPaused={isPaused} audioContext={audioContext} />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: 1 }} />
-      {!(unrecoverabeError || connectionError) && (
+      {!(unrecoverableErrorMessage != null || connectionError) && (
         <Navbar
           topicTitle={topicSelection?.title || ""}
           hamburgerOpen={hamburgerOpen}
@@ -169,7 +169,7 @@ export default function Main(props: MainProps) {
           onClick={() => setHamburgerOpen(false)}
         ></div>
       )}
-      {!unrecoverabeError && (
+      {unrecoverableErrorMessage == null && (
         <Overlay
           isActive={!isMeetingPath(location.pathname)}
           isBlurred={!isRootPath(location.pathname)}
@@ -185,10 +185,10 @@ export default function Main(props: MainProps) {
               path={routes.newMeeting}
               element={
                 <NewMeeting
-                  setUnrecoverableError={setUnrecoverableError}
+                  setUnrecoverableError={setUnrecoverableErrorMessage}
                   topicSelection={topicSelection}
                   setTopicSelection={setTopicSelection}
-                  setMeetingCreatorKey={setMeetingCreatorKey}
+                  setMeetingliveKey={setMeetingliveKey}
                 />
               }
             />
@@ -197,8 +197,11 @@ export default function Main(props: MainProps) {
               element={
                 <Council
                   key={stripLanguagePrefix(location.pathname)}
-                  creatorKey={meetingCreatorKey}
-                  setUnrecoverableError={setUnrecoverableError}
+                  topic={topicSelection}
+                  setTopic={setTopicSelection}
+                  liveKey={meetingliveKey}
+                  setliveKey={setMeetingliveKey}
+                  setUnrecoverableError={setUnrecoverableErrorMessage}
                   connectionError={connectionError}
                   setConnectionError={setConnectionError}
                   currentSpeakerId={currentSpeakerId}
@@ -220,15 +223,15 @@ export default function Main(props: MainProps) {
           {isPortrait && location.pathname !== "/" && <RotateOverlay />}
         </Overlay>
       )}
-      {unrecoverabeError && (
+      {unrecoverableErrorMessage != null && ( (
         <Overlay
           isActive={true}
           isBlurred={true}
         >
-          <CouncilError />
+          <CouncilError detailMessage={unrecoverableErrorMessage} />
         </Overlay>
-      )}
-      {connectionError && !unrecoverabeError && (
+      ))}
+      {connectionError && unrecoverableErrorMessage == null && (
         <Overlay
           isActive={true}
           isBlurred={true}
