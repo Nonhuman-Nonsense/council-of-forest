@@ -11,6 +11,7 @@ import { useDocumentVisibility } from "@/utils";
 import { useTranslation } from "react-i18next";
 import { useCouncilMachine } from "@hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
+import ReplayModeBanner from "./ReplayModeBanner";
 
 interface CouncilProps {
   liveKey: string | null;
@@ -193,14 +194,13 @@ function Council({
     }
   }, [isDocumentVisible, isPaused]);
 
-
   return (
     <>
       {councilState === 'loading' && <Loading />}
-      <>
-        {liveKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
-          <HumanInput liveKey={liveKey} isPanelist={(councilState === 'human_panelist')} currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""} onSubmitHumanMessage={handleOnSubmitHumanMessage} />
-        )}
+      {liveKey && (councilState === 'human_input' || councilState === 'human_panelist') && (
+        <HumanInput liveKey={liveKey} isPanelist={(councilState === 'human_panelist')} currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""} onSubmitHumanMessage={handleOnSubmitHumanMessage} />
+      )}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "visible" }}>
         <Output
           textMessages={textMessages}
           audioMessages={audioMessages}
@@ -213,25 +213,32 @@ function Council({
           audioContext={audioContext}
           handleOnFinishedPlaying={handleOnFinishedPlaying}
         />
-      </>
-      {showControls && (
-        <ConversationControls
-          onSkipBackward={handleOnSkipBackward}
-          onSkipForward={handleOnSkipForward}
-          onRaiseHand={handleOnRaiseHand}
-          isRaisedHand={isRaisedHand}
-          isWaitingToInterject={isRaisedHand && councilState !== 'human_input'}
-          isMuted={isMuted}
-          onMuteUnmute={toggleMute}
-          isPaused={isPaused}
-          onPausePlay={() => setPaused(!isPaused)}
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          canRaiseHand={canRaiseHand}
-          onTopOfOverlay={activeOverlay === "summary" && location.hash === ""}
-          humanName={humanName}
-        />
-      )}
+        {showControls && (
+          <ConversationControls
+            onSkipBackward={handleOnSkipBackward}
+            onSkipForward={handleOnSkipForward}
+            onRaiseHand={handleOnRaiseHand}
+            isRaisedHand={isRaisedHand}
+            isWaitingToInterject={isRaisedHand && councilState !== 'human_input'}
+            isMuted={isMuted}
+            onMuteUnmute={toggleMute}
+            isPaused={isPaused}
+            onPausePlay={() => setPaused(!isPaused)}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            canRaiseHand={canRaiseHand}
+            onTopOfOverlay={activeOverlay === "summary" && location.hash === ""}
+            humanName={humanName}
+          />
+        )}
+        {replayManifest && (
+          <ReplayModeBanner
+            meeting={replayManifest}
+            isPaused={isPaused}
+            visible={!liveKey}
+          />
+        )}
+      </div>
       <Overlay isActive={activeOverlay !== null}>
         {activeOverlay !== null && (
           <CouncilOverlays

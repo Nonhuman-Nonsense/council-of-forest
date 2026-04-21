@@ -67,13 +67,12 @@ const Output: React.FC<OutputProps> = ({
 
   return (
     <>
-      <div style={showTextOutput ? hiddenStyle : {}}>
-        <TextOutput
-          currentAudioMessage={currentAudioMessage}
-          isPaused={isPaused}
-          setCurrentSnippetIndex={setCurrentSnippetIndex}
-        />
-      </div>
+      <TextOutput
+        currentAudioMessage={currentAudioMessage}
+        isPaused={isPaused}
+        style={showTextOutput ? hiddenStyle : undefined}
+        setCurrentSnippetIndex={setCurrentSnippetIndex}
+      />
       <div data-testid="audio-indicator" data-playing={!!currentAudioMessage}>
         <AudioOutput
           currentAudioMessage={currentAudioMessage}
