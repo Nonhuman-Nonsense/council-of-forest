@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef, useMemo, createRef, CSSProperties, type RefObject } from "react";
 import FoodAnimation from "./FoodAnimation.jsx";
-import { dvh, minWindowHeight, filename, useMobile, useDocumentVisibility } from "../utils.js";
+import { dvh, minWindowHeight, useMobile, useDocumentVisibility } from "../utils.js";
 import forestCharacters from "../prompts/forest_characters.json";
 import { forestCharacterRatios } from "../generated/forestCharacterRatios";
+import { forestBackgroundUrls } from "@assets/backgrounds/index";
+import {
+    characterAmbienceUrl,
+    characterImageAvifUrl,
+    characterMp3Url,
+} from "@assets/characters/characterData";
 
 type ForestManifestEntry = (typeof forestCharacters)[number];
 
@@ -150,9 +156,9 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
-            <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={`/backgrounds/forest${isMobile ? "-small" : ""}.avif`} alt="" />
+            <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
-                <FoodAnimation type="transparent" character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} currentSpeakerId={currentSpeakerId} />
+                <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} currentSpeakerId={currentSpeakerId} />
                 <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
             </div>
             {characters.map((character) => (
@@ -190,12 +196,12 @@ type BeingProps = {
 function Being({ id, ref, type, height, left, bottom, always_on, isPaused, currentSpeakerId }: BeingProps) {
     // One ref object is reused per character; only one of div / img mounts — narrow per branch for ref types.
     return (<>
-        {type !== "image" &&
+        {type === "video" &&
             <div ref={ref as RefObject<HTMLDivElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }}>
-                <FoodAnimation type={type} character={{ id: id }} isPaused={isPaused} always_on={always_on} currentSpeakerId={currentSpeakerId} styles={{}} />
+                <FoodAnimation character={{ id: id }} isPaused={isPaused} always_on={always_on} currentSpeakerId={currentSpeakerId} styles={{}} />
             </div>
         }
-        {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={`/characters/images/${filename(id)}.avif`} alt="" />}
+        {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={characterImageAvifUrl(id)} alt="" />}
     </>
     );
 }
@@ -240,7 +246,7 @@ function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioPr
 
     async function loadBeingAudio() {
 
-        const audioBuffer = await fetch(`/characters/audio/${id}.mp3`)
+        const audioBuffer = await fetch(characterMp3Url(id))
             .then(res => res.arrayBuffer())
             .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
 
@@ -289,7 +295,7 @@ function AmbientAudio({ audioContext }: AmbientAudioProps) {
     }
 
     async function loadAmbience() {
-        const audioBuffer = await fetch(`/characters/ambience.mp3`)
+        const audioBuffer = await fetch(characterAmbienceUrl)
             .then(res => res.arrayBuffer())
             .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
 

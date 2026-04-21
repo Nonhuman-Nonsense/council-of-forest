@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { toTitleCase, useMobile, useMobileXs } from "@/utils";
 import { useTranslation } from "react-i18next";
-
-import globalOptionsData from "@/global-options-client.json";
 import { Character, VoiceOption, AVAILABLE_VOICES } from "@shared/ModelTypes";
 import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages";
 import VideoPreloader from "@components/VideoPreloader";
+import { globalClientOptions } from "@/globalClientOptions";
+import { characterIconWebpUrl } from "@assets/characters/characterData";
 
 import Lottie from 'react-lottie-player';
 import loadingAnimation from '@animations/loading.json';
@@ -13,23 +13,13 @@ import loadingAnimation from '@animations/loading.json';
 // Dynamic import of food data modules
 const foodModules = import.meta.glob<FoodData>('/src/prompts/foods_*.json', { eager: true, import: 'default' });
 
-// Eagerly import food images
-const foodImages = import.meta.glob('/src/assets/foods/small/*.webp', { eager: true, import: 'default' }) as Record<string, string>;
-
 function getFoodImageUrl(id: string): string | undefined {
-  // Construct the key that matches the glob pattern
-  return foodImages[`/src/assets/foods/small/${id}.webp`];
+  try {
+    return characterIconWebpUrl(id);
+  } catch {
+    return undefined;
+  }
 }
-
-interface GlobalOptions {
-  audio_speed?: number;
-  conversationMaxLength: number;
-  meetingVeryMaxLength: number;
-  extraMessageCount: number;
-  chairId: string;
-}
-
-const globalOptions: GlobalOptions = globalOptionsData;
 
 export interface Food extends Partial<Character> {
   id: string;
@@ -87,7 +77,7 @@ for (const language in localFoodData) {
 }
 
 // Infer the default voice from the configuration to ensure blankHuman is valid
-const defaultChair = localFoodData[AVAILABLE_LANGUAGES[0]]?.foods.find(f => f.id === globalOptions.chairId);
+const defaultChair = localFoodData[AVAILABLE_LANGUAGES[0]]?.foods.find(f => f.id === globalClientOptions.chairId);
 const defaultVoice: VoiceOption = defaultChair?.voice || AVAILABLE_VOICES[0];
 
 const blankHuman: Food = {
@@ -155,7 +145,7 @@ function SelectFoods({ topicTitle, onContinueForward, loading: loading = false }
     newHuman.index = id;
 
     // Assign chair's voice to human panelist so validation passes
-    const chair = foods.find(f => f.id === globalOptions.chairId);
+    const chair = foods.find(f => f.id === globalClientOptions.chairId);
     if (chair && chair.voice) {
       newHuman.voice = chair.voice;
       newHuman.voiceProvider = chair.voiceProvider;
@@ -410,7 +400,7 @@ function SelectFoods({ topicTitle, onContinueForward, loading: loading = false }
               onMouseEnter={() => setCurrentFood(food.id)}
               onMouseLeave={() => setCurrentFood(null)}
               // moderator check
-              onSelectFood={food.id === globalOptions.chairId ? undefined : selectFood}
+              onSelectFood={food.id === globalClientOptions.chairId ? undefined : selectFood}
               onDeselectFood={deselectFood}
               isSelected={selectedFoods.includes(food.id)}
               selectLimitReached={selectedFoods.length >= maxFoods}

@@ -1,7 +1,7 @@
 [
   {
     "id": "salmon",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "zoom": 60,
     "height": 9,
@@ -10,14 +10,14 @@
   },
   {
     "id": "bird",
-    "type": "transparent",
+    "type": "video",
     "height": 14,
     "left": 12.5,
     "bottom": 52
   },
   {
     "id": "bumblebee",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "zoom": 60,
     "height": 10,
@@ -33,7 +33,7 @@
   },
   {
     "id": "pine",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "zoom": 100,
     "height": 61,
@@ -42,7 +42,7 @@
   },
   {
     "id": "reindeer",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "height": 16,
     "left": -26.5,
@@ -50,7 +50,7 @@
   },
   {
     "id": "windturbine",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "height": 22,
     "left": 1,
@@ -58,7 +58,7 @@
   },
   {
     "id": "treeharvester",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.05,
     "zoom": 80,
     "height": 19,
@@ -67,7 +67,7 @@
   },
   {
     "id": "kota",
-    "type": "transparent",
+    "type": "video",
     "always_on": true,
     "height": 35,
     "left": 54,
@@ -75,7 +75,7 @@
   },
   {
     "id": "lichen",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "height": 25,
     "left": 40,
@@ -83,7 +83,7 @@
   },
   {
     "id": "burningpine",
-    "type": "transparent",
+    "type": "video",
     "always_on": true,
     "height": 14,
     "left": -88,
@@ -91,7 +91,7 @@
   },
   {
     "id": "aurora",
-    "type": "transparent",
+    "type": "video",
     "always_on": true,
     "height": 21,
     "left": -35,
@@ -99,7 +99,7 @@
   },
   {
     "id": "mountain",
-    "type": "transparent",
+    "type": "video",
     "audio": 0.2,
     "zoom": 40,
     "height": 16,
