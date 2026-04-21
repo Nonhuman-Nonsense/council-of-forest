@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { filename, useMobile } from "../utils";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useMobile } from "../utils";
+import {
+    characterOpaqueVideoUrl,
+    characterTransparentVideoUrls,
+} from "@assets/characters/characterData";
 
 interface FoodAnimationProps {
   character: { id: string };
   type: string;
-  styles: React.CSSProperties;
+  styles: CSSProperties;
   isPaused: boolean;
   always_on?: boolean;
   currentSpeakerId: string;
@@ -16,21 +20,15 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
   const [vidLoaded, setVidLoaded] = useState(false);
   const hasCharacter = Boolean(character?.id);
 
-  // Forest-specific logic: River has no subfolder, others do based on device size
-  const folder = character.id === "river" ? "" : isMobile ? "small/" : "large/";
   const transparency = type === "transparent";
 
-  //This is to fix a problem on safari where videos are not shown at all until they are played.
-  //So we play the video for a moment on component mount, and then go back to the normal behaviour
   useEffect(() => {
     async function startVid() {
       if (video.current) {
         try {
           await video.current.play();
         } catch (e) {
-          //Sometimes video playing might fail due to being paused because it is a background tab etc.
-          //But this is not a problem, just catch and proceed.
-          console.log(e);//log for now but prob safe to fail silently
+          console.log(e);
         }
         video.current.pause();
         setVidLoaded(true);
@@ -42,7 +40,7 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
   useEffect(() => {
     if (vidLoaded && video.current) {
       if (!isPaused && (currentSpeakerId === character.id || always_on === true)) {
-        video.current.play().catch(e => console.log(e));//log for now but prob safe to fail silently
+        video.current.play().catch(e => console.log(e));
       } else {
         video.current.pause();
       }
@@ -51,21 +49,26 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
 
   if (!hasCharacter) return null;
 
-  return (
-    <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
-      {transparency && <>
+  if (transparency) {
+    const urls = characterTransparentVideoUrls(character.id, isMobile);
+    return (
+      <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
         <source
-          src={`/characters/${folder}${filename(character.id)}-hevc-safari.mp4`}
+          src={urls.hevc}
           type={'video/mp4; codecs="hvc1"'} />
         <source
-          src={`/characters/${folder}${filename(character.id)}-vp9-chrome.webm`}
+          src={urls.vp9}
           type={"video/webm"} />
-      </>}
-      {!transparency &&
-        <source
-          src={`/characters/${folder}${filename(character.id)}.webm`}
-          type={"video/webm"} />
-      }
+      </video>
+    );
+  }
+
+  const opaqueUrl = characterOpaqueVideoUrl(character.id, isMobile);
+  return (
+    <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
+      <source
+        src={opaqueUrl}
+        type={"video/webm"} />
     </video>
   );
 }
