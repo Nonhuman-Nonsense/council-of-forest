@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import FoodAnimation from '@/components/FoodAnimation';
 
-// Mock Lottie
 vi.mock('lottie-web', () => ({
     default: {
         loadAnimation: vi.fn(() => ({
@@ -18,9 +17,10 @@ describe('FoodAnimation Compatibility', () => {
         const { container } = render(
             <FoodAnimation
                 type="transparent"
-                folder="characters"
                 character={{ id: "river" }}
                 isPaused={false}
+                currentSpeakerId=""
+                styles={{}}
             />
         );
         expect(container).toBeInTheDocument();
@@ -32,6 +32,8 @@ describe('FoodAnimation Compatibility', () => {
                 type="transparent"
                 character={{ id: "river", emotion: "happy" }}
                 isPaused={false}
+                currentSpeakerId=""
+                styles={{}}
             />
         );
         expect(container).toBeInTheDocument();

@@ -1,5 +1,6 @@
 import React from 'react';
-import { foodVideoUrlsForId } from "@assets/foods/foodVideos";
+import { useMobile } from "@/utils";
+import { characterTransparentVideoUrls } from "@assets/characters/characterData";
 
 interface VideoPreloaderProps {
     foodIds: string[];
@@ -15,10 +16,11 @@ interface VideoPreloaderProps {
  * (HEVC vs VP9) is preloaded based on browser support.
  */
 function VideoPreloader({ foodIds }: VideoPreloaderProps): React.ReactElement {
+    const isMobile = useMobile();
     return (
         <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden' }}>
             {foodIds.map((id) => {
-                const urls = foodVideoUrlsForId(id);
+                const urls = characterTransparentVideoUrls(id, isMobile);
                 return (
                     <video
                         key={id}

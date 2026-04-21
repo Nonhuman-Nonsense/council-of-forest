@@ -1,53 +1,73 @@
 import { describe, it, expect } from "vitest";
+import foodsEn from "../../src/prompts/foods_en.json";
+import forestCharacters from "../../src/prompts/forest_characters.json";
+import { filename } from "@/utils";
 
-const foodsModules = import.meta.glob<{ foods: { id: string }[] }>("/src/prompts/foods_*.json", {
-    eager: true,
-    import: "default",
-});
+const largeHevc = import.meta.glob("/src/assets/characters/large/*-hevc-safari.mp4");
+const largeVp9 = import.meta.glob("/src/assets/characters/large/*-vp9-chrome.webm");
+const smallHevc = import.meta.glob("/src/assets/characters/small/*-hevc-safari.mp4");
+const smallVp9 = import.meta.glob("/src/assets/characters/small/*-vp9-chrome.webm");
+const riverHevc = import.meta.glob("/src/assets/characters/river-hevc-safari.mp4");
+const riverVp9 = import.meta.glob("/src/assets/characters/river-vp9-chrome.webm");
 
-const hevcVideos = import.meta.glob("/src/assets/foods/videos/*-hevc-safari.mp4");
-const vp9Videos = import.meta.glob("/src/assets/foods/videos/*-vp9-chrome.webm");
-
-function collectFoodIds(): Set<string> {
-    const ids = new Set<string>();
-    for (const data of Object.values(foodsModules)) {
-        for (const food of data.foods ?? []) {
-            if (food?.id) ids.add(food.id);
-        }
-    }
-    return ids;
+function includesAsset(keys: string[], fragment: string): boolean {
+    const needle = fragment.replace(/\\/g, "/");
+    return keys.some((k) => k.replace(/\\/g, "/").includes(needle));
 }
 
-function idsFromGlobKeys(keys: string[], suffix: string): Set<string> {
-    const ids = new Set<string>();
-    const escaped = suffix.replace(/\./g, "\\.");
-    const re = new RegExp(`\\/([^/]+)${escaped}$`);
-    for (const k of keys) {
-        const m = k.match(re);
-        if (m) ids.add(m[1]);
-    }
-    return ids;
-}
-
-describe("Food video integrity", () => {
-    it("has a matching HEVC + VP9 pair for every food in prompts", () => {
-        const foodIds = collectFoodIds();
-        const hevcIds = idsFromGlobKeys(Object.keys(hevcVideos), "-hevc-safari.mp4");
-        const vp9Ids = idsFromGlobKeys(Object.keys(vp9Videos), "-vp9-chrome.webm");
-
-        for (const id of foodIds) {
-            expect(hevcIds.has(id), `Missing HEVC for food: ${id}`).toBe(true);
-            expect(vp9Ids.has(id), `Missing VP9 for food: ${id}`).toBe(true);
+describe("Character video integrity", () => {
+    it("foods_en selectable characters have full transparent video sets (or river root)", () => {
+        const largeHevcKeys = Object.keys(largeHevc);
+        const largeVp9Keys = Object.keys(largeVp9);
+        const smallHevcKeys = Object.keys(smallHevc);
+        const smallVp9Keys = Object.keys(smallVp9);
+        for (const food of foodsEn.foods) {
+            const id = food.id;
+            if (id === "river") {
+                expect(Object.keys(riverHevc).length).toBe(1);
+                expect(Object.keys(riverVp9).length).toBe(1);
+                continue;
+            }
+            const fn = filename(id);
+            expect(includesAsset(largeHevcKeys, `large/${fn}-hevc-safari.mp4`), `Missing large HEVC for ${id}`).toBe(
+                true,
+            );
+            expect(includesAsset(largeVp9Keys, `large/${fn}-vp9-chrome.webm`), `Missing large VP9 for ${id}`).toBe(
+                true,
+            );
+            expect(includesAsset(smallHevcKeys, `small/${fn}-hevc-safari.mp4`), `Missing small HEVC for ${id}`).toBe(
+                true,
+            );
+            expect(includesAsset(smallVp9Keys, `small/${fn}-vp9-chrome.webm`), `Missing small VP9 for ${id}`).toBe(
+                true,
+            );
         }
+    });
 
-        for (const id of hevcIds) {
-            expect(foodIds.has(id), `Orphan HEVC video for unknown food: ${id}`).toBe(true);
-            expect(vp9Ids.has(id), `HEVC without VP9 pair for food: ${id}`).toBe(true);
-        }
-
-        for (const id of vp9Ids) {
-            expect(foodIds.has(id), `Orphan VP9 video for unknown food: ${id}`).toBe(true);
-            expect(hevcIds.has(id), `VP9 without HEVC pair for food: ${id}`).toBe(true);
+    it("forest_characters transparent entries have full large+small codec pairs", () => {
+        const largeHevcKeys = Object.keys(largeHevc);
+        const largeVp9Keys = Object.keys(largeVp9);
+        const smallHevcKeys = Object.keys(smallHevc);
+        const smallVp9Keys = Object.keys(smallVp9);
+        for (const entry of forestCharacters) {
+            if (entry.type !== "transparent") continue;
+            const fn = filename(entry.id);
+            expect(
+                includesAsset(largeHevcKeys, `large/${fn}-hevc-safari.mp4`),
+                `Missing large HEVC for ${entry.id}`,
+            ).toBe(true);
+            expect(
+                includesAsset(largeVp9Keys, `large/${fn}-vp9-chrome.webm`),
+                `Missing large VP9 for ${entry.id}`,
+            ).toBe(true);
+            expect(
+                includesAsset(smallHevcKeys, `small/${fn}-hevc-safari.mp4`),
+                `Missing small HEVC for ${entry.id}`,
+            ).toBe(true);
+            expect(
+                includesAsset(smallVp9Keys, `small/${fn}-vp9-chrome.webm`),
+                `Missing small VP9 for ${entry.id}`,
+            ).toBe(true);
         }
     });
 });

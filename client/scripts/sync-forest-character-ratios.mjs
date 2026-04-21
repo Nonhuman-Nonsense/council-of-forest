@@ -1,9 +1,10 @@
 /**
- * Reads forest character image/video dimensions from client/public/characters,
+ * Reads forest character image/video dimensions from client/src/assets/characters,
  * verifies all transparent video variants share one aspect ratio, and writes
  * src/generated/forestCharacterRatios.ts
  *
- * Requires assets under public/characters (see FoodAnimation paths). River is omitted.
+ * River is measured from root-level river-* files; other transparent characters
+ * use large/ and small/ encodes. Image-type characters use images/*.avif.
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -15,7 +16,7 @@ import imageSize from "image-size";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const clientRoot = join(__dirname, "..");
-const publicCharacters = join(clientRoot, "public", "characters");
+const characterAssets = join(clientRoot, "src", "assets", "characters");
 const manifestPath = join(clientRoot, "src", "prompts", "forest_characters.json");
 const outPath = join(clientRoot, "src", "generated", "forestCharacterRatios.ts");
 
@@ -122,7 +123,7 @@ function main() {
 
     if (entry.type === "image") {
       const rel = join("images", `${fn}.avif`);
-      const abs = join(publicCharacters, rel);
+      const abs = join(characterAssets, rel);
       try {
         const { width, height } = getImageDimensions(abs);
         dimensions[id] = { width, height };
@@ -143,7 +144,7 @@ function main() {
       ];
       const measured = [];
       for (const rel of rels) {
-        const abs = join(publicCharacters, rel);
+        const abs = join(characterAssets, rel);
         try {
           const { width, height } = getVideoDimensions(abs);
           measured.push({ path: rel, w: width, h: height });

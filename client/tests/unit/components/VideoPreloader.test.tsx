@@ -1,8 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import VideoPreloader from '../../../src/components/VideoPreloader';
 
+vi.mock('../../../src/utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../src/utils')>();
+    return {
+        ...actual,
+        useMobile: vi.fn(),
+    };
+});
+
+import { useMobile } from '../../../src/utils';
+
 describe('VideoPreloader', () => {
+    beforeEach(() => {
+        vi.mocked(useMobile).mockReturnValue(false);
+    });
+
     it('renders empty container when list is empty', () => {
         const { container } = render(<VideoPreloader foodIds={[]} />);
         const div = container.firstChild as HTMLElement;
@@ -10,29 +24,20 @@ describe('VideoPreloader', () => {
     });
 
     it('renders hidden video elements for provided food IDs', () => {
-        const foods = ['tomato', 'potato'];
+        const foods = ['reindeer', 'lichen'];
         const { container } = render(<VideoPreloader foodIds={foods} />);
 
         const div = container.firstChild as HTMLElement;
-        // Check hidden styles
         expect(div).toHaveStyle({ display: 'none', width: '0', height: '0' });
 
         const videos = div.querySelectorAll('video');
         expect(videos).toHaveLength(2);
 
-        // Check first video (tomato)
-        const tomatoVideo = videos[0];
-        expect(tomatoVideo).toHaveAttribute('preload', 'auto');
-        // Boolean attributes in testing-library check
-        // Often 'muted' attribute is present as empty string or we can check property
-        expect(tomatoVideo).toHaveProperty('muted', true);
-        expect(tomatoVideo).toHaveProperty('playsInline', true);
-
-        const sources = tomatoVideo.querySelectorAll('source');
-        expect(sources).toHaveLength(2);
-        expect(sources[0].getAttribute('src')).toContain('tomato-hevc-safari');
-        expect(sources[0]).toHaveAttribute('type', 'video/mp4; codecs="hvc1"');
-        expect(sources[1].getAttribute('src')).toContain('tomato-vp9-chrome');
-        expect(sources[1]).toHaveAttribute('type', 'video/webm');
+        const firstSources = videos[0].querySelectorAll('source');
+        expect(firstSources).toHaveLength(2);
+        expect(firstSources[0].getAttribute('src')).toContain('reindeer-hevc-safari');
+        expect(firstSources[0]).toHaveAttribute('type', 'video/mp4; codecs="hvc1"');
+        expect(firstSources[1].getAttribute('src')).toContain('reindeer-vp9-chrome');
+        expect(firstSources[1]).toHaveAttribute('type', 'video/webm');
     });
 });

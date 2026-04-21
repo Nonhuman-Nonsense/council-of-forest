@@ -20,7 +20,8 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
   const [vidLoaded, setVidLoaded] = useState(false);
   const hasCharacter = Boolean(character?.id);
 
-  const transparency = type === "transparent";
+  // Forest: selectable beings use alpha videos (HEVC+VP9). JSON often omits `type`, so FoodItem defaults to "food".
+  const useDualCodecVideo = type === "transparent" || type === "food";
 
   useEffect(() => {
     async function startVid() {
@@ -49,7 +50,7 @@ function FoodAnimation({ character, type, styles, isPaused, always_on, currentSp
 
   if (!hasCharacter) return null;
 
-  if (transparency) {
+  if (useDualCodecVideo) {
     const urls = characterTransparentVideoUrls(character.id, isMobile);
     return (
       <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>

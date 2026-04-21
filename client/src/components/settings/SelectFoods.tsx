@@ -5,6 +5,7 @@ import { Character, VoiceOption, AVAILABLE_VOICES } from "@shared/ModelTypes";
 import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages";
 import VideoPreloader from "@components/VideoPreloader";
 import { globalClientOptions } from "@/globalClientOptions";
+import { characterIconWebpUrl } from "@assets/characters/characterData";
 
 import Lottie from 'react-lottie-player';
 import loadingAnimation from '@animations/loading.json';
@@ -12,12 +13,12 @@ import loadingAnimation from '@animations/loading.json';
 // Dynamic import of food data modules
 const foodModules = import.meta.glob<FoodData>('/src/prompts/foods_*.json', { eager: true, import: 'default' });
 
-// Eagerly import food images
-const foodImages = import.meta.glob('/src/assets/foods/small/*.webp', { eager: true, import: 'default' }) as Record<string, string>;
-
 function getFoodImageUrl(id: string): string | undefined {
-  // Construct the key that matches the glob pattern
-  return foodImages[`/src/assets/foods/small/${id}.webp`];
+  try {
+    return characterIconWebpUrl(id);
+  } catch {
+    return undefined;
+  }
 }
 
 export interface Food extends Partial<Character> {
