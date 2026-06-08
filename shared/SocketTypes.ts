@@ -34,6 +34,8 @@ export interface CreateMeetingBody {
     topic: Topic;
     characters: Character[];
     language: string;
+    /** Audience member name learned during voice setup (optional). */
+    humanName?: string;
 }
 
 export interface ResumeMeetingResponse {
@@ -67,13 +69,38 @@ export interface PublicAudioClipResponse {
     audioBase64: string;
 }
 
+/** Extra detail for internal clients (prototype / development only; omitted in production). */
+export interface ClientErrorDebug {
+    name?: string;
+    stack?: string;
+    cause?: unknown;
+    context?: string;
+    zodIssues?: unknown;
+    raw?: unknown;
+}
+
 export interface ErrorPayload {
     message: string;
     code: number;
+    debug?: ClientErrorDebug;
 }
+
+/** HTTP error JSON body (`message` + optional `debug`; status code is on the response). */
+export type ApiErrorBody = Pick<ErrorPayload, "message" | "debug">;
 
 export interface ClientKeyResponse {
     value: string;
+}
+
+// These are submit DTOs, not canonical conversation messages. The server normalizes them into
+// stricter `Message` variants before persistence/broadcast, which keeps the shared message union honest.
+export interface SubmitHumanMessagePayload {
+    text: string;
+}
+
+export interface SubmitHumanPanelistPayload {
+    text: string;
+    speaker: string;
 }
 
 // Events emitted by the Server to the Client
@@ -89,8 +116,8 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
     start_conversation: (opts: SetupOptions) => void;
     disconnect: () => void;
-    submit_human_message: (msg: Message) => void;
-    submit_human_panelist: (msg: Message) => void;
+    submit_human_message: (msg: SubmitHumanMessagePayload) => void;
+    submit_human_panelist: (msg: SubmitHumanPanelistPayload) => void;
     raise_hand: (opts: HandRaisedOptions) => void;
     wrap_up_meeting: (msg: WrapUpMessage) => void;
     attempt_reconnection: (opts: ReconnectionOptions) => void;

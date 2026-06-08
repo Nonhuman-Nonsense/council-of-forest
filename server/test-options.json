@@ -1,11 +1,12 @@
 {
-    "gptModel": "gpt-4o-mini",
+    "conversationModel": "mistral/mistral-medium-latest",
+    "conversationReasoning": "none",
     "voiceModel": "gpt-4o-mini-tts",
     "inworldVoiceModel": "inworld-tts-1.5-mini",
-    "maxTokens": 50,
-    "chairMaxTokens": 50,
+    "maxTokens": 150,
+    "chairMaxTokens": 150,
     "conversationMaxLength": 5,
-    "audio_speed": 1.25,
+    "defaultAudioSpeed": 1.25,
     "raiseHandInvitationLength": 100,
     "finalizeMeetingLength": 100
 }

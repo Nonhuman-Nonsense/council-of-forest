@@ -261,6 +261,14 @@ button.primary:hover {
   background-color: var(--accent-hover);
 }
 
+.status-error {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 0.9em;
+  padding: 6px 10px;
+  user-select: none;
+}
+
 button.icon-btn {
   padding: 4px;
   background: transparent;
@@ -300,6 +308,15 @@ input[type="range"],
 input[type="checkbox"] {
   accent-color: var(--accent-color);
   cursor: pointer;
+}
+
+input + small,
+select + small,
+textarea + small{
+  display:block;
+  margin-top: calc(var(--spacing-sm) * -1);
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
 }
 
 /* Styled Select */

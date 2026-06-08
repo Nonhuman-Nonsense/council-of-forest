@@ -1,17 +1,16 @@
 {
-  "gptModel": "gpt-4o",
+  "conversationModel": "mistral/mistral-large-3",
+  "conversationReasoning": "none",
   "voiceModel": "gpt-4o-mini-tts",
   "geminiVoiceModel": "gemini-2.5-flash-tts",
   "inworldVoiceModel": "inworld-tts-1.5-max",
   "temperature": 1,
+  "subtitleTimingPriorities": ["inworld", "whisper", "estimated"],
   "maxTokens": 170,
   "chairMaxTokens": 220,
-  "frequencyPenalty": 0,
-  "presencePenalty": 0,
-  "audio_speed": 1.1,
+  "defaultAudioSpeed": 1.1,
   "trimSentance": false,
   "trimParagraph": true,
-  "chairId": "river",
   "trimChairSemicolon": true,
   "show_trimmed": true,
   "skipAudio": false,
@@ -33,5 +32,9 @@
     "en": "Expect english input.",
     "sv": "Förvänta dig svenska."
   },
-  "audioConcurrency": 10
+  "audioConcurrency": 10,
+  "voiceGuideRealtimeModel": "google-ai-studio/gemini-2.5-flash",
+  "voiceGuideOpenAIRealtimeModel": "gpt-realtime",
+  "voiceGuideRealtimeTranscriptionModel": "assemblyai/u3-rt-pro",
+  "humanTargetingModel": "google-ai-studio/gemini-2.5-flash"
 }

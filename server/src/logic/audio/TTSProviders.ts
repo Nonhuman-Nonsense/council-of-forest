@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import { GoogleAuth } from 'google-auth-library';
 import { withNetworkRetry } from "@utils/NetworkUtils.js";
-import { Word } from "@utils/textUtils.js";
+import { Word } from "@shared/textUtils.js";
 import { AudioSystemOptions, Speaker } from "./AudioTypes.js";
 import { getGoogleLanguageCode } from "./AudioUtils.js";
 import { InworldPronunciationUtils } from "@utils/InworldPronunciationUtils.js";
@@ -17,6 +17,10 @@ interface GenerateParams {
 export interface AudioResult {
     audio: Buffer;
     words?: Word[];
+}
+
+function hasSpokenToken(word: string): boolean {
+    return word.toLowerCase().replace(/[^\w]|_/g, "").length > 0;
 }
 
 export async function generateGeminiAudio(params: GenerateParams): Promise<AudioResult> {
@@ -48,7 +52,7 @@ export async function generateGeminiAudio(params: GenerateParams): Promise<Audio
         },
         audioConfig: {
             audioEncoding: "OGG_OPUS",
-            speakingRate: speaker.voiceSpeed ?? options.audio_speed
+            speakingRate: speaker.voiceSpeed ?? options.defaultAudioSpeed
         }
     };
 
@@ -82,7 +86,7 @@ export async function generateOpenAIAudio(params: GenerateParams): Promise<Audio
     const mp3 = await withNetworkRetry(() => openai.audio.speech.create({
         model: options.voiceModel,
         voice: speaker.voice as OpenAI.Audio.SpeechCreateParams["voice"],
-        speed: speaker.voiceSpeed ?? options.audio_speed,
+        speed: speaker.voiceSpeed ?? options.defaultAudioSpeed,
         input: text.substring(0, 4096),
         instructions: speaker.voiceInstruction,
         response_format: "opus"
@@ -113,7 +117,7 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
             timestampType: "WORD",
             audio_config: {
                 audio_encoding: "OGG_OPUS",
-                speaking_rate: speaker.voiceSpeed ?? options.audio_speed
+                speaking_rate: speaker.voiceSpeed ?? options.defaultAudioSpeed
             },
         })
     }), "AudioSystemInworld");
@@ -145,14 +149,20 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
             const starts = wa.wordStartTimeSeconds;
             const ends = wa.wordEndTimeSeconds;
             if (Array.isArray(waWords) && Array.isArray(starts) && Array.isArray(ends)) {
-                words = waWords.map((word: string, i: number) => {
+                words = waWords.flatMap((word: string, i: number) => {
+                    // Inworld includes punctuation, spaces, and empty strings as timed alignment entries.
+                    // The sentence mapper expects spoken tokens only; otherwise long sentences compress.
+                    if (!hasSpokenToken(word) || typeof starts[i] !== "number" || typeof ends[i] !== "number") {
+                        return [];
+                    }
+
                     // Restore original word if it was replaced with IPA
                     const original = replacedWords.get(word);
-                    return {
+                    return [{
                         word: original || word,
                         start: starts[i],
                         end: ends[i]
-                    };
+                    }];
                 });
             }
         }

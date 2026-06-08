@@ -2,7 +2,7 @@ import type { Message } from '@shared/ModelTypes.js';
 import type { SetupOptions } from '@shared/SocketTypes.js';
 import type { ILifecycleContext } from "@interfaces/MeetingInterfaces.js";
 import type { Message as AudioMessage } from "@logic/AudioSystem.js";
-import { splitSentences } from "@utils/textUtils.js";
+import { splitSentences } from "@shared/textUtils.js";
 import { Logger } from "@utils/Logger.js";
 import removeMd from 'remove-markdown';
 import type { StoredMeeting } from "@models/DBModels.js";
@@ -94,7 +94,7 @@ export class MeetingLifecycleHandler {
         Logger.info(`meeting ${m._id}`, `summary generated on index ${m.conversation.length - 1}`);
 
         if (m._id !== null) {
-            manager.services.meetingsCollection.updateOne(
+            await manager.services.meetingsCollection.updateOne(
                 { _id: m._id },
                 { $set: { conversation: m.conversation, summary: summary } }
             );
@@ -112,7 +112,7 @@ export class MeetingLifecycleHandler {
         summary.sentences = splitSentences(response);
 
         if (m._id !== null) {
-            await manager.audioSystem.generateAudio(
+            void manager.audioSystem.generateAudio(
                 audioMessage as AudioMessage,
                 m.characters[0],
                 m.language,

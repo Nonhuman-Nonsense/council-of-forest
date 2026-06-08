@@ -11,6 +11,7 @@ import { initDb } from '@services/DbService.js';
 import { initOpenAI } from '@services/OpenAIService.js';
 import { SocketManager } from '@logic/SocketManager.js';
 import { AVAILABLE_LANGUAGES } from '@shared/AvailableLanguages.js';
+import { CHARACTERS_FILE } from '@shared/prompts/characterSetupMetadata.js';
 
 import { verifyGoogleCredentials } from '@utils/StartupChecks.js';
 import {
@@ -20,7 +21,9 @@ import {
   CACHE_CONTROL_NO_STORE,
   cacheControlPrivateNoStoreApi,
 } from '@utils/httpCache.js';
+import { getSpaRedirectTarget, isBlockedScannerPath, shouldServeSpaShell } from '@utils/spaFallback.js';
 import { registerMeetingRoutes } from '@api/meetingRoutes.js';
+import { registerRealtimeRoutes } from '@api/realtimeSession.js';
 import { registerAudioRoutes } from '@api/audioRoutes.js';
 
 const environment: string = config.NODE_ENV;
@@ -52,6 +55,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // Api routes run before static files (audio GET overwrites Cache-Control on success)
 app.use('/api', cacheControlPrivateNoStoreApi);
 registerMeetingRoutes(app, environment);
+registerRealtimeRoutes(app);
 registerAudioRoutes(app);
 
 if (environment === "prototype") {
@@ -62,10 +66,10 @@ if (environment === "prototype") {
   }));
   //Enable prototype to reset to default settings for each language
   for (const lang of AVAILABLE_LANGUAGES) {
-    for (const promptfile of ['foods', 'topics']) {
+    for (const promptfile of [CHARACTERS_FILE, 'topics']) {
       app.get(`/${promptfile}_${lang}.json`, function (_req: Request, res: Response) {
         res.setHeader('Cache-Control', CACHE_CONTROL_NO_STORE);
-        res.sendFile(path.join(process.cwd(), "../client/src/prompts", `${promptfile}_${lang}.json`));
+        res.sendFile(path.join(process.cwd(), "../shared/prompts", `${promptfile}_${lang}.json`));
       });
     }
   }
@@ -86,7 +90,19 @@ if (environment === "prototype") {
       }
     },
   }));
-  app.get("/{*splat}", function (_req: Request, res: Response) {
+  app.get("/{*splat}", function (req: Request, res: Response) {
+    if (isBlockedScannerPath(req.path)) {
+      res.setHeader('Cache-Control', CACHE_CONTROL_NO_STORE);
+      res.sendStatus(404);
+      return;
+    }
+
+    if (!shouldServeSpaShell(req.path)) {
+      res.setHeader('Cache-Control', CACHE_CONTROL_NO_STORE);
+      res.redirect(302, getSpaRedirectTarget(req.path));
+      return;
+    }
+
     res.setHeader('Cache-Control', CACHE_CONTROL_HTML_SHELL);
     res.sendFile(path.join(clientDistPath, "index.html"));
   });

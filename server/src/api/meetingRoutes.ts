@@ -4,11 +4,8 @@ import { Logger } from "@utils/Logger.js";
 import { createMeeting } from "./createMeeting.js";
 import { getMeeting } from "./getMeeting.js";
 import { buildReplayMeetingManifest } from "./replayManifest.js";
-import { getClientKey } from "./getClientKey.js";
 import { resumeMeeting } from "./resumeMeeting.js";
-import { meetingsCollection } from "@services/DbService.js";
-import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages.js";
-import { BadRequestError, CouncilError, ForbiddenError, UnauthorizedError } from "@models/Errors.js";
+import { BadRequestError, CouncilError, UnauthorizedError } from "@models/Errors.js";
 
 const BEARER = /^Bearer\s+(.+)$/i;
 
@@ -41,21 +38,22 @@ async function apiRouteWithErrorHandling(
     res: Response,
     handler: (req: Request, res: Response) => Promise<void>
 ): Promise<void> {
+    const context = `api ${method} ${path}`;
     try {
         await handler(req, res);
     } catch (e: unknown) {
         if (e instanceof ZodError) {
             await Logger.warn("api", `${method} ${path} failed, validation error`, e);
-            res.status(400).json({ message: "Invalid request" });
+            res.status(400).json(CouncilError.fromZod(e).toApiBody(context));
             return;
         }
         if (e instanceof CouncilError) {
             await Logger.warn("api", `${method} ${path} failed, ${e.name}`, e);
-            res.status(e.statusCode).json({ message: e.clientMessage });
+            res.status(e.statusCode).json(e.toApiBody(context));
             return;
         }
         await Logger.error("api", `${method} ${path} failed, internal server error`, e);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json(CouncilError.fromUnexpected(e).toApiBody(context));
     }
 }
 
@@ -103,33 +101,6 @@ export function registerMeetingRoutes(app: Express, environment: string): void {
             const response = await resumeMeeting(meetingIdNumber);
             await Logger.info("api", `PUT /api/meetings/${meetingId} resumed`);
             res.status(200).json(response);
-        });
-    });
-
-    app.post("/api/clientkey", async (req: Request, res: Response) => {
-        await apiRouteWithErrorHandling("POST", "/api/clientkey", req, res, async (req: Request, res: Response) => {
-            const bearer = parseRequiredBearerToken(req);
-
-            // Check if the live key exists in the database
-            const exists = await meetingsCollection.findOne({ liveKey: bearer }, { projection: { _id: 1 } });
-            if (!exists) {
-                throw new ForbiddenError();
-            }
-
-            // Check if the language is valid
-            const language = req.body?.language;
-            if (
-                typeof language !== "string" ||
-                !(AVAILABLE_LANGUAGES as readonly string[]).includes(language)
-            ) {
-                throw new BadRequestError();
-            }
-
-            // All good
-            // Get the client key
-            const data = await getClientKey(language);
-            await Logger.info("api", `POST /api/clientkey successful`);
-            res.status(200).json(data);
         });
     });
 }

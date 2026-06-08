@@ -1,9 +1,11 @@
-import type { Message } from "@shared/ModelTypes.js";
+import type { Character, HumanMessage, Message, PanelistMessage } from "@shared/ModelTypes.js";
+import type { SubmitHumanMessagePayload, SubmitHumanPanelistPayload } from "@shared/SocketTypes.js";
 import type { IHumanInputContext } from "@interfaces/MeetingInterfaces.js";
 import type { Message as AudioQueueMessage } from "@logic/audio/AudioTypes.js";
 import { Logger } from "@utils/Logger.js";
 import { v4 as uuidv4 } from "uuid";
-import { splitSentences } from "@utils/textUtils.js";
+import { splitSentences } from "@shared/textUtils.js";
+import { HumanTargetClassifier } from "@logic/HumanTargetClassifier.js";
 
 export interface InjectionMessage {
     text: string;
@@ -18,9 +20,11 @@ export interface InjectionMessage {
  */
 export class HumanInputHandler {
     manager: IHumanInputContext;
+    targetClassifier: HumanTargetClassifier;
 
     constructor(meetingManager: IHumanInputContext) {
         this.manager = meetingManager;
+        this.targetClassifier = new HumanTargetClassifier(meetingManager.serverOptions);
     }
 
     /**
@@ -28,7 +32,7 @@ export class HumanInputHandler {
      * Validates that the state is 'awaiting_human_question' before processing.
      * Updates conversation w/ user text, triggers audio generation, and resumes the run loop.
      */
-    async handleSubmitHumanMessage(message: Message): Promise<void> {
+    async handleSubmitHumanMessage(payload: SubmitHumanMessagePayload): Promise<void> {
         const { manager } = this;
         const m = manager.meeting;
         if (!m) return;
@@ -46,19 +50,27 @@ export class HumanInputHandler {
             m.conversation.pop();
         }
 
-        if (message.askParticular) {
-            Logger.info(`meeting ${m._id}`, `specifically asked to ${message.askParticular} `);
-            message.text = message.speaker + " asked " + message.askParticular + ":\xa0" + message.text;
-        } else {
-            message.text = message.speaker + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + message.text;
+        const humanName = m.state.humanName || "Human";
+        const targetedCharacter = this.resolveTargetCharacter(
+            await this.targetClassifier.inferTarget(m, payload.text),
+            m.characters
+        );
+
+        if (targetedCharacter) {
+            Logger.info(`meeting ${m._id}`, `specifically asked to ${targetedCharacter.id} `);
         }
+        const renderedText = humanName + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + payload.text;
 
         const msgId = "human-" + uuidv4();
-        message.id = msgId;
-        message.type = "human";
-        message.speaker = m.state.humanName;
+        const message: HumanMessage = {
+            id: msgId,
+            type: "human",
+            speaker: humanName,
+            text: renderedText,
+            askParticular: targetedCharacter?.id,
+        };
 
-        m.conversation.push(message as Message);
+        m.conversation.push(message);
 
         await manager.services.meetingsCollection.updateOne(
             { _id: m._id },
@@ -71,9 +83,8 @@ export class HumanInputHandler {
 
         // Assert types for Queue compatibility
         const queueMsg = {
-            id: msgId,
+            ...message,
             sentences: message.sentences,
-            ...message
         } as AudioQueueMessage;
 
         manager.audioSystem.queueAudioGeneration(
@@ -89,16 +100,22 @@ export class HumanInputHandler {
         manager.startLoop();
     }
 
+    private resolveTargetCharacter(target: string | undefined, characters: Character[]): Character | undefined {
+        if (!target) return undefined;
+
+        return characters.find((character) => character.id === target || character.name === target);
+    }
+
     /**
      * Handles input from a 'human panelist' (a human participant acting as a character/expert).
      * Validates that the state is 'awaiting_human_panelist'.
      */
-    async handleSubmitHumanPanelist(message: Message): Promise<void> {
+    async handleSubmitHumanPanelist(payload: SubmitHumanPanelistPayload): Promise<void> {
         const { manager } = this;
         const m = manager.meeting;
         if (!m) return;
 
-        Logger.info(`meeting ${m._id}`, `human panelist ${message.speaker} on index ${m.conversation.length - 1} `);
+        Logger.info(`meeting ${m._id}`, `human panelist ${payload.speaker} on index ${m.conversation.length - 1} `);
 
         if (m.conversation[m.conversation.length - 1].type !== 'awaiting_human_panelist') {
             Logger.error(`meeting ${m._id}`, "Received a human panelist but was not expecting one!");
@@ -106,12 +123,15 @@ export class HumanInputHandler {
         }
         m.conversation.pop();
 
-        const charName = m.characters.find(c => c.id === message.speaker)?.name || "Unknown";
-        message.text = charName + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + message.text;
-        message.id = message.speaker + uuidv4();
-        message.type = "panelist";
+        const charName = m.characters.find(c => c.id === payload.speaker)?.name || "Unknown";
+        const message: PanelistMessage = {
+            id: payload.speaker + uuidv4(),
+            type: "panelist",
+            speaker: payload.speaker,
+            text: charName + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + payload.text,
+        };
 
-        m.conversation.push(message as Message);
+        m.conversation.push(message);
 
         await manager.services.meetingsCollection.updateOne(
             { _id: m._id },
@@ -123,9 +143,8 @@ export class HumanInputHandler {
         message.sentences = splitSentences(message.text);
 
         const queueMsg = {
-            id: message.id!,
+            ...message,
             sentences: message.sentences,
-            ...message
         } as AudioQueueMessage;
 
         manager.audioSystem.queueAudioGeneration(

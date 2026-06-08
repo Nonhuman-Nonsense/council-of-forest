@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { Ref } from 'react';
-import Navbar from '@components/Navbar';
+import Navbar from '@main/Navbar';
 import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
@@ -39,7 +39,7 @@ vi.mock('react-responsive', () => ({
 }));
 
 // Mock Assets
-vi.mock('@/animations/hamburger.json', () => ({ default: {} }));
+vi.mock('@assets/animations/hamburger.json', () => ({ default: {} }));
 
 import * as utils from '@/utils';
 import * as responsive from 'react-responsive';
@@ -61,9 +61,9 @@ describe('Navbar', () => {
         vi.mocked(responsive.useMediaQuery).mockReturnValue(true); // showIconinMeny
     });
 
-    const renderNavbar = (props = defaultProps) => {
+    const renderNavbar = (props = defaultProps, initialEntries: string[] = ['/en/meeting/123']) => {
         return render(
-            <MemoryRouter initialEntries={['/en/meeting/123']}>
+            <MemoryRouter initialEntries={initialEntries}>
                 <Navbar {...props} />
             </MemoryRouter>
         );
@@ -76,6 +76,7 @@ describe('Navbar', () => {
         expect(screen.getByText('SETTINGS')).toBeVisible();
         expect(screen.getByText('ABOUT')).toBeVisible();
         expect(screen.getByText('CONTACT')).toBeVisible();
+        expect(screen.queryByText('SETUP')).not.toBeInTheDocument();
         expect(screen.queryByTestId('lottie-player')).not.toBeInTheDocument();
     });
 

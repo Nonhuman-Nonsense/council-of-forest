@@ -1,13 +1,13 @@
 const { createApp } = Vue;
+const CHARACTERS_FILE = "beings";
 
 const defaultOptions = {
-  gptModel: "gpt-4o-mini",
+  conversationModel: "mistral/mistral-large-3",
+  conversationReasoning: "none",
   temperature: 1,
   maxTokens: 200,
   chairMaxTokens: 250,
-  frequencyPenalty: 0,
-  presencePenalty: 0,
-  audio_speed: 1.15,
+  defaultAudioSpeed: 1.15,
 
   trimSentance: false,
   trimParagraph: true,
@@ -231,6 +231,37 @@ createApp({
   },
 
   methods: {
+    formatClientError(errorPayload) {
+      if (!errorPayload || typeof errorPayload !== 'object') {
+        return String(errorPayload ?? 'Unknown error');
+      }
+
+      let text = errorPayload.message || 'Unknown error';
+      const debug = errorPayload.debug;
+      if (!debug) return text;
+
+      if (debug.context) {
+        text = `[${debug.context}] ${text}`;
+      }
+      if (debug.stack) {
+        text += `\n\n${debug.stack}`;
+      } else if (debug.zodIssues) {
+        text += `\n\n${JSON.stringify(debug.zodIssues, null, 2)}`;
+      } else if (debug.raw != null) {
+        text += `\n\n${JSON.stringify(debug.raw, null, 2)}`;
+      } else if (debug.name) {
+        text += `\n\n${debug.name}`;
+      }
+      return text;
+    },
+
+    formatApiErrorBody(body, status) {
+      if (body && typeof body === 'object' && body.message) {
+        return this.formatClientError({ message: body.message, code: status, debug: body.debug });
+      }
+      return typeof body === 'string' && body.trim() ? body : `Request failed (${status})`;
+    },
+
     log(category, message, data = null) {
       const styles = {
         'SOCKET_OUT': 'color: #10b981; font-weight: bold;', // Green
@@ -357,7 +388,7 @@ createApp({
      * 
      * 1. Hydrates state from LocalStorage (`PromptsAndOptions`).
      * 2. Migrates legacy data if needed.
-     * 3. Loads default prompts from `foods_en.json` if startup fails or is fresh.
+     * 3. Loads default prompts from the app-specific character bundle if startup fails or is fresh.
      * 4. Ensures character sorting (Pinned > Active > Inactive).
      */
     async startup() {
@@ -365,7 +396,7 @@ createApp({
         const stored = JSON.parse(localStorage.getItem("PromptsAndOptions"));
         if (stored) {
           // Merge stored options to handle new fields gracefully
-          this.options = { ...defaultOptions, ...stored.options };
+          this.options = { ...defaultOptions, ...(stored.options || {}) };
           this.localOptions = { ...JSON.parse(JSON.stringify(defaultLocalOptions)), ...stored.localOptions };
 
           this.log('SYSTEM', 'State Loaded from LocalStorage');
@@ -430,20 +461,20 @@ createApp({
       // Initialize languages from server
       for (const lang of this.available_languages) {
         try {
-          const [foodsResp, topicsResp] = await Promise.all([
-            fetch(`./foods_${lang}.json`),
+          const [charactersResp, topicsResp] = await Promise.all([
+            fetch(`./${CHARACTERS_FILE}_${lang}.json`),
             fetch(`./topics_${lang}.json`)
           ]);
 
-          if (!foodsResp.ok) throw new Error(`Failed to fetch foods_${lang}: ${foodsResp.status}`);
+          if (!charactersResp.ok) throw new Error(`Failed to fetch ${CHARACTERS_FILE}_${lang}: ${charactersResp.status}`);
           if (!topicsResp.ok) throw new Error(`Failed to fetch topics_${lang}: ${topicsResp.status}`);
 
-          const foodsParams = await foodsResp.json();
+          const charactersParams = await charactersResp.json();
           const topics = await topicsResp.json();
 
           // Map Characters (Global)
-          // foodsParams is { foods: [...] }
-          const characters = foodsParams.foods.map(f => ({
+          // charactersParams is { characters: [...] }
+          const characters = charactersParams.characters.map(f => ({
             ...f,
             _ui_id: Date.now() + Math.random() // Ensure unique ID
           }));
@@ -528,7 +559,7 @@ createApp({
           .join(", ");
 
         replacedCharacters[0].prompt = replacedCharacters[0].prompt
-          .replace("[FOODS]", participants)
+          .replace("[CHARACTERS]", participants)
           .replace('[HUMANS]', '');
       }
 
@@ -550,13 +581,12 @@ createApp({
 
     getServerOptions() {
       return {
-        gptModel: this.options.gptModel,
+        conversationModel: this.options.conversationModel,
+        conversationReasoning: this.options.conversationReasoning,
         temperature: this.options.temperature,
         maxTokens: this.options.maxTokens,
         chairMaxTokens: this.options.chairMaxTokens,
-        frequencyPenalty: this.options.frequencyPenalty,
-        presencePenalty: this.options.presencePenalty,
-        audio_speed: this.options.audio_speed,
+        defaultAudioSpeed: this.options.defaultAudioSpeed,
         trimSentance: this.options.trimSentance,
         trimParagraph: this.options.trimParagraph,
         trimChairSemicolon: this.options.trimChairSemicolon,
@@ -612,7 +642,7 @@ createApp({
       this.socket.on("conversation_error", (errorMessage) => {
         this.log('ERROR', 'Conversation Error', errorMessage);
         this.status = 'ERROR';
-        alert(errorMessage.message);
+        alert(this.formatClientError(errorMessage));
       });
     },
 
@@ -751,31 +781,31 @@ createApp({
       const lang = this.options.language || 'en';
 
       // Base export shape from the active locale JSON (parse each file independently so one failed fetch does not wipe the other)
-      let rawFoods = { foods: [] };
+      let rawCharacters = { characters: [] };
       let rawTopics = { topics: [] };
-      // English JSON: only fetched when exporting a non-English locale (canonical ids + topic slot fallback); when lang is en, reuse rawFoods/rawTopics
-      let rawFoodsEn = null;
+      // English JSON: only fetched when exporting a non-English locale (canonical ids + topic slot fallback); when lang is en, reuse rawCharacters/rawTopics
+      let rawCharactersEn = null;
       let rawTopicsEn = null;
 
       try {
         this.log('SYSTEM', 'Fetching raw data for export...');
-        const [foodsResp, topicsResp] = await Promise.all([
-          fetch(`./foods_${lang}.json`),
+        const [charactersResp, topicsResp] = await Promise.all([
+          fetch(`./${CHARACTERS_FILE}_${lang}.json`),
           fetch(`./topics_${lang}.json`)
         ]);
-        if (foodsResp.ok) {
-          rawFoods = await foodsResp.json();
+        if (charactersResp.ok) {
+          rawCharacters = await charactersResp.json();
         }
         if (topicsResp.ok) {
           rawTopics = await topicsResp.json();
         }
 
         if (lang !== 'en') {
-          const [foodsEnResp, topicsEnResp] = await Promise.all([
-            fetch('./foods_en.json'),
+          const [charactersEnResp, topicsEnResp] = await Promise.all([
+            fetch(`./${CHARACTERS_FILE}_en.json`),
             fetch('./topics_en.json')
           ]);
-          if (foodsEnResp.ok) rawFoodsEn = await foodsEnResp.json();
+          if (charactersEnResp.ok) rawCharactersEn = await charactersEnResp.json();
           if (topicsEnResp.ok) rawTopicsEn = await topicsEnResp.json();
         }
       } catch (e) {
@@ -783,28 +813,28 @@ createApp({
       }
 
       const enCharsForExport = (this.languageData.en && this.languageData.en.characters) || [];
-      const rawEnFoodsList = ((lang === 'en' ? rawFoods : rawFoodsEn) || {}).foods || [];
+      const rawEnCharactersList = ((lang === 'en' ? rawCharacters : rawCharactersEn) || {}).characters || [];
 
-      // 1. Export Characters (Foods)
+      // 1. Export Characters
       // Clone raw structure to preserve static fields (addHuman, panelWithHumans, metadata etc)
-      let foodsExport = JSON.parse(JSON.stringify(rawFoods));
+      let charactersExport = JSON.parse(JSON.stringify(rawCharacters));
 
       // Update timestamp if metadata exists
-      if (foodsExport.metadata) {
+      if (charactersExport.metadata) {
         const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
         const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        foodsExport.metadata.last_updated = `${dateStr} ${timeStr}`;
+        charactersExport.metadata.last_updated = `${dateStr} ${timeStr}`;
       }
 
-      // Update the "foods" array with current active characters
-      foodsExport.foods = (this.currentLanguageData.characters || []).map((c, idx) => {
+      // Update the "characters" array with current active characters
+      charactersExport.characters = (this.currentLanguageData.characters || []).map((c, idx) => {
         // Exclude internal fields like _ui_id
         const { _ui_id, ...rest } = c;
         // Ensure structure matches schema
         const provider = rest.voiceProvider || 'openai';
         const canonicalFoodId =
           (enCharsForExport[idx] && enCharsForExport[idx].id) ||
-          rawEnFoodsList[idx]?.id ||
+          rawEnCharactersList[idx]?.id ||
           rest.id ||
           (rest.name ? rest.name.toLowerCase().replace(/\s+/g, '') : 'unknown');
 
@@ -884,7 +914,7 @@ createApp({
         URL.revokeObjectURL(url);
       };
 
-      download(`foods_${lang}_${timestamp}.json`, foodsExport);
+      download(`${CHARACTERS_FILE}_${lang}_${timestamp}.json`, charactersExport);
       download(`topics_${lang}_${timestamp}.json`, topicsExport);
 
       this.log('SYSTEM', 'Exported Prompts to JSON');
@@ -905,7 +935,13 @@ createApp({
         });
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(errText || `Create meeting failed (${res.status})`);
+          let errBody = errText;
+          try {
+            errBody = JSON.parse(errText);
+          } catch {
+            // keep raw text
+          }
+          throw new Error(this.formatApiErrorBody(errBody, res.status));
         }
         const { meetingId, liveKey } = await res.json();
         this.meetingId = Number(meetingId);
@@ -949,7 +985,13 @@ createApp({
         });
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(errText || `Create meeting failed (${res.status})`);
+          let errBody = errText;
+          try {
+            errBody = JSON.parse(errText);
+          } catch {
+            // keep raw text
+          }
+          throw new Error(this.formatApiErrorBody(errBody, res.status));
         }
         const { meetingId, liveKey } = await res.json();
         this.meetingId = Number(meetingId);

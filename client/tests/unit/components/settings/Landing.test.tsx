@@ -1,12 +1,18 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Landing from '@components/settings/Landing';
+import Landing from '@newMeeting/Landing';
 import { MemoryRouter } from 'react-router';
 
 // Mock dependencies
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         t: (key: string) => key,
+    }),
+}));
+
+vi.mock('@/routing', () => ({
+    useRouting: () => ({
+        newMeetingPath: '/en/new',
     }),
 }));
 
@@ -19,7 +25,7 @@ vi.mock('@/utils', () => ({
     dvh: 'vh',
 }));
 
-vi.mock('@components/RotateDevice', () => ({
+vi.mock('@main/overlay/RotateDevice', () => ({
     default: () => <div data-testid="rotate-device">Rotate Device</div>,
 }));
 
@@ -41,7 +47,7 @@ describe('Landing', () => {
     it('renders welcome message', () => {
         render(
             <MemoryRouter>
-                <Landing newMeetingPath="/en/new" />
+                <Landing />
             </MemoryRouter>
         );
         expect(screen.getByText('welcome')).toBeInTheDocument();
@@ -52,7 +58,7 @@ describe('Landing', () => {
         (useMediaQuery as ReturnType<typeof vi.fn>).mockReturnValue(false); // Portrait false
         render(
             <MemoryRouter>
-                <Landing newMeetingPath="/en/new" />
+                <Landing />
             </MemoryRouter>
         );
         expect(screen.getByText('go')).toBeInTheDocument();
@@ -64,7 +70,7 @@ describe('Landing', () => {
         (useMediaQuery as ReturnType<typeof vi.fn>).mockReturnValue(true); // Portrait true
         render(
             <MemoryRouter>
-                <Landing newMeetingPath="/en/new" />
+                <Landing />
             </MemoryRouter>
         );
         expect(screen.getByTestId('rotate-device')).toBeInTheDocument();
@@ -74,7 +80,7 @@ describe('Landing', () => {
     it('Go link points at newMeetingPath', () => {
         render(
             <MemoryRouter>
-                <Landing newMeetingPath="/en/new" />
+                <Landing />
             </MemoryRouter>
         );
         const link = screen.getByTestId('landing-go');
