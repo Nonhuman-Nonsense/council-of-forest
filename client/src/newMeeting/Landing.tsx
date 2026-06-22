@@ -39,7 +39,7 @@ const Landing: React.FC = () => {
     flexDirection: "column",
     height: "80%",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: isMuseumMode ? "center" : "space-between",
     paddingBottom: "5%"
   };
 
@@ -76,17 +76,18 @@ const Landing: React.FC = () => {
           <div style={{ textAlign: "center" }}>
             <h2 style={{ marginBottom: "-10px", marginTop: isMobile ? "0" : "" }}>{t('landing.welcome')}</h2>
             <h1 style={{ margin: isMobile ? "5px 0 0 0" : "" }}>{t('council').toUpperCase()}</h1>
-            <p>{t('landing.projectBy')}</p>
           </div>
 
-          <div style={logosRowStyle}>
-            <Link to={{ hash: "contact" }}>
-              <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
-            </Link>
-            <Link to={{ hash: "contact" }}>
-              <img src={biosphereLogo} alt={t('biosphere')} style={biosphereLogoStyle} />
-            </Link>
-          </div>
+          {!isMuseumMode && (
+            <div style={logosRowStyle}>
+              <Link to={{ hash: "contact" }}>
+                <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
+              </Link>
+              <Link to={{ hash: "contact" }}>
+                <img src={biosphereLogo} alt={t('biosphere')} style={biosphereLogoStyle} />
+              </Link>
+            </div>
+          )}
         </div>
 
         {isPortrait ?
