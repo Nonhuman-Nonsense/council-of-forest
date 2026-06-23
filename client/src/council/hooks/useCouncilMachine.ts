@@ -6,6 +6,7 @@ import type { Character, Message, Meeting, Topic } from "@shared/ModelTypes";
 import type { PublicAudioClipResponse, DecodedAudioMessage } from "@shared/SocketTypes";
 import { CouncilOverlayType } from "../overlays/CouncilOverlays";
 import { resumeMeeting, ResumeMeetingError } from "@api/resumeMeeting";
+import { setMeetingPlaybackSuspended } from "@/audio/meetingAudio";
 
 /** Keep the loading UI visible this long on first paint so the Loading animation can run. */
 const MIN_INITIAL_LOADING_DISPLAY_MS = import.meta.env.VITEST ? 0 : 2000;
@@ -17,14 +18,17 @@ export interface UseCouncilMachineProps {
     replayManifest: Meeting | null;
     topic: Topic | null;
     participants: Character[] | null;
-    initialHumanName?: string;
-    audioContext: React.RefObject<AudioContext | null>;
+    humanName: string;
+    setHumanName: (name: string) => void;
+    meetingAudioContext: React.RefObject<AudioContext | null>;
     setUnrecoverableError: (message: string) => void;
     setConnectionError: (error: boolean) => void;
     connectionError: boolean;
     isPaused: boolean;
     setPaused: (paused: boolean) => void;
-    setAudioPaused?: (paused: boolean) => void;
+    setMeetingPlaybackPaused?: (paused: boolean) => void;
+    /** When true, meeting Web Audio is frozen without toggling user pause UI. */
+    metaAgentActive?: boolean;
 }
 
 export type CouncilState =
@@ -44,14 +48,16 @@ export function useCouncilMachine({
     replayManifest,
     topic: _topic,
     participants: _participants,
-    initialHumanName,
-    audioContext,
+    humanName,
+    setHumanName,
+    meetingAudioContext,
     setUnrecoverableError,
     setConnectionError,
     connectionError,
     isPaused,
     setPaused,
-    setAudioPaused,
+    setMeetingPlaybackPaused,
+    metaAgentActive = false,
 }: UseCouncilMachineProps) {
 
     const { t } = useTranslation();
@@ -70,14 +76,7 @@ export function useCouncilMachine({
     const [activeOverlay, setActiveOverlay] = useState<CouncilOverlayType | null>(null);
     const [summary, setSummary] = useState<Message | null>(null);
 
-    const [humanName, setHumanName] = useState(initialHumanName ?? "");
     const [isRaisedHand, setIsRaisedHand] = useState(false);
-
-    useEffect(() => {
-        if (initialHumanName && initialHumanName.trim().length > 0) {
-            setHumanName(initialHumanName.trim());
-        }
-    }, [initialHumanName]);
 
     // Connection variables
     const [attemptingReconnect, setAttemptingReconnect] = useState(false);
@@ -119,9 +118,9 @@ export function useCouncilMachine({
         liveKey,
         onAudioUpdate: (audioMessage) => {
             (async () => {
-                if (audioMessage.audio && audioContext.current) {
+                if (audioMessage.audio && meetingAudioContext.current) {
                     try {
-                        const buffer = await audioContext.current.decodeAudioData(
+                        const buffer = await meetingAudioContext.current.decodeAudioData(
                             audioMessage.audio as unknown as ArrayBuffer
                         );
                         const decodedMessage: DecodedAudioMessage = { ...audioMessage, audio: buffer };
@@ -178,7 +177,7 @@ export function useCouncilMachine({
                 throw new Error(`Replay audio fetch failed (${res.status})`);
             }
             const clip = (await res.json()) as PublicAudioClipResponse;
-            const ctx = audioContext.current;
+            const ctx = meetingAudioContext.current;
             if (!ctx) {
                 throw new Error("AudioContext not available");
             }
@@ -192,7 +191,7 @@ export function useCouncilMachine({
             );
             return { id: clip.id, type: clip.type, sentences: clip.sentences, audio: buffer };
         },
-        [audioContext],
+        [meetingAudioContext],
     );
 
     // Download first audio, then batch download the rest
@@ -646,21 +645,22 @@ export function useCouncilMachine({
             setPaused(true);
         }
 
-        // Audio Context Suspension
-        if (isPaused) {
-            if (setAudioPaused) {
-                setAudioPaused(true);
-            } else if (audioContext.current && audioContext.current.state !== "suspended") {
-                audioContext.current.suspend();
+        // Audio Context Suspension — user pause OR meta-agent session (independent paths).
+        const freezeMeetingAudio = isPaused || metaAgentActive;
+        if (freezeMeetingAudio) {
+            if (setMeetingPlaybackPaused) {
+                setMeetingPlaybackPaused(true);
+            } else {
+                setMeetingPlaybackSuspended(meetingAudioContext, true);
             }
         } else {
-            if (setAudioPaused) {
-                setAudioPaused(false);
-            } else if (audioContext.current && audioContext.current.state === "suspended") {
-                audioContext.current.resume();
+            if (setMeetingPlaybackPaused) {
+                setMeetingPlaybackPaused(false);
+            } else {
+                setMeetingPlaybackSuspended(meetingAudioContext, false);
             }
         }
-    }, [isPaused, activeOverlay, location, connectionError, setAudioPaused, councilState]);
+    }, [isPaused, metaAgentActive, activeOverlay, location, connectionError, setMeetingPlaybackPaused, councilState, meetingAudioContext, setPaused]);
 
     useEffect(() => {
         if (councilState === 'waiting') {
@@ -694,7 +694,6 @@ export function useCouncilMachine({
             playNextIndex,
             activeOverlay,
             summary,
-            humanName,
             isRaisedHand,
             currentMeetingId,
             canGoBack,
@@ -716,7 +715,6 @@ export function useCouncilMachine({
             handleHumanNameEntered,
             handleOnRaiseHand,
             cancelOverlay,
-            setHumanName,
             setIsRaisedHand,
             setCurrentSnippetIndex,
             toggleMute

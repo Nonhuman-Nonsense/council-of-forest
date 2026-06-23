@@ -14,8 +14,8 @@ import { useTranslation } from "react-i18next";
 import { useCouncilMachine } from "./hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
 import ReplayModeBanner from "./ReplayModeBanner";
-import { useAppMode } from "@/museum/useAppMode";
-import { getPushToTalk } from "@/settings/councilSettings";
+import { useCouncilSettings } from "@/settings/useCouncilSettings";
+import MeetingMetaAgent from "@museum/metaAgent/MeetingMetaAgent";
 
 interface CouncilProps {
   liveKey: string | null;
@@ -25,8 +25,8 @@ interface CouncilProps {
   setUnrecoverableError: (message: string) => void;
   setConnectionError: (error: boolean) => void;
   connectionError: boolean;
-  audioContext: React.RefObject<AudioContext | null>;
-  setAudioPaused: (paused: boolean) => void;
+  meetingAudioContext: React.RefObject<AudioContext | null>;
+  setMeetingPlaybackPaused: (paused: boolean) => void;
   currentSpeakerId: string;
   setCurrentSpeakerId: (id: string) => void;
   isPaused: boolean;
@@ -41,16 +41,16 @@ function Council({
   setUnrecoverableError,
   setConnectionError,
   connectionError,
-  audioContext,
-  setAudioPaused,
+  meetingAudioContext,
+  setMeetingPlaybackPaused,
   currentSpeakerId,
   setCurrentSpeakerId,
   isPaused,
   setPaused,
 }: CouncilProps) {
   const { meetingId } = useParams<{ meetingId: string }>();
-  const { t } = useTranslation();
-  const { isMuseumMode } = useAppMode();
+  const { t, i18n } = useTranslation();
+  const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,7 +59,8 @@ function Council({
 
   const [participants, setParticipants] = useState<Character[]>([]);
   const [replayManifest, setReplayManifest] = useState<Meeting | null>(null);
-  const [initialHumanName, setInitialHumanName] = useState<string | undefined>(undefined);
+  const [humanName, setHumanName] = useState("");
+  const [metaAgentActive, setMetaAgentActive] = useState(false);
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
@@ -68,7 +69,7 @@ function Council({
       return;
     }
 
-    setInitialHumanName(undefined);
+    setHumanName("");
     const ac = new AbortController();
     void (async () => {
       try {
@@ -84,7 +85,9 @@ function Council({
         setTopic(meeting.topic);
         setParticipants(meeting.characters);
         const storedName = meeting.state?.humanName?.trim();
-        setInitialHumanName(storedName && storedName.length > 0 ? storedName : undefined);
+        if (storedName && storedName.length > 0) {
+          setHumanName(storedName);
+        }
       } catch (error) {
         if (ac.signal.aborted) return;
         console.error(error);
@@ -103,14 +106,16 @@ function Council({
     replayManifest: liveKey ? null : replayManifest,
     topic,
     participants,
-    initialHumanName,
-    audioContext,
+    humanName,
+    setHumanName,
+    meetingAudioContext,
     setUnrecoverableError,
     setConnectionError,
     connectionError,
     isPaused,
     setPaused,
-    setAudioPaused,
+    setMeetingPlaybackPaused,
+    metaAgentActive,
   });
 
   const {
@@ -121,7 +126,6 @@ function Council({
     playNextIndex,
     activeOverlay,
     summary,
-    humanName,
     isRaisedHand,
     canGoBack,
     canGoForward,
@@ -158,8 +162,13 @@ function Council({
     }
   }, [councilState, textMessages, playNextIndex, setUnrecoverableError]);
 
-  // Sync current speaker ID to parent component for Forest zoom.
+  // Sync current speaker ID to Main for Forest zoom (always-mounted sibling scene).
   useEffect(() => {
+    if (metaAgentActive) {
+      setCurrentSpeakerId(participants[0]?.id?.toLowerCase() ?? "");
+      return;
+    }
+
     if (councilState === "loading") {
       setCurrentSpeakerId("");
       return;
@@ -191,13 +200,13 @@ function Council({
         setCurrentSpeakerId(activeMessage.speaker.toLowerCase());
       }
     }
-  }, [playingNowIndex, textMessages, setCurrentSpeakerId, councilState, playNextIndex]);
+  }, [playingNowIndex, textMessages, setCurrentSpeakerId, councilState, playNextIndex, metaAgentActive, participants]);
 
   // Derived UI State
   const participationPhase = getParticipationPhase(councilState, textMessages, playingNowIndex);
   const isButtonMuseumMode = useMemo(
-    () => isMuseumMode && getPushToTalk(),
-    [isMuseumMode]
+    () => isMuseumMode && pushToTalkMode,
+    [isMuseumMode, pushToTalkMode]
   );
   const isWaitingToInterject = isRaisedHand && councilState !== 'human_input';
   const controlsVisible = (
@@ -209,14 +218,30 @@ function Council({
   const isDocumentVisible = useDocumentVisibility();
 
   useEffect(() => {
-    if (!isDocumentVisible && !isPaused) {
+    if (!isDocumentVisible && !isPaused && !metaAgentActive) {
       setPaused(true);
     }
-  }, [isDocumentVisible, isPaused]);
+  }, [isDocumentVisible, isPaused, metaAgentActive, setPaused]);
 
   return (
     <>
       {councilState === 'loading' && <Loading />}
+      {pushToTalkMode && liveKey && (
+        <MeetingMetaAgent
+          liveKey={liveKey}
+          language={i18n.language}
+          participationPhase={participationPhase}
+          setMeetingPlaybackPaused={setMeetingPlaybackPaused}
+          metaAgentActive={metaAgentActive}
+          setMetaAgentActive={setMetaAgentActive}
+          onRestartMeeting={() => navigate("/")}
+          councilState={councilState}
+          topic={topic}
+          participants={participants}
+          currentSpeakerName={participants.find((p) => p.id === currentSpeakerId)?.name ?? ""}
+          humanName={humanName}
+        />
+      )}
       {liveKey && participationPhase !== "off" && (
         <HumanInput
           phase={participationPhase}
@@ -228,19 +253,21 @@ function Council({
         />
       )}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "visible" }}>
-        <Output
-          textMessages={textMessages}
-          audioMessages={audioMessages}
-          playingNowIndex={playingNowIndex}
-          councilState={councilState}
-          isMuted={isMuted}
-          isPaused={isPaused}
-          currentSnippetIndex={currentSnippetIndex}
-          setCurrentSnippetIndex={setCurrentSnippetIndex}
-          audioContext={audioContext}
-          handleOnFinishedPlaying={handleOnFinishedPlaying}
-        />
-        {controlsVisible && (
+        {!metaAgentActive && (
+          <Output
+            textMessages={textMessages}
+            audioMessages={audioMessages}
+            playingNowIndex={playingNowIndex}
+            councilState={councilState}
+            isMuted={isMuted}
+            isPaused={isPaused}
+            currentSnippetIndex={currentSnippetIndex}
+            setCurrentSnippetIndex={setCurrentSnippetIndex}
+            meetingAudioContext={meetingAudioContext}
+            handleOnFinishedPlaying={handleOnFinishedPlaying}
+          />
+        )}
+        {controlsVisible && !metaAgentActive && (
           <ConversationControls
             hidden={isMuseumMode}
             onSkipBackward={handleOnSkipBackward}

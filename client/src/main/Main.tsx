@@ -23,7 +23,12 @@ import { isMeetingPath, isRootPath, stripLanguagePrefix, useRouting } from "@/ro
 import RotateDevice from "./overlay/RotateDevice";
 import FullscreenButton from "./FullscreenButton";
 import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
-import { useAppMode } from "@/museum/useAppMode";
+import { useCouncilSettings } from "@/settings/useCouncilSettings";
+import {
+  createMeetingAudioContext,
+  useMeetingPlaybackSuspended,
+} from "@/audio/meetingAudio";
+import { createSceneAudioContext } from "@/audio/sceneAudio";
 import { usePortrait, dvh } from "@/utils";
 import CouncilError from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
@@ -60,31 +65,30 @@ export default function Main(props: MainProps) {
   //Had to lift up navbar state to this level to be able to close it from main overlay
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
 
-  // Keep these at Main level because Forest lives outside the routed Council tree and still
-  // needs live speaker/audio state. Matching this ownership across apps also reduces merge
-  // conflicts when Council and background/audio behavior evolve together.
+  // Lift speaker + pause state to Main: Forest mounts outside the routed Council tree.
+  // Meeting playback uses its own bus; scene bed (ambient + BeingAudio) stays on a
+  // separate context that meta-agent freeze must not suspend.
   const [currentSpeakerId, setCurrentSpeakerId] = useState("");
   const [isPaused, setPaused] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
-  const [audioPaused, setAudioPaused] = useState(false);
+  const meetingAudioContext = useRef<AudioContext | null>(null);
+  const sceneAudioContext = useRef<AudioContext | null>(null);
+  const [meetingPlaybackPaused, setMeetingPlaybackPaused] = useState(false);
 
+  if (meetingAudioContext.current === null) {
+    meetingAudioContext.current = createMeetingAudioContext();
+  }
+  if (sceneAudioContext.current === null) {
+    sceneAudioContext.current = createSceneAudioContext();
+  }
+
+  useMeetingPlaybackSuspended(meetingAudioContext, meetingPlaybackPaused);
   const { i18n } = useTranslation();
   const { rootPath, newMeetingPath } = useRouting();
   const location = useLocation();
   const navigate = useNavigate();
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode } = useAppMode();
-
-  if (audioContext.current === null) {
-    type WindowWithWebkitAudio = Window & { webkitAudioContext?: typeof AudioContext };
-    const AudioContextCtor =
-      window.AudioContext ?? (window as WindowWithWebkitAudio).webkitAudioContext;
-    if (!AudioContextCtor) {
-      throw new Error("Web Audio API is not available in this environment");
-    }
-    audioContext.current = new AudioContextCtor();
-  }
+  const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
   useEffect(() => {
     if (i18n.language !== props.lang) {
       void i18n.changeLanguage(props.lang);
@@ -127,18 +131,6 @@ export default function Main(props: MainProps) {
     }
   }, [location.pathname]);
 
-  // Centralize Web Audio suspension here so Council and future scene components can share one
-  // AudioContext without each feature trying to suspend/resume it independently.
-  useEffect(() => {
-    if (audioPaused) {
-      if (audioContext.current && audioContext.current.state !== "suspended") {
-        audioContext.current.suspend();
-      }
-    } else if (audioContext.current && audioContext.current.state === "suspended") {
-      audioContext.current.resume();
-    }
-  }, [audioPaused]);
-
   function onReset(resetTopic?: Topic) {
     if (!resetTopic) {
       window.location.href = rootPath;
@@ -173,12 +165,16 @@ export default function Main(props: MainProps) {
 
   return (
     <>
-      {isMuseumMode && (
+      {pushToTalkMode && (
         <Suspense fallback={null}>
           <MuseumButtonProvider />
         </Suspense>
       )}
-      <Forest currentSpeakerId={currentSpeakerId} isPaused={isPaused} audioContext={audioContext} />
+      <Forest
+        currentSpeakerId={currentSpeakerId}
+        isPaused={isPaused}
+        sceneAudioContext={sceneAudioContext}
+      />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: 1 }} />
       {!(unrecoverableErrorMessage != null || connectionError) && ( !isMuseumMode &&
         <Navbar
@@ -224,8 +220,8 @@ export default function Main(props: MainProps) {
                   setCurrentSpeakerId={setCurrentSpeakerId}
                   isPaused={isPaused}
                   setPaused={setPaused}
-                  audioContext={audioContext}
-                  setAudioPaused={setAudioPaused}
+                  meetingAudioContext={meetingAudioContext}
+                  setMeetingPlaybackPaused={setMeetingPlaybackPaused}
                 />
               }
             />

@@ -46,6 +46,9 @@
             "@realtime/*": [
                 "./src/realtime/*"
             ],
+            "@museum/*": [
+                "./src/museum/*"
+            ],
             "@shared/*": [
                 "../shared/*"
             ]

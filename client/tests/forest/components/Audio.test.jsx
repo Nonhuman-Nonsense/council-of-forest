@@ -70,7 +70,7 @@ describe('Forest Audio Logic', () => {
     it('AmbientAudio initializes and loads ambience on mount', async () => {
         const audioContextRef = { current: mockAudioContext };
 
-        render(<Forest currentSpeakerId={null} isPaused={false} audioContext={audioContextRef} />);
+        render(<Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={audioContextRef} />);
 
         // AmbientAudio is rendered unconditionally
         await waitFor(() => {
@@ -95,7 +95,7 @@ describe('Forest Audio Logic', () => {
         const speakerId = 'river';
 
         // Initial render with valid speaker
-        render(<Forest currentSpeakerId={speakerId} isPaused={false} audioContext={audioContextRef} />);
+        render(<Forest currentSpeakerId={speakerId} isPaused={false} sceneAudioContext={audioContextRef} />);
 
         // Wait for connection
         await waitFor(() => {
@@ -116,7 +116,7 @@ describe('Forest Audio Logic', () => {
         const audioContextRef = { current: mockAudioContext };
         const speakerId = 'river';
 
-        const { rerender } = render(<Forest currentSpeakerId={speakerId} isPaused={false} audioContext={audioContextRef} />);
+        const { rerender } = render(<Forest currentSpeakerId={speakerId} isPaused={false} sceneAudioContext={audioContextRef} />);
 
         // Wait for start
         await waitFor(() => {
@@ -127,7 +127,7 @@ describe('Forest Audio Logic', () => {
         mockGainNode.gain.linearRampToValueAtTime.mockClear();
 
         // Change speaker to null (or someone else)
-        rerender(<Forest currentSpeakerId={null} isPaused={false} audioContext={audioContextRef} />);
+        rerender(<Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={audioContextRef} />);
 
         await waitFor(() => {
             // Should ramp to 0

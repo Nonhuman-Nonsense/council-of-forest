@@ -20,7 +20,7 @@ type ForestCharacter = ForestManifestEntry & {
 type ForestProps = {
     currentSpeakerId: string;
     isPaused: boolean;
-    audioContext: RefObject<AudioContext | null>;
+    sceneAudioContext: RefObject<AudioContext | null>;
 };
 
 /** Build-time sync guarantees a ratio per manifest id; fail fast if manifest and generated file drift. */
@@ -32,7 +32,7 @@ function ratioFor(id: string): number {
     return r;
 }
 
-function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
+function Forest({ currentSpeakerId, isPaused, sceneAudioContext }: ForestProps) {
 
     const isMobile = useMobile();
 
@@ -155,11 +155,11 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
     return (
         <div style={container} ref={containerRef}>
-            <AmbientAudio audioContext={audioContext} />
+            <AmbientAudio sceneAudioContext={sceneAudioContext} />
             <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} currentSpeakerId={currentSpeakerId} />
-                <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
+                <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} sceneAudioContext={sceneAudioContext} />
             </div>
             {characters.map((character) => (
                 <div key={character.id}>
@@ -174,7 +174,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
                         isPaused={isPaused}
                         currentSpeakerId={currentSpeakerId}
                     />
-                    {character.audio && <BeingAudio id={character.id} volume={character.audio} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />}
+                    {character.audio && <BeingAudio id={character.id} volume={character.audio} currentSpeakerId={currentSpeakerId} sceneAudioContext={sceneAudioContext} />}
                 </div>
             ))}
         </div >
@@ -210,10 +210,10 @@ type BeingAudioProps = {
     id: string;
     currentSpeakerId: string;
     volume: number;
-    audioContext: RefObject<AudioContext | null>;
+    sceneAudioContext: RefObject<AudioContext | null>;
 };
 
-function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
+function BeingAudio({ id, currentSpeakerId, volume, sceneAudioContext }: BeingAudioProps) {
     const gainNode = useRef(null); //The general volume control node
     const sourceNode = useRef(null);
 
@@ -229,17 +229,17 @@ function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioPr
 
     useEffect(() => {
         if (play) {
-            gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
-            gainNode.current.gain.linearRampToValueAtTime(volume, audioContext.current.currentTime + 2);
+            gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
+            gainNode.current.gain.linearRampToValueAtTime(volume, sceneAudioContext.current.currentTime + 2);
         } else {
-            gainNode.current.gain.linearRampToValueAtTime(0, audioContext.current.currentTime + 2);
+            gainNode.current.gain.linearRampToValueAtTime(0, sceneAudioContext.current.currentTime + 2);
         }
     }, [play]);
 
-    if (audioContext.current && gainNode.current === null) {
-        gainNode.current = audioContext.current.createGain();
-        gainNode.current.connect(audioContext.current.destination);
-        sourceNode.current = audioContext.current.createBufferSource();
+    if (sceneAudioContext.current && gainNode.current === null) {
+        gainNode.current = sceneAudioContext.current.createGain();
+        gainNode.current.connect(sceneAudioContext.current.destination);
+        sourceNode.current = sceneAudioContext.current.createBufferSource();
 
         loadBeingAudio();
     }
@@ -248,12 +248,12 @@ function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioPr
 
         const audioBuffer = await fetch(characterMp3Url(id))
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => sceneAudioContext.current.decodeAudioData(ArrayBuffer));
 
         sourceNode.current.buffer = audioBuffer;
         sourceNode.current.loop = true;
         sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
+        gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
         sourceNode.current.start();
     }
 
@@ -261,10 +261,10 @@ function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioPr
 }
 
 type AmbientAudioProps = {
-    audioContext: RefObject<AudioContext | null>;
+    sceneAudioContext: RefObject<AudioContext | null>;
 };
 
-function AmbientAudio({ audioContext }: AmbientAudioProps) {
+function AmbientAudio({ sceneAudioContext }: AmbientAudioProps) {
     const gainNode = useRef(null); //The general volume control node
     const sourceNode = useRef(null);
 
@@ -276,34 +276,34 @@ function AmbientAudio({ audioContext }: AmbientAudioProps) {
     //Fade out ambience on tab onfocus
     useEffect(() => {
         if (!isDocumentVisible) {
-            gainNode.current.gain.linearRampToValueAtTime(0, audioContext.current.currentTime + 0.5);
+            gainNode.current.gain.linearRampToValueAtTime(0, sceneAudioContext.current.currentTime + 0.5);
         } else {
-            gainNode.current.gain.linearRampToValueAtTime(onVolume, audioContext.current.currentTime + 5);
+            gainNode.current.gain.linearRampToValueAtTime(onVolume, sceneAudioContext.current.currentTime + 5);
         }
     }, [isDocumentVisible]);
 
-    if (audioContext.current && gainNode.current === null) {
-        gainNode.current = audioContext.current.createGain();
-        gainNode.current.connect(audioContext.current.destination);
+    if (sceneAudioContext.current && gainNode.current === null) {
+        gainNode.current = sceneAudioContext.current.createGain();
+        gainNode.current.connect(sceneAudioContext.current.destination);
 
         //Set ambience volume
-        gainNode.current.gain.setValueAtTime(onVolume, audioContext.current.currentTime);
+        gainNode.current.gain.setValueAtTime(onVolume, sceneAudioContext.current.currentTime);
 
 
-        sourceNode.current = audioContext.current.createBufferSource();
+        sourceNode.current = sceneAudioContext.current.createBufferSource();
         loadAmbience();
     }
 
     async function loadAmbience() {
         const audioBuffer = await fetch(characterAmbienceUrl)
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => sceneAudioContext.current.decodeAudioData(ArrayBuffer));
 
         sourceNode.current.buffer = audioBuffer;
         sourceNode.current.loop = true;
         sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
-        gainNode.current.gain.linearRampToValueAtTime(onVolume, audioContext.current.currentTime + 5);
+        gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
+        gainNode.current.gain.linearRampToValueAtTime(onVolume, sceneAudioContext.current.currentTime + 5);
         sourceNode.current.start();
     }
 

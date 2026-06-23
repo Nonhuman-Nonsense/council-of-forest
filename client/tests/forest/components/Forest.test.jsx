@@ -36,7 +36,7 @@ describe('Forest Visual Logic', () => {
     };
 
     it('renders Forest background', () => {
-        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={mockAudioContext} />);
         const html = container.innerHTML;
         // Forest background + characters
         expect(html).toContain('forest');
@@ -44,13 +44,13 @@ describe('Forest Visual Logic', () => {
 
     it('zooms in when valid speaker is active', async () => {
         const { container, rerender } = render(
-            <Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={mockAudioContext} />
         );
         const forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
 
         rerender(
-            <Forest currentSpeakerId="salmon" isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId="salmon" isPaused={false} sceneAudioContext={mockAudioContext} />
         );
 
         // Wait for effect
@@ -66,10 +66,10 @@ describe('Forest Visual Logic', () => {
 
     it('does not zoom for unknown speaker', async () => {
         const { container, rerender } = render(
-            <Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={mockAudioContext} />
         );
         rerender(
-            <Forest currentSpeakerId="unknown_blob" isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId="unknown_blob" isPaused={false} sceneAudioContext={mockAudioContext} />
         );
         // Should stay at default
         const forestContainer = container.firstChild;

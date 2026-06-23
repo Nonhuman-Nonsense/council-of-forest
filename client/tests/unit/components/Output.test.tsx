@@ -46,7 +46,7 @@ describe('Output', () => {
         isPaused: false,
         currentSnippetIndex: 0,
         setCurrentSnippetIndex: mockSetCurrentSnippetIndex,
-        audioContext: mockAudioContext,
+        meetingAudioContext: mockAudioContext,
         handleOnFinishedPlaying: mockHandleOnFinishedPlaying,
     };
 
