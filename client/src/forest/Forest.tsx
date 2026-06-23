@@ -21,6 +21,7 @@ type ForestProps = {
     currentSpeakerId: string;
     isPaused: boolean;
     sceneAudioContext: RefObject<AudioContext | null>;
+    metaAgentActive?: boolean;
 };
 
 /** Build-time sync guarantees a ratio per manifest id; fail fast if manifest and generated file drift. */
@@ -32,7 +33,7 @@ function ratioFor(id: string): number {
     return r;
 }
 
-function Forest({ currentSpeakerId, isPaused, sceneAudioContext }: ForestProps) {
+function Forest({ currentSpeakerId, isPaused, sceneAudioContext, metaAgentActive = false }: ForestProps) {
 
     const isMobile = useMobile();
 
@@ -89,15 +90,18 @@ function Forest({ currentSpeakerId, isPaused, sceneAudioContext }: ForestProps) 
     };
 
 
+    // Chair (river) is the always-on backdrop — not in forest_characters. Meta-agent stays zoomed out.
+    const zoomSpeakerId = metaAgentActive ? "" : currentSpeakerId;
+
     useEffect(() => {
         //find the current speaker in the list of characters
-        const found = characters.find((char) => char.id === currentSpeakerId);
+        const found = characters.find((char) => char.id === zoomSpeakerId);
         if (found) {
             setZoomInOnBeing(found);
         } else {
             setZoomInOnBeing(null);
         }
-    }, [currentSpeakerId, characters]);
+    }, [zoomSpeakerId, characters]);
 
     useEffect(() => {
         if (zoomInOnBeing) {
@@ -158,7 +162,7 @@ function Forest({ currentSpeakerId, isPaused, sceneAudioContext }: ForestProps) 
             <AmbientAudio sceneAudioContext={sceneAudioContext} />
             <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
-                <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} currentSpeakerId={currentSpeakerId} />
+                <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
                 <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} sceneAudioContext={sceneAudioContext} />
             </div>
             {characters.map((character) => (
@@ -194,11 +198,12 @@ type BeingProps = {
 };
 
 function Being({ id, ref, type, height, left, bottom, always_on, isPaused, currentSpeakerId }: BeingProps) {
+    const isPerforming = Boolean(always_on) || currentSpeakerId === id;
     // One ref object is reused per character; only one of div / img mounts — narrow per branch for ref types.
     return (<>
         {type === "video" &&
             <div ref={ref as RefObject<HTMLDivElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }}>
-                <FoodAnimation character={{ id: id }} isPaused={isPaused} always_on={always_on} currentSpeakerId={currentSpeakerId} styles={{}} />
+                <FoodAnimation character={{ id: id }} isPaused={isPaused} isPerforming={isPerforming} always_on={always_on} styles={{}} />
             </div>
         }
         {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={characterImageAvifUrl(id)} alt="" />}

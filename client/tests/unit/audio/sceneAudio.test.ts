@@ -5,7 +5,9 @@ describe("sceneAudio", () => {
   it("createSceneAudioContext returns an AudioContext", () => {
     const ctx = createSceneAudioContext();
     expect(ctx).toBeInstanceOf(window.AudioContext);
-    void ctx.close();
+    if (typeof ctx.close === "function") {
+      void ctx.close();
+    }
   });
 
   it("createSceneAudioContext throws when Web Audio is unavailable", () => {

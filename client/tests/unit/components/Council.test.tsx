@@ -150,6 +150,8 @@ describe('Council Component', () => {
         setCurrentSpeakerId: vi.fn(),
         isPaused: false,
         setPaused: vi.fn(),
+        metaAgentActive: false,
+        setMetaAgentActive: vi.fn(),
     };
 
     beforeEach(() => {
@@ -285,7 +287,7 @@ describe('Council Component', () => {
           setPushToTalkMode: vi.fn(),
         });
 
-        render(<Council {...defaultProps} />);
+        render(<Council {...defaultProps} metaAgentActive={true} />);
 
         await waitFor(() => {
             expect(screen.queryByTestId('output')).not.toBeInTheDocument();

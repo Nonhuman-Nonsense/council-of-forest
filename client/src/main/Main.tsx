@@ -70,6 +70,7 @@ export default function Main(props: MainProps) {
   // separate context that meta-agent freeze must not suspend.
   const [currentSpeakerId, setCurrentSpeakerId] = useState("");
   const [isPaused, setPaused] = useState(false);
+  const [metaAgentActive, setMetaAgentActive] = useState(false);
   const meetingAudioContext = useRef<AudioContext | null>(null);
   const sceneAudioContext = useRef<AudioContext | null>(null);
   const [meetingPlaybackPaused, setMeetingPlaybackPaused] = useState(false);
@@ -129,6 +130,9 @@ export default function Main(props: MainProps) {
     if (withoutLang === `/${routes.newMeeting}` || isRootPath(location.pathname)) {
       setMeetingliveKey(null);
     }
+    if (!isMeetingPath(location.pathname)) {
+      setMetaAgentActive(false);
+    }
   }, [location.pathname]);
 
   function onReset(resetTopic?: Topic) {
@@ -172,6 +176,7 @@ export default function Main(props: MainProps) {
       )}
       <Forest
         currentSpeakerId={currentSpeakerId}
+        metaAgentActive={metaAgentActive}
         isPaused={isPaused}
         sceneAudioContext={sceneAudioContext}
       />
@@ -220,6 +225,8 @@ export default function Main(props: MainProps) {
                   setCurrentSpeakerId={setCurrentSpeakerId}
                   isPaused={isPaused}
                   setPaused={setPaused}
+                  metaAgentActive={metaAgentActive}
+                  setMetaAgentActive={setMetaAgentActive}
                   meetingAudioContext={meetingAudioContext}
                   setMeetingPlaybackPaused={setMeetingPlaybackPaused}
                 />

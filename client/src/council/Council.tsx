@@ -16,6 +16,7 @@ import { getMeeting } from "@api/getMeeting.js";
 import ReplayModeBanner from "./ReplayModeBanner";
 import { useCouncilSettings } from "@/settings/useCouncilSettings";
 import MeetingMetaAgent from "@museum/metaAgent/MeetingMetaAgent";
+import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 
 interface CouncilProps {
   liveKey: string | null;
@@ -31,6 +32,8 @@ interface CouncilProps {
   setCurrentSpeakerId: (id: string) => void;
   isPaused: boolean;
   setPaused: (paused: boolean) => void;
+  metaAgentActive: boolean;
+  setMetaAgentActive: (active: boolean) => void;
 }
 
 function Council({
@@ -47,6 +50,8 @@ function Council({
   setCurrentSpeakerId,
   isPaused,
   setPaused,
+  metaAgentActive,
+  setMetaAgentActive,
 }: CouncilProps) {
   const { meetingId } = useParams<{ meetingId: string }>();
   const { t, i18n } = useTranslation();
@@ -60,7 +65,7 @@ function Council({
   const [participants, setParticipants] = useState<Character[]>([]);
   const [replayManifest, setReplayManifest] = useState<Meeting | null>(null);
   const [humanName, setHumanName] = useState("");
-  const [metaAgentActive, setMetaAgentActive] = useState(false);
+  const [agentSpeaking, setAgentSpeaking] = useState(false);
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
@@ -151,6 +156,24 @@ function Council({
     toggleMute,
   } = actions;
 
+  // Derive the active speaker locally from playback state, but publish it to Main.
+  // The extra hop is intentional: it keeps the cross-app contract aligned with Forest, where
+  // an always-mounted sibling scene needs this value outside the routed Council subtree.
+  const derivedCurrentSpeakerId = useMemo(() => {
+    if (metaAgentActive) {
+      return agentSpeaking ? CHAIR_ID : "";
+    }
+    if (councilState === 'loading') return "";
+    if (councilState === 'human_input') return humanName;
+    if (councilState === 'human_panelist') {
+      const pendingMessage = textMessages[playNextIndex];
+      return pendingMessage?.type === 'awaiting_human_panelist' ? pendingMessage.speaker : "";
+    }
+    const activeMessage = textMessages[playingNowIndex];
+    if (activeMessage && isSpeakerMessage(activeMessage)) return activeMessage.speaker;
+    return "";
+  }, [metaAgentActive, agentSpeaking, councilState, playingNowIndex, textMessages, playNextIndex, humanName]);
+
   useEffect(() => {
     if (councilState !== "human_panelist") return;
 
@@ -162,45 +185,9 @@ function Council({
     }
   }, [councilState, textMessages, playNextIndex, setUnrecoverableError]);
 
-  // Sync current speaker ID to Main for Forest zoom (always-mounted sibling scene).
   useEffect(() => {
-    if (metaAgentActive) {
-      setCurrentSpeakerId(participants[0]?.id?.toLowerCase() ?? "");
-      return;
-    }
-
-    if (councilState === "loading") {
-      setCurrentSpeakerId("");
-      return;
-    }
-
-    if (councilState === "human_input") {
-      setCurrentSpeakerId("");
-      return;
-    }
-
-    if (councilState === "human_panelist") {
-      const pendingMessage = textMessages[playNextIndex];
-      if (pendingMessage?.type === "awaiting_human_panelist") {
-        setCurrentSpeakerId(pendingMessage.speaker.toLowerCase());
-      } else {
-        setCurrentSpeakerId("");
-      }
-      return;
-    }
-
-    if (councilState === "summary") {
-      setCurrentSpeakerId("");
-      return;
-    }
-
-    if (playingNowIndex >= 0) {
-      const activeMessage = textMessages[playingNowIndex];
-      if (activeMessage && isSpeakerMessage(activeMessage)) {
-        setCurrentSpeakerId(activeMessage.speaker.toLowerCase());
-      }
-    }
-  }, [playingNowIndex, textMessages, setCurrentSpeakerId, councilState, playNextIndex, metaAgentActive, participants]);
+    setCurrentSpeakerId(derivedCurrentSpeakerId);
+  }, [derivedCurrentSpeakerId, setCurrentSpeakerId]);
 
   // Derived UI State
   const participationPhase = getParticipationPhase(councilState, textMessages, playingNowIndex);
@@ -234,6 +221,7 @@ function Council({
           setMeetingPlaybackPaused={setMeetingPlaybackPaused}
           metaAgentActive={metaAgentActive}
           setMetaAgentActive={setMetaAgentActive}
+          setAgentSpeaking={setAgentSpeaking}
           onRestartMeeting={() => navigate("/")}
           councilState={councilState}
           topic={topic}
