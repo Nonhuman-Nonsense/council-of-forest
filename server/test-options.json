@@ -4,7 +4,7 @@
     "maxTokens": 100,
     "chairMaxTokens": 100,
     "conversationMaxLength": 5,
-    "defaultAudioSpeed": 1.25,
+    "defaultAudioSpeed": 1.20,
     "raiseHandInvitationLength": 100,
     "panelistInvitationLength": 60,
     "finalizeMeetingLength": 100
