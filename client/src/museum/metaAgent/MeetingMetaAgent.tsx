@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useButtonLed, useButtonPressed, useButtonPressOwner } from "@museum/button/hooks";
+import { useButton, type ButtonLedMode } from "@museum/button/useButton";
 import { useHoldToSpeakHint } from "@voice/useHoldToSpeakHint";
 import RealtimeCaptionOverlay from "@realtime/RealtimeCaptionOverlay";
 import { useMetaAgent } from "./useMetaAgent";
@@ -37,7 +37,7 @@ export interface MeetingMetaAgentProps {
  *
  * Mounting contract:
  *  - Only mount when `pushToTalkMode && liveKey` (live meeting + PTT).
- *  - Button presses route via shared intent arbitration (human-input wins in active phase).
+ *  - Button presses route via shared claim arbitration (human-input wins in active phase).
  */
 export default function MeetingMetaAgent({
   liveKey,
@@ -54,6 +54,8 @@ export default function MeetingMetaAgent({
   currentSpeakerName,
   humanName,
 }: MeetingMetaAgentProps) {
+  const button = useButton("meta-agent");
+
   const instructions = useMemo(
     () => buildMetaAgentPrompt({ pushToTalkMode: true }),
     [],
@@ -91,8 +93,19 @@ export default function MeetingMetaAgent({
     toolHandlers,
   });
 
-  const pressed = useButtonPressed("meta-agent");
-  const pressOwner = useButtonPressOwner();
+  const { claim, release, setLed, pressed } = button;
+
+  useEffect(() => {
+    claim();
+    return () => release();
+  }, [claim, release]);
+
+  const ledMode: ButtonLedMode =
+    connectionState !== "ready" ? "off" : metaAgentActive && pressed ? "on" : "pulse";
+
+  useEffect(() => {
+    setLed(ledMode);
+  }, [setLed, ledMode]);
 
   const showHoldToSpeakHint = useHoldToSpeakHint({
     pushToTalkMode: true,
@@ -119,12 +132,6 @@ export default function MeetingMetaAgent({
       setAgentOutputMuted(true);
     };
   }, [setMicEnabled, setAgentOutputMuted]);
-
-  // Track whether we were active so we detect rising / falling edge.
-  const wasActiveRef = useRef(metaAgentActive);
-  useEffect(() => {
-    wasActiveRef.current = metaAgentActive;
-  });
 
   // Standby → Active: rising edge of routed press while not yet active.
   useEffect(() => {
@@ -166,23 +173,12 @@ export default function MeetingMetaAgent({
     setMicEnabled(pressed);
   }, [pressed, metaAgentActive, setMicEnabled]);
 
-  // Yield when human-input (or higher priority) takes the button.
-  useEffect(() => {
-    if (metaAgentActive && pressOwner !== "meta-agent") {
-      setMetaAgentActive(false);
-      setMicEnabled(false);
-    }
-  }, [pressOwner, metaAgentActive, setMetaAgentActive, setMicEnabled]);
-
   // Ensure mic is closed whenever we leave active mode.
   useEffect(() => {
     if (!metaAgentActive) {
       setMicEnabled(false);
     }
   }, [metaAgentActive, setMicEnabled]);
-
-  const ledMode = metaAgentActive && pressed ? "on" : "pulse";
-  useButtonLed("meta-agent", ledMode);
 
   if (!metaAgentActive) return null;
 

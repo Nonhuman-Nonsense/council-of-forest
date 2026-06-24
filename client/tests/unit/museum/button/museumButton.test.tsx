@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { PUSH_TO_TALK_CHANGE_EVENT } from "@/settings/councilSettings";
+import React from "react";
 
 const store = vi.hoisted(() => ({
   init: vi.fn(),
@@ -15,16 +16,27 @@ vi.mock("@/museum/button/buttonStore", () => ({
   },
 }));
 
-vi.mock("@/museum/button/config", () => ({
+vi.mock("@/museum/button/buttonBridge", () => ({
   isButtonBridgeAvailable: vi.fn(() => true),
 }));
 
-describe("MuseumButtonProvider", () => {
+const ledDebugState = vi.hoisted(() => ({ enabled: false }));
+
+vi.mock("@/museum/button/buttonDebug", () => ({
+  default: () => <div data-testid="button-led-debug-overlay" />,
+  useButtonLedDebugOverlay: () => ({
+    ledDebugOverlay: ledDebugState.enabled,
+    setLedDebugOverlay: vi.fn(),
+  }),
+}));
+
+describe("MuseumButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     localStorage.setItem("councilAppMode", "museum");
     localStorage.setItem("councilPushToTalk", "true");
+    ledDebugState.enabled = false;
   });
 
   afterEach(() => {
@@ -32,8 +44,8 @@ describe("MuseumButtonProvider", () => {
   });
 
   async function renderProvider(): Promise<void> {
-    const { default: MuseumButtonProvider } = await import("@/museum/button/MuseumButtonProvider");
-    render(<MuseumButtonProvider />);
+    const { default: MuseumButton } = await import("@/museum/button/MuseumButton");
+    render(<MuseumButton />);
   }
 
   it("initializes keyboard and connects when museum push-to-talk is active", async () => {
@@ -77,8 +89,8 @@ describe("MuseumButtonProvider", () => {
   });
 
   it("disconnects on unmount", async () => {
-    const { default: MuseumButtonProvider } = await import("@/museum/button/MuseumButtonProvider");
-    const { unmount } = render(<MuseumButtonProvider />);
+    const { default: MuseumButton } = await import("@/museum/button/MuseumButton");
+    const { unmount } = render(<MuseumButton />);
     vi.clearAllMocks();
 
     unmount();
@@ -103,5 +115,14 @@ describe("MuseumButtonProvider", () => {
 
     expect(store.init).not.toHaveBeenCalled();
     expect(store.connect).not.toHaveBeenCalled();
+  });
+
+  it("renders LED debug overlay when flag is enabled", async () => {
+    ledDebugState.enabled = true;
+
+    const { default: MuseumButton } = await import("@/museum/button/MuseumButton");
+    const { getByTestId } = render(<MuseumButton />);
+
+    expect(getByTestId("button-led-debug-overlay")).toBeInTheDocument();
   });
 });

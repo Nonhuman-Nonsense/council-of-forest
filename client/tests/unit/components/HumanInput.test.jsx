@@ -6,11 +6,15 @@ import { useMobile } from '@/utils';
 import { bootstrapHumanInputRealtimeSession } from '@api/realtimeSession';
 import { createRealtimeConnection } from '@/realtime/realtimeConnection';
 
-const mockUseButtonLed = vi.hoisted(() => vi.fn());
+const mockClaim = vi.hoisted(() => vi.fn());
+const mockRelease = vi.hoisted(() => vi.fn());
+const mockSetLed = vi.hoisted(() => vi.fn());
+const mockPushToTalkMode = vi.hoisted(() => ({ value: false }));
 
 const mockButtonState = vi.hoisted(() => ({
     pressed: false,
     rawPressed: false,
+    buttonOwner: null,
 }));
 
 const mockButtonListeners = vi.hoisted(() => new Set());
@@ -33,6 +37,16 @@ vi.mock('@/utils', () => ({
     useMobile: vi.fn(),
     dvh: "vh",
     mapFoodIndex: (l, i) => i
+}));
+
+vi.mock('@/settings/useCouncilSettings', () => ({
+    useCouncilSettings: () => ({
+        pushToTalkMode: mockPushToTalkMode.value,
+        isMuseumMode: false,
+        mode: 'web',
+        setAppMode: vi.fn(),
+        setPushToTalkMode: vi.fn(),
+    }),
 }));
 
 vi.mock('@api/realtimeSession', () => ({
@@ -61,18 +75,33 @@ vi.mock('@/museum/button/buttonStore', () => ({
     useButtonStore: (selector) => selector(mockButtonState),
 }));
 
-vi.mock('@/museum/button/hooks', async () => {
+vi.mock('@/museum/button/useButton', async () => {
     const React = await import('react');
     return {
-        useButtonLed: (...args) => mockUseButtonLed(...args),
-        useRawPressed: (active) =>
-            React.useSyncExternalStore(
+        useButton: (owner) => {
+            const pressed = React.useSyncExternalStore(
                 (onStoreChange) => {
                     mockButtonListeners.add(onStoreChange);
                     return () => mockButtonListeners.delete(onStoreChange);
                 },
-                () => (active ? mockButtonState.rawPressed : false),
-            ),
+                () => mockButtonState.buttonOwner === owner && mockButtonState.pressed,
+            );
+            const rawPressed = React.useSyncExternalStore(
+                (onStoreChange) => {
+                    mockButtonListeners.add(onStoreChange);
+                    return () => mockButtonListeners.delete(onStoreChange);
+                },
+                () => mockButtonState.rawPressed,
+            );
+            return {
+                claim: mockClaim,
+                release: mockRelease,
+                setLed: mockSetLed,
+                pressed,
+                rawPressed,
+                isOwner: mockButtonState.buttonOwner === owner,
+            };
+        },
     };
 });
 
@@ -506,8 +535,11 @@ describe('HumanInput PTT museum mode', () => {
 
     beforeEach(() => {
         mockOnSubmit = vi.fn();
+        mockPushToTalkMode.value = true;
         useMobile.mockReturnValue(false);
-        mockUseButtonLed.mockClear();
+        mockClaim.mockClear();
+        mockRelease.mockClear();
+        mockSetLed.mockClear();
         mockButtonState.pressed = false;
         setMockRawPressed(false);
         bootstrapHumanInputRealtimeSession.mockResolvedValue({
@@ -525,6 +557,7 @@ describe('HumanInput PTT museum mode', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
+        mockPushToTalkMode.value = false;
         setMockRawPressed(false);
     });
 
@@ -610,14 +643,17 @@ describe('HumanInput PTT museum mode', () => {
 
     // ── LED management ────────────────────────────────────────────────────────
 
-    it('registers human-input pulse intent when active+ready', async () => {
-        await renderPttReady();
-        expect(mockUseButtonLed).toHaveBeenCalledWith('human-input', 'pulse', true);
+    it('does not claim the button when pushToTalkMode=false', async () => {
+        mockPushToTalkMode.value = false;
+        mockClaim.mockClear();
+        await renderAndWaitReady({ onSubmitHumanMessage: mockOnSubmit });
+        expect(mockClaim).not.toHaveBeenCalled();
     });
 
-    it('passes inactive flag when isButtonMuseumMode=false', async () => {
-        await renderAndWaitReady({ onSubmitHumanMessage: mockOnSubmit });
-        expect(mockUseButtonLed).toHaveBeenCalledWith('human-input', 'off', false);
+    it('claims human-input and sets pulse LED when active with pushToTalkMode', async () => {
+        await renderPttReady();
+        expect(mockClaim).toHaveBeenCalled();
+        expect(mockSetLed).toHaveBeenCalledWith('pulse');
     });
 
     // ── Press → record, release → finish + auto-submit ────────────────────────
@@ -681,7 +717,7 @@ describe('HumanInput PTT museum mode', () => {
 
         // Type some text (simulating transcript arriving via recording)
         const textarea = screen.getByPlaceholderText('human.button_museum');
-        fireEvent.change(textarea, { target: { value: 'Hello council' } });
+        fireEvent.change(textarea, { target: { value: 'Hello dear council' } });
 
         setMockRawPressed(true);
         await waitFor(() => {
@@ -691,8 +727,109 @@ describe('HumanInput PTT museum mode', () => {
         setMockRawPressed(false);
 
         await waitFor(() => {
-            expect(mockOnSubmit).toHaveBeenCalledWith('Hello council');
+            expect(mockOnSubmit).toHaveBeenCalledWith('Hello dear council');
         });
+    });
+
+    it('does not auto-submit when transcript has fewer than three words', async () => {
+        await renderPttReady();
+
+        const textarea = screen.getByPlaceholderText('human.button_museum');
+        fireEvent.change(textarea, { target: { value: 'Hello council' } });
+
+        setMockRawPressed(true);
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_on')).toBeInTheDocument();
+        });
+
+        setMockRawPressed(false);
+
+        await new Promise(r => setTimeout(r, 50));
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+        expect(textarea).toHaveValue('Hello council');
+    });
+
+    it('waits for incremental transcript before auto-submitting', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        let onEvent;
+        createRealtimeConnection.mockImplementation(async (opts) => {
+            onEvent = opts.onEvent;
+            return { pc: {}, dc: {}, micStream: createMockMicStream(), close: vi.fn() };
+        });
+
+        await renderPttReady();
+
+        setMockRawPressed(true);
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_on')).toBeInTheDocument();
+        });
+
+        onEvent({ type: 'input_audio_buffer.speech_started' });
+        onEvent({
+            type: 'conversation.item.input_audio_transcription.delta',
+            item_id: 'item_1',
+            delta: 'Hello',
+        });
+        onEvent({
+            type: 'conversation.item.input_audio_transcription.delta',
+            item_id: 'item_1',
+            delta: ' dear',
+        });
+        setMockRawPressed(false);
+
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+
+        onEvent({
+            type: 'conversation.item.input_audio_transcription.delta',
+            item_id: 'item_1',
+            delta: ' council',
+        });
+
+        await vi.advanceTimersByTimeAsync(2000);
+
+        await waitFor(() => {
+            expect(mockOnSubmit).toHaveBeenCalledWith('Hello dear council');
+        });
+
+        vi.useRealTimers();
+    });
+
+    it('auto-submits when transcript arrives after release while already ready', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        let onEvent;
+        createRealtimeConnection.mockImplementation(async (opts) => {
+            onEvent = opts.onEvent;
+            return { pc: {}, dc: {}, micStream: createMockMicStream(), close: vi.fn() };
+        });
+
+        await renderPttReady();
+
+        setMockRawPressed(true);
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_on')).toBeInTheDocument();
+        });
+
+        onEvent({ type: 'input_audio_buffer.speech_started' });
+        setMockRawPressed(false);
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('icon-record_voice_on')).not.toBeInTheDocument();
+        });
+
+        onEvent({
+            type: 'conversation.item.input_audio_transcription.completed',
+            item_id: 'item_1',
+            transcript: 'one two three',
+        });
+
+        await vi.advanceTimersByTimeAsync(2000);
+
+        await waitFor(() => {
+            expect(mockOnSubmit).toHaveBeenCalledWith('one two three');
+        });
+
+        vi.useRealTimers();
     });
 
     it('does not auto-submit when textarea is empty after PTT release', async () => {

@@ -1,15 +1,20 @@
+import { useEffect } from "react";
 import { useMobile, useMobileXs } from "@/utils";
 import { useTranslation } from "react-i18next";
 import { useCouncilSettings } from "@/settings/useCouncilSettings";
-import { useButtonConnection, useButtonLed } from "@/museum/button/hooks";
+import {
+  useButton,
+  useButtonConnection,
+  useButtonBridgeHealth,
+} from "@/museum/button/useButton";
 import {
   getBridgeAppStatus,
   getBridgeDaemonStatus,
   getSetupBridgeDetailLines,
   getSetupBridgeLogHint,
   getUsbButtonStatus,
-} from "@/museum/button/setupButtonStatus";
-import { useButtonBridgeHealth } from "@/museum/button/useBridgeHealth";
+} from "@/main/overlay/setupButtonStatus";
+import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 
 /**
  * Setup Overlay
@@ -25,8 +30,20 @@ function Setup(): React.ReactElement {
   const { bridgeStatus, bridgeError, bridgeAvailable } =
     useButtonConnection(bridgeButtonActive);
   const bridgeHealth = useButtonBridgeHealth(bridgeButtonActive);
+  const { ledDebugOverlay, setLedDebugOverlay } = useButtonLedDebugOverlay();
 
-  useButtonLed("setup", "pulse", bridgeButtonActive);
+  const button = useButton("setup");
+  const { claim, release, setLed, pressed } = button;
+
+  // Staff debug page: always hold the button claim; pulse normally, on while pressed.
+  useEffect(() => {
+    claim();
+    return () => release();
+  }, [claim, release]);
+
+  useEffect(() => {
+    setLed(pressed ? "on" : "pulse");
+  }, [setLed, pressed]);
 
   const daemonStatus = getBridgeDaemonStatus(bridgeHealth);
   const appStatus = getBridgeAppStatus(bridgeAvailable, bridgeHealth, bridgeStatus);
@@ -36,7 +53,7 @@ function Setup(): React.ReactElement {
 
   const containerStyle: React.CSSProperties = {
     width: "96vw",
-    height: "70%",
+    minHeight: "70%",
     maxWidth: "850px",
     display: "flex",
     flexDirection: "column",
@@ -186,6 +203,19 @@ function Setup(): React.ReactElement {
           ) : null}
         </div>
       ) : null}
+
+      <div style={sectionStyle}>
+        <h3 style={{ marginTop: 0 }}>{t("setup.button.debugTitle")}</h3>
+        <button
+          type="button"
+          data-testid="setup-led-debug-toggle"
+          className={ledDebugOverlay ? "selected " : ""}
+          onClick={() => setLedDebugOverlay(!ledDebugOverlay)}
+          style={{ ...selectButtonStyle, maxWidth: 360 }}
+        >
+          {t("setup.button.ledDebugOverlay")}
+        </button>
+      </div>
     </div>
   );
 }

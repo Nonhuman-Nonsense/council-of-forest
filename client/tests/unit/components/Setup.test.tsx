@@ -32,12 +32,29 @@ vi.mock('@/utils', () => ({
   useMobileXs: () => false,
 }));
 
-vi.mock('@/museum/button/useBridgeHealth', () => ({
-  useButtonBridgeHealth: () => bridgeHealthState,
+const mockClaim = vi.fn();
+const mockRelease = vi.fn();
+const mockSetLed = vi.fn();
+const mockSetLedDebugOverlay = vi.fn();
+const ledDebugState = { enabled: false };
+
+vi.mock('@/museum/button/buttonDebug', () => ({
+  useButtonLedDebugOverlay: () => ({
+    ledDebugOverlay: ledDebugState.enabled,
+    setLedDebugOverlay: mockSetLedDebugOverlay,
+  }),
 }));
 
-vi.mock('@/museum/button/hooks', () => ({
-  useButtonLed: vi.fn(),
+vi.mock('@/museum/button/useButton', () => ({
+  useButtonBridgeHealth: () => bridgeHealthState,
+  useButton: () => ({
+    claim: mockClaim,
+    release: mockRelease,
+    setLed: mockSetLed,
+    pressed: false,
+    rawPressed: false,
+    isOwner: false,
+  }),
   useButtonConnection: () => ({
     bridgeStatus: museumButtonState.bridgeStatus,
     bridgeError: museumButtonState.bridgeError,
@@ -49,6 +66,8 @@ vi.mock('@/museum/button/hooks', () => ({
 describe('Setup overlay', () => {
   beforeEach(() => {
     localStorage.clear();
+    ledDebugState.enabled = false;
+    mockSetLedDebugOverlay.mockClear();
     museumButtonState.bridgeStatus = 'disconnected';
     museumButtonState.bridgeError = null;
     museumButtonState.bridgeAvailable = true;
@@ -127,6 +146,36 @@ describe('Setup overlay', () => {
     expect(screen.getByTestId('setup-button-usb-status')).toHaveTextContent(
       'setup.button.usb.connected',
     );
+  });
+
+  it('claims the button on mount for hardware debugging', () => {
+    mockClaim.mockClear();
+    const { unmount } = render(<Setup />);
+    expect(mockClaim).toHaveBeenCalled();
+    unmount();
+    expect(mockRelease).toHaveBeenCalled();
+  });
+
+  it('sets pulse LED by default and on while pressed', () => {
+    mockSetLed.mockClear();
+    render(<Setup />);
+    expect(mockSetLed).toHaveBeenCalledWith('pulse');
+  });
+
+  it('toggles LED debug overlay from setup', () => {
+    render(<Setup />);
+
+    const toggle = screen.getByTestId('setup-led-debug-toggle');
+    expect(toggle).not.toHaveClass('selected');
+
+    fireEvent.click(toggle);
+    expect(mockSetLedDebugOverlay).toHaveBeenCalledWith(true);
+  });
+
+  it('shows LED debug toggle as selected when flag is enabled', () => {
+    ledDebugState.enabled = true;
+    render(<Setup />);
+    expect(screen.getByTestId('setup-led-debug-toggle')).toHaveClass('selected');
   });
 
   it('shows bridge running and usb not detected when no hardware is plugged in', () => {

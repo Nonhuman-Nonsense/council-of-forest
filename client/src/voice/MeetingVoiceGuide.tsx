@@ -12,13 +12,12 @@ import {
   type MeetingSetupUserEvent,
 } from "@newMeeting/meetingSetup";
 import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
-import { useButtonLed, useButtonPressed } from "@/museum/button/hooks";
+import { useButton, type ButtonLedMode } from "@/museum/button/useButton";
 import { useCouncilSettings } from "@/settings/useCouncilSettings";
 import { buildGuidePrompt } from "./guidePrompt";
 import { createGuideToolHandlers, createGuideTools } from "./guideTools";
 import { getVoiceGuideBundle } from "./voiceGuideBundle";
 import { useHoldToSpeakHint } from "./useHoldToSpeakHint";
-import { computeButtonLedMode } from "@/museum/button/ledMode";
 import Loading from "@main/Loading";
 import { useVoiceGuide } from "./useVoiceGuide";
 
@@ -41,7 +40,8 @@ export default function MeetingVoiceGuide({
 }: MeetingVoiceGuideProps) {
   const { i18n, t } = useTranslation();
   const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
-  const pressed = useButtonPressed("voice-guide");
+  const button = useButton("voice-guide");
+  const { claim, release, setLed, pressed } = button;
   const {
     selectedTopic,
     customTopic,
@@ -128,15 +128,22 @@ export default function MeetingVoiceGuide({
     lastCaption: voice.lastCaption,
   });
 
-  const ledMode = computeButtonLedMode({
-    pushToTalkMode,
-    muted,
-    isConnecting: voice.isConnecting,
-    voiceError: voice.error,
-    pressed,
-  });
+  const ledMode = useMemo((): ButtonLedMode => {
+    if (!pushToTalkMode || muted || voice.isConnecting || voice.error) return "off";
+    if (pressed) return "on";
+    return "pulse";
+  }, [pushToTalkMode, muted, voice.isConnecting, voice.error, pressed]);
 
-  useButtonLed("voice-guide", ledMode, pushToTalkMode);
+  useEffect(() => {
+    if (!pushToTalkMode) return;
+    claim();
+    return () => release();
+  }, [claim, release, pushToTalkMode]);
+
+  useEffect(() => {
+    if (!pushToTalkMode) return;
+    setLed(ledMode);
+  }, [setLed, pushToTalkMode, ledMode]);
 
   useEffect(() => {
     if (!lastUserEvent) {

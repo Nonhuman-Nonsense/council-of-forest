@@ -140,6 +140,16 @@ a.button.selected {
   color: rgba(0, 0, 0, 0.9);
 }
 
+@keyframes auto-button-drain {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
 /* We have to do this as a pseudo element to enable nested blurring in chrome */
 /* https://stackoverflow.com/questions/60997948/backdrop-filter-not-working-for-nested-elements-in-chrome */
 .blur::before {
@@ -444,6 +454,20 @@ nav.blur::before {
   }
   100% {
     transform: translate3d(calc(-100% / var(--marquee-segments, 2)), 0, 0);
+  }
+}
+
+@keyframes button-led-debug-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+    box-shadow: none;
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.95);
   }
 }
 

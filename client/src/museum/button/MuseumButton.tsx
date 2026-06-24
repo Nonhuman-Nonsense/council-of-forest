@@ -1,14 +1,16 @@
 import { useEffect } from "react";
-import { isButtonBridgeAvailable } from "./config";
+import { isButtonBridgeAvailable } from "./buttonBridge";
 import { useCouncilSettings } from "@/settings/useCouncilSettings";
 import { useButtonStore } from "./buttonStore";
+import ButtonLedDebugOverlay, { useButtonLedDebugOverlay } from "./buttonDebug";
 
 /**
  * Push-to-talk button lifecycle: keyboard (Space) when PTT is enabled in any
  * app mode; hardware bridge only in museum mode when the bridge is available.
  */
-export default function MuseumButtonProvider(): null {
+export default function MuseumButton(): React.ReactElement | null {
   const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
+  const { ledDebugOverlay } = useButtonLedDebugOverlay();
   const bridgeActive = isMuseumMode && pushToTalkMode && isButtonBridgeAvailable();
 
   // Space-as-PTT works in web and museum whenever push-to-talk is on.
@@ -42,5 +44,5 @@ export default function MuseumButtonProvider(): null {
     };
   }, [bridgeActive]);
 
-  return null;
+  return ledDebugOverlay ? <ButtonLedDebugOverlay /> : null;
 }

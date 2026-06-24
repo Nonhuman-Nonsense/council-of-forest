@@ -2,7 +2,7 @@
  * Race-condition coverage: WS vs USB ordering, USB flap while WS stays up, resync timing.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ButtonTransport } from "@/museum/button/transport";
+import { ButtonTransport } from "@/museum/button/buttonBridge";
 import { _resetButtonStoreForTests, useButtonStore } from "@/museum/button/buttonStore";
 import {
   startTestBridge,
@@ -41,7 +41,8 @@ describe.sequential("button reconnect race conditions", () => {
     _resetButtonStoreForTests();
     useButtonStore.getState().init();
     await useButtonStore.getState().connect();
-    await useButtonStore.getState().registerButtonIntent("human-input", "pulse");
+    await useButtonStore.getState().claimButton("human-input");
+    await useButtonStore.getState().setButtonLed("human-input", "pulse");
 
     expect(useButtonStore.getState().bridgeStatus).toBe("connected");
     expect(useButtonStore.getState().serialDeviceConnected).toBe(false);
@@ -121,7 +122,8 @@ describe.sequential("button reconnect race conditions", () => {
     _resetButtonStoreForTests();
     useButtonStore.getState().init();
     await useButtonStore.getState().connect();
-    await useButtonStore.getState().registerButtonIntent("human-input", "pulse");
+    await useButtonStore.getState().claimButton("human-input");
+    await useButtonStore.getState().setButtonLed("human-input", "pulse");
 
     bridge.simulateUsbDisconnect();
     await waitForCondition(() => !useButtonStore.getState().serialDeviceConnected);

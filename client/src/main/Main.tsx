@@ -15,6 +15,7 @@ import Landing from "@newMeeting/Landing";
 import Navbar from "./Navbar";
 import type { Topic } from "@shared/ModelTypes";
 import { buildTopicFromSelection } from "@newMeeting/meetingSetup";
+import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
 import MeetingSetupShell from "@newMeeting/MeetingSetupShell";
 import NewMeeting from "@newMeeting/NewMeeting";
 import Council from "@council/Council";
@@ -34,7 +35,7 @@ import CouncilError from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
 import { lazy, Suspense } from "react";
 
-const MuseumButtonProvider = lazy(() => import("@/museum/button/MuseumButtonProvider"));
+const MuseumButton = lazy(() => import("@/museum/button/MuseumButton"));
 
 import routes from "@/routes.json";
 
@@ -137,10 +138,13 @@ export default function Main(props: MainProps) {
 
   function onReset(resetTopic?: Topic) {
     if (!resetTopic) {
+      useMeetingSetupStore.getState().resetStore();
       window.location.href = rootPath;
       return;
     }
 
+    //If resetting to a specific topic
+    useMeetingSetupStore.getState().resetStore();
     setTopicSelection(resetTopic);
 
     navigate({
@@ -171,7 +175,7 @@ export default function Main(props: MainProps) {
     <>
       {pushToTalkMode && (
         <Suspense fallback={null}>
-          <MuseumButtonProvider />
+          <MuseumButton />
         </Suspense>
       )}
       <Forest
