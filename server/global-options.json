@@ -44,21 +44,30 @@
   "voiceGuideOpenAIRealtimeModel": "gpt-realtime",
   "voiceGuideRealtimeTranscriptionModel": "assemblyai/u3-rt-pro",
   "chairRealtime": {
-    "strategy": "unified",
+    "strategy": "split",
     "languages": {
       "en": {
         "provider": "inworld",
         "llmModel": "google-ai-studio/gemini-2.5-flash",
         "ttsModel": "inworld-tts-1.5-max",
         "transcriptionModel": "assemblyai/u3-rt-pro",
-        "agentVoice": null
+        "agentVoice": {
+          "voice": "Ashley",
+          "voiceProvider": "inworld",
+          "voiceTemperature": 1.5
+        }
       },
       "sv": {
         "provider": "inworld",
         "llmModel": "google-ai-studio/gemini-2.5-flash",
         "ttsModel": "inworld-tts-2",
         "transcriptionModel": "soniox/stt-rt-v4",
-        "agentVoice": null
+        "agentVoice": {
+          "voice": "Ashley",
+          "voiceProvider": "inworld",
+          "voiceLocale": "sv",
+          "voiceTemperature": 1.5
+        }
       }
     }
   },
