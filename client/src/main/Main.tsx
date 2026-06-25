@@ -32,7 +32,7 @@ import {
 } from "@/audio/meetingAudio";
 import { createSceneAudioContext } from "@/audio/sceneAudio";
 import { usePortrait, dvh } from "@/utils";
-import CouncilError from "./overlay/CouncilError";
+import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
 import { lazy, Suspense } from "react";
 
@@ -60,7 +60,7 @@ interface MainProps {
 export default function Main(props: MainProps) {
   const [topicSelection, setTopicSelection] = useState<Topic | null>(null);
   
-  const [unrecoverableErrorMessage, setUnrecoverableErrorMessage] = useState<string | null>(null);
+  const { unrecoverableError, setUnrecoverableError } = useUnrecoverableError();
   const [connectionError, setConnectionError] = useState(false);
   const [meetingliveKey, setMeetingliveKey] = useState<string | null>(null);
 
@@ -188,7 +188,7 @@ export default function Main(props: MainProps) {
         sceneAudioContext={sceneAudioContext}
       />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: 1 }} />
-      {!(unrecoverableErrorMessage != null || connectionError) && ( !isMuseumMode &&
+      {!(unrecoverableError != null || connectionError) && ( !isMuseumMode &&
         <Navbar
           topicTitle={topicSelection?.title || ""}
           hamburgerOpen={hamburgerOpen}
@@ -197,7 +197,7 @@ export default function Main(props: MainProps) {
       )}
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
       {isMuseumMode && <MuseumModeEscapeHatch />}
-      {unrecoverableErrorMessage == null &&
+      {unrecoverableError == null &&
         <Overlay
           isActive={!isMeetingPath(location.pathname)}
           isBlurred={!isRootPath(location.pathname)}
@@ -206,7 +206,7 @@ export default function Main(props: MainProps) {
             <Route
               element={
                 <MeetingSetupShell
-                  setUnrecoverableError={setUnrecoverableErrorMessage}
+                  setUnrecoverableError={setUnrecoverableError}
                   topicSelection={topicSelection}
                   setTopicSelection={setTopicSelection}
                   setMeetingliveKey={setMeetingliveKey}
@@ -225,7 +225,7 @@ export default function Main(props: MainProps) {
                   setTopic={setTopicSelection}
                   liveKey={meetingliveKey}
                   setliveKey={setMeetingliveKey}
-                  setUnrecoverableError={setUnrecoverableErrorMessage}
+                  setUnrecoverableError={setUnrecoverableError}
                   connectionError={connectionError}
                   setConnectionError={setConnectionError}
                   currentSpeakerId={currentSpeakerId}
@@ -250,15 +250,12 @@ export default function Main(props: MainProps) {
           {isPortrait && location.pathname !== "/" && <RotateOverlay />}
         </Overlay>
       }
-      {unrecoverableErrorMessage != null && ( (
-        <Overlay
-          isActive={true}
-          isBlurred={true}
-        >
-          <CouncilError detailMessage={unrecoverableErrorMessage} />
+      {unrecoverableError != null && (
+        <Overlay isActive={true} isBlurred={true}>
+          <CouncilError error={unrecoverableError} />
         </Overlay>
-      ))}
-      {connectionError && unrecoverableErrorMessage == null && (
+      )}
+      {connectionError && unrecoverableError == null && (
         <Overlay
           isActive={true}
           isBlurred={true}
