@@ -41,7 +41,7 @@ function makeSnapshot(overrides: Partial<MetaAgentStateSnapshot> = {}): MetaAgen
       prompt: "",
     },
     participants: [
-      { id: "water", name: "Water", description: "", prompt: "", voice: "" },
+      { id: "river", name: "River", description: "", prompt: "", voice: "" },
       { id: "oak", name: "Oak", description: "", prompt: "", voice: "" },
     ],
     currentSpeakerName: "Oak",
@@ -52,10 +52,17 @@ function makeSnapshot(overrides: Partial<MetaAgentStateSnapshot> = {}): MetaAgen
 }
 
 describe("getMetaAgentBundle", () => {
-  it("loads the foods meta-agent bundle for English", () => {
+  it("loads the beings meta-agent bundle for English", () => {
     const bundle = getMetaAgentBundle("en");
-    expect(bundle.chairIdentity).toContain("Water");
-    expect(bundle.councilVocabulary.councilName).toBe("Council of Foods");
+    expect(bundle.chairIdentity).toContain("River");
+    expect(bundle.councilVocabulary.councilName).toBe("Council of Forest");
+    expect(bundle.jobInstructions.length).toBeGreaterThan(0);
+  });
+
+  it("loads the beings meta-agent bundle for Swedish", () => {
+    const bundle = getMetaAgentBundle("sv");
+    expect(bundle.chairIdentity).toContain("Älven");
+    expect(bundle.councilVocabulary.councilName).toBe("Skogsrådet");
     expect(bundle.jobInstructions.length).toBeGreaterThan(0);
   });
 });
@@ -113,7 +120,7 @@ describe("buildMetaAgentPrompt", () => {
     expect(prompt).toContain("do not repeat verbatim");
   });
 
-  it("loads activationGreetingExample from the shipped foods bundle", () => {
+  it("loads activationGreetingExample from the shipped beings bundle", () => {
     const bundle = getMetaAgentBundle("en");
     const prompt = buildMetaAgentPrompt({ bundle });
     expect(bundle.activationGreetingExample).toContain("interrupted");
@@ -126,7 +133,7 @@ describe("buildMetaAgentPrompt", () => {
     expect(prompt).toContain("address the interruption");
   });
 
-  it("uses the shipped foods bundle without errors", () => {
+  it("uses the shipped beings bundle without errors", () => {
     const prompt = buildMetaAgentPrompt({
       bundle: getMetaAgentBundle("en"),
       pushToTalkMode: true,
@@ -165,14 +172,14 @@ describe("buildMetaAgentStateSnapshot", () => {
   it("excludes the chair from councilMembers", () => {
     const snap = buildMetaAgentStateSnapshot(makeSnapshot());
     const payload = JSON.parse(snap.replace(/^\(STATE SYNC: /, "").replace(/\)$/, ""));
-    expect(payload.councilMembers).not.toContain("Water");
+    expect(payload.councilMembers).not.toContain("River");
   });
 
   it("includes human panelists when present", () => {
     const snap = buildMetaAgentStateSnapshot(
       makeSnapshot({
         participants: [
-          { id: "water", name: "Water", description: "", prompt: "", voice: "" },
+          { id: "river", name: "River", description: "", prompt: "", voice: "" },
           { id: "oak", name: "Oak", description: "", prompt: "", voice: "" },
           {
             id: "panelist0",
