@@ -20,12 +20,19 @@ export type UseMetaAgentResult = {
   error: string | null;
   lastCaption: string | null;
   lastUserTranscript: string | null;
-  /** True between `response.created` and `response.done` for the meta-agent voice. */
+  /**
+   * True while the meta-agent is producing a voice response.
+   * TODO: Today this follows response.created → response.done (generation end), not
+   * remote playback end. Refine here (e.g. remote audio analyser) when idle/resume
+   * timing needs to track speaker output precisely.
+   */
   agentSpeaking: boolean;
   /** Open or close the mic track (track.enabled). No-op if not yet connected. */
   setMicEnabled: (open: boolean) => void;
   /** Inject a user message into the agent conversation (e.g. state snapshot). */
   sendUserMessage: (text: string) => void;
+  /** Ask the model to respond when no response is in flight. */
+  requestAgentResponse: () => void;
   /** Mute or unmute remote agent audio (e.g. after terminal tools or on re-activate). */
   setAgentOutputMuted: (muted: boolean) => void;
 };
@@ -35,7 +42,7 @@ export type UseMetaAgentResult = {
  *
  * - Bootstrap requires a liveKey bearer (museum mode + live meeting only).
  * - Mic gating via `track.enabled` (PTT holds the button).
- * - No opening greeting — agent waits for the visitor.
+ * - No opening greeting on connect — agent greets when the visitor activates.
  * - Connects on mount; tears down on unmount.
  */
 export function useMetaAgent(params: UseMetaAgentParams): UseMetaAgentResult {

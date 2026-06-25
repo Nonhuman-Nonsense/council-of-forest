@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useButton, type ButtonLedMode } from "@museum/button/useButton";
-import { useHoldToSpeakHint } from "@voice/useHoldToSpeakHint";
+import { BUTTON_IDLE_REMIND_MS, useHoldToSpeakHint } from "@voice/useHoldToSpeakHint";
 import RealtimeCaptionOverlay from "@realtime/RealtimeCaptionOverlay";
 import { useMetaAgent } from "./useMetaAgent";
-import { buildMetaAgentPrompt, buildMetaAgentStateSnapshot } from "./metaAgentPrompt";
+import {
+  buildMetaAgentPrompt,
+  buildMetaAgentActivationTurn,
+  buildMetaAgentStateSnapshot,
+  getMetaAgentBundle,
+} from "./metaAgentPrompt";
 import {
   createMetaAgentTools,
   createMetaAgentToolHandlers,
 } from "./metaAgentTools";
+import { log } from "@/logger";
 import type { ParticipationPhase } from "@council/humanInput/participationPhase";
 import type { CouncilState } from "@council/hooks/useCouncilMachine";
 import type { Character, Topic } from "@shared/ModelTypes";
@@ -33,7 +39,7 @@ export interface MeetingMetaAgentProps {
  * Museum meta-agent: a persistent WebRTC voice agent that sits on top of the
  * council meeting.  The visitor can press the PTT button at any time to talk
  * to the chair (meta-agent).  Meeting Web Audio freezes while the meta agent is
- * active and only resumes when the agent calls `resume_meeting`.
+ * active and only resumes when the agent calls `continue_meeting`.
  *
  * Mounting contract:
  *  - Only mount when `pushToTalkMode && liveKey` (live meeting + PTT).
@@ -57,8 +63,12 @@ export default function MeetingMetaAgent({
   const button = useButton("meta-agent");
 
   const instructions = useMemo(
-    () => buildMetaAgentPrompt({ pushToTalkMode: true }),
-    [],
+    () =>
+      buildMetaAgentPrompt({
+        bundle: getMetaAgentBundle(language),
+        pushToTalkMode: true,
+      }),
+    [language],
   );
 
   const tools = useMemo(() => createMetaAgentTools(), []);
@@ -84,6 +94,7 @@ export default function MeetingMetaAgent({
     agentSpeaking,
     setMicEnabled,
     sendUserMessage,
+    requestAgentResponse,
     setAgentOutputMuted,
   } = useMetaAgent({
     language,
@@ -107,7 +118,7 @@ export default function MeetingMetaAgent({
     setLed(ledMode);
   }, [setLed, ledMode]);
 
-  const showHoldToSpeakHint = useHoldToSpeakHint({
+  const { showHoldToSpeakHint, idleRemindVisible } = useHoldToSpeakHint({
     pushToTalkMode: true,
     sessionActive: metaAgentActive,
     isConnecting: connectionState === "connecting",
@@ -141,6 +152,11 @@ export default function MeetingMetaAgent({
     setMetaAgentActive(true);
     setAgentOutputMuted(false);
     setMicEnabled(true);
+    log.event("META", "activate", {
+      councilState,
+      participationPhase,
+      currentSpeakerName,
+    });
     sendUserMessage(
       buildMetaAgentStateSnapshot({
         councilState,
@@ -151,6 +167,8 @@ export default function MeetingMetaAgent({
         participationPhase,
       }),
     );
+    sendUserMessage(buildMetaAgentActivationTurn());
+    requestAgentResponse();
   }, [
     pressed,
     metaAgentActive,
@@ -159,6 +177,7 @@ export default function MeetingMetaAgent({
     setAgentOutputMuted,
     setMicEnabled,
     sendUserMessage,
+    requestAgentResponse,
     councilState,
     topic,
     participants,
@@ -179,6 +198,44 @@ export default function MeetingMetaAgent({
       setMicEnabled(false);
     }
   }, [metaAgentActive, setMicEnabled]);
+
+  const idleResumeFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (metaAgentActive) return;
+    idleResumeFiredRef.current = false;
+  }, [metaAgentActive]);
+
+  useEffect(() => {
+    if (!idleRemindVisible) {
+      idleResumeFiredRef.current = false;
+    }
+  }, [idleRemindVisible]);
+
+  // Auto-resume 10s after the idle PTT reminder appears (not while agent or visitor is active).
+  useEffect(() => {
+    if (!metaAgentActive || connectionState !== "ready") return;
+    if (!idleRemindVisible) return;
+    if (idleResumeFiredRef.current) return;
+    if (agentSpeaking || pressed) return;
+
+    const timerId = window.setTimeout(() => {
+      if (idleResumeFiredRef.current) return;
+      if (agentSpeaking || pressed) return;
+      idleResumeFiredRef.current = true;
+      log.event("META", "idle auto-resume continue_meeting");
+      toolHandlers.continue_meeting({});
+    }, BUTTON_IDLE_REMIND_MS);
+
+    return () => window.clearTimeout(timerId);
+  }, [
+    metaAgentActive,
+    connectionState,
+    idleRemindVisible,
+    agentSpeaking,
+    pressed,
+    toolHandlers,
+  ]);
 
   if (!metaAgentActive) return null;
 

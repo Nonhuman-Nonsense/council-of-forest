@@ -13,9 +13,21 @@ import {
 import type { RealtimeTool, ToolHandler } from "@voice/guideTools";
 import { createCaptionScheduler } from "@voice/captionScheduler";
 import { createRemoteAudioAnchor, type RemoteAudioAnchor } from "@voice/remoteAudioAnchor";
+import { log, summarizeLogPayload } from "@/logger";
 
 const AUDIO_ANCHOR_FALLBACK_DELAY_MS = 600;
-const noopLog = () => {};
+
+function realtimeDebugLog(...args: unknown[]): void {
+  const message = args.map((arg) => {
+    if (typeof arg === "string") return arg;
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  }).join(" ");
+  log.event("REALTIME", message, args.length > 1 ? summarizeLogPayload({ detail: args.slice(1) }) : undefined);
+}
 
 export type RealtimeVoiceFeature = "meta-agent" | "voice-guide";
 
@@ -55,6 +67,8 @@ export type UseRealtimeVoiceSessionResult = {
   agentSpeaking: boolean;
   setMicEnabled: (open: boolean) => void;
   sendUserMessage: (text: string) => void;
+  /** Ask the model to respond when no response is in flight. */
+  requestAgentResponse: () => void;
   setAgentOutputMuted: (muted: boolean) => void;
 };
 
@@ -203,13 +217,14 @@ export function useRealtimeVoiceSession(
     setConnectionState("connecting");
     setError(null);
     setHasReceivedAudioPart(false);
+    log.event("REALTIME", "connecting", { feature, language });
 
     let conn: RealtimeConnection | null = null;
     try {
       const [bootResult, micResult] = await Promise.allSettled([
         fetchRealtimeBootstrap(
           { feature, language },
-          noopLog,
+          realtimeDebugLog,
           controller.signal,
           authHeaders,
         ),
@@ -289,7 +304,7 @@ export function useRealtimeVoiceSession(
               captionScheduler.setAudioAnchor(performance.now());
             }, AUDIO_ANCHOR_FALLBACK_DELAY_MS);
           },
-          log: noopLog,
+          log: realtimeDebugLog,
         },
       });
       eventLoopRef.current = loop;
@@ -303,7 +318,7 @@ export function useRealtimeVoiceSession(
           : undefined,
         callBodyExtras: { feature, provider },
         micStream,
-        log: noopLog,
+        log: realtimeDebugLog,
         signal: controller.signal,
         onRemoteTrack: (track) => {
           if (isStale()) { try { track.stop(); } catch { /* ignore */ } return; }
@@ -318,7 +333,7 @@ export function useRealtimeVoiceSession(
                 clearAudioAnchorFallback();
                 captionScheduler.setAudioAnchor(nowMs);
               },
-              log: noopLog,
+              log: realtimeDebugLog,
             });
           } catch { /* remote audio anchor optional */ }
           track.onended = () => {
@@ -337,7 +352,9 @@ export function useRealtimeVoiceSession(
         },
         onClose: (reason) => {
           if (isStale()) return;
+          log.event("REALTIME", "connection closed", { feature, reason });
           if (reason === "pc_failed" || reason === "dc_error") {
+            log.event("ERROR", "realtime connection lost", { feature, reason });
             setError(connectionLostMessage);
             setConnectionState("error");
           }
@@ -351,6 +368,7 @@ export function useRealtimeVoiceSession(
 
       activeConn = conn;
       connectionRef.current = conn;
+      log.event("REALTIME", "ready", { feature, provider });
       setConnectionState("ready");
     } catch (e) {
       const isAbort = e instanceof Error && e.name === "AbortError";
@@ -359,6 +377,7 @@ export function useRealtimeVoiceSession(
         return;
       }
       const msg = e instanceof Error ? e.message : startFailedMessage;
+      log.event("ERROR", "realtime session start failed", { feature, message: msg });
       conn?.close();
       setError(msg);
       setConnectionState("error");
@@ -427,6 +446,10 @@ export function useRealtimeVoiceSession(
     eventLoopRef.current?.sendUserMessage(text);
   }, []);
 
+  const requestAgentResponse = useCallback(() => {
+    eventLoopRef.current?.requestResponseIfIdle();
+  }, []);
+
   return {
     connectionState,
     error,
@@ -436,6 +459,7 @@ export function useRealtimeVoiceSession(
     agentSpeaking,
     setMicEnabled,
     sendUserMessage,
+    requestAgentResponse,
     setAgentOutputMuted,
   };
 }

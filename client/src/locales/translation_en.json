@@ -11,6 +11,29 @@
   "contact": "Contact",
   "setup": {
     "title": "SETUP",
+    "panels": {
+      "installation": "Installation",
+      "voiceGuide": "Voice guide",
+      "details": "Details & hints",
+      "logging": "Logging"
+    },
+    "logging": {
+      "on": "On",
+      "off": "Off",
+      "all": "All",
+      "none": "None",
+      "categoriesLabel": "Log categories",
+      "categories": {
+        "API": "API",
+        "SOCKET": "Socket",
+        "AGENT": "Agent tools",
+        "REALTIME": "Realtime",
+        "BUTTON": "Button",
+        "META": "Meta agent",
+        "SYSTEM": "System",
+        "ERROR": "Error detail"
+      }
+    },
     "mode": "Mode",
     "web": "Web",
     "museum": "Museum",
@@ -47,7 +70,14 @@
       "usbNotDetectedHint": "Plug in the Council button via USB. The bridge scans for Arduino USB devices automatically.",
       "usbWrongDeviceHint": "A USB serial device was found, but it is not running Council button firmware. Reflash the Arduino sketch or check the USB cable/port.",
       "debugTitle": "Button debug",
-      "ledDebugOverlay": "LED preview overlay"
+      "ledDebugOverlay": "LED preview overlay",
+      "owners": {
+        "none": "—",
+        "setup": "Setup",
+        "voice-guide": "Voice guide",
+        "human-input": "Human input",
+        "meta-agent": "Meta agent"
+      }
     }
   },
   "settings": "Settings",

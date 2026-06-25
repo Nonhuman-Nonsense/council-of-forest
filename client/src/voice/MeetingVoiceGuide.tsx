@@ -13,7 +13,7 @@ import {
 } from "@newMeeting/meetingSetup";
 import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
 import { useButton, type ButtonLedMode } from "@/museum/button/useButton";
-import { useCouncilSettings } from "@/settings/useCouncilSettings";
+import { useCouncilSettings } from "@/settings/councilSettings";
 import { buildGuidePrompt } from "./guidePrompt";
 import { createGuideToolHandlers, createGuideTools } from "./guideTools";
 import { getVoiceGuideBundle } from "./voiceGuideBundle";
@@ -119,7 +119,7 @@ export default function MeetingVoiceGuide({
   const showMuseumLandingLoading =
     isMuseumMode && phase === "landing" && !muted && voice.isConnecting;
 
-  const showHoldToSpeakHint = useHoldToSpeakHint({
+  const { showHoldToSpeakHint } = useHoldToSpeakHint({
     pushToTalkMode,
     sessionActive: !muted,
     isConnecting: voice.isConnecting,
