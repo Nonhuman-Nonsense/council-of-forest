@@ -1,11 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { getChairAgentVoice, getChairMeetingVoice } from "@logic/characterSetupBundle.js";
+import {
+    getChairAgentVoice,
+    getChairMeetingVoice,
+    getChairRealtimeLanguageConfig,
+    getHumanInputRealtimeLanguageConfig,
+} from "@logic/characterSetupBundle.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
 
-describe("Forest chair voice (split preset)", () => {
+/** Forest-only preset: split chair voice + Swedish beings on ElevenLabs. */
+describe("Forest realtime preset", () => {
     const options = getGlobalOptions();
 
-    it("uses split strategy with per-language agent voices", () => {
+    it("uses split chair strategy with per-language agent voices", () => {
         expect(options.chairRealtime.strategy).toBe("split");
         expect(options.chairRealtime.languages.sv?.agentVoice?.voice).toBe("Ashley");
         expect(options.chairRealtime.languages.en?.agentVoice?.voice).toBe("Ashley");
@@ -32,5 +38,14 @@ describe("Forest chair voice (split preset)", () => {
             voice: "Ashley",
             voiceProvider: "inworld",
         });
+    });
+
+    it("aligns Swedish Soniox STT across human-input and chair agent sessions", () => {
+        const humanInput = getHumanInputRealtimeLanguageConfig("sv", options);
+        const chair = getChairRealtimeLanguageConfig("sv", options);
+
+        expect(humanInput.provider).toBe("inworld");
+        expect(humanInput.transcriptionModel).toBe("soniox/stt-rt-v4");
+        expect(chair.transcriptionModel).toBe("soniox/stt-rt-v4");
     });
 });
