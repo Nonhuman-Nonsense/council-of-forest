@@ -18,6 +18,7 @@ import { useCouncilSettings } from "@/settings/councilSettings";
 import MeetingMetaAgent from "@museum/metaAgent/MeetingMetaAgent";
 import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 import type { SetUnrecoverableError } from "@main/overlay/CouncilError";
+import { notifyAutoplay } from "@/autoplay/autoplayStore";
 
 interface CouncilProps {
   liveKey: string | null;
@@ -193,6 +194,10 @@ function Council({
   useEffect(() => {
     setCurrentSpeakerId(derivedCurrentSpeakerId);
   }, [derivedCurrentSpeakerId, setCurrentSpeakerId]);
+
+  useEffect(() => {
+    notifyAutoplay({ type: "council-state", state: councilState });
+  }, [councilState]);
 
   // Derived UI State
   const participationPhase = getParticipationPhase(councilState, textMessages, playingNowIndex);

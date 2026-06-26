@@ -1,5 +1,5 @@
 import "@/App.css";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { getTopicsBundle } from "./topicsBundle";
 import {
   Routes,
@@ -30,9 +30,9 @@ import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait, dvh } from "@/utils";
 import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
-import { lazy, Suspense } from "react";
 
 const MuseumButton = lazy(() => import("@/museum/button/MuseumButton"));
+const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
 
 import routes from "@/routes.json";
 
@@ -165,6 +165,14 @@ export default function Main(props: MainProps) {
 
   return (
     <>
+      {isMuseumMode && (
+        <Suspense fallback={null}>
+          <AutoplayCoordinator
+            meetingliveKey={meetingliveKey}
+            setMeetingliveKey={setMeetingliveKey}
+          />
+        </Suspense>
+      )}
       {pushToTalkMode && (
         <Suspense fallback={null}>
           <MuseumButton />

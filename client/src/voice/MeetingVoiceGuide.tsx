@@ -20,7 +20,6 @@ import { getVoiceGuideBundle } from "./voiceGuideBundle";
 import { useHoldToSpeakHint } from "./useHoldToSpeakHint";
 import Loading from "@main/Loading";
 import { useVoiceGuide } from "./useVoiceGuide";
-
 type MeetingVoiceGuideProps = {
   phase: MeetingSetupPhase;
   lastUserEvent: MeetingSetupUserEvent | null;
