@@ -27,13 +27,14 @@ import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
-import { usePortrait, dvh } from "@/utils";
+import { usePortrait } from "@/utils";
 import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
 
 const MuseumButton = lazy(() => import("@/museum/button/MuseumButton"));
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
 
+import { z } from "@/zIndexLayers";
 import routes from "@/routes.json";
 
 function useIsIphone() {
@@ -159,7 +160,7 @@ export default function Main(props: MainProps) {
     left: "0",
     top: "0",
     pointerEvents: "auto",
-    zIndex: "9",
+    zIndex: z.hamburgerBlocker,
   };
 
 
@@ -184,7 +185,7 @@ export default function Main(props: MainProps) {
         isPaused={isPaused}
         audioContext={audioContext}
       />
-      <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: 1 }} />
+      <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: z.gradientFooter }} />
       {!(unrecoverableError != null || connectionError) && ( !isMuseumMode &&
         <Navbar
           topicTitle={topicSelection?.title || ""}
@@ -247,7 +248,7 @@ export default function Main(props: MainProps) {
         </Overlay>
       }
       {unrecoverableError != null && (
-        <Overlay isActive={true} isBlurred={true}>
+        <Overlay isActive={true} isBlurred={true} layer="system">
           <CouncilError error={unrecoverableError} />
         </Overlay>
       )}
@@ -255,6 +256,7 @@ export default function Main(props: MainProps) {
         <Overlay
           isActive={true}
           isBlurred={true}
+          layer="system"
         >
           <Reconnecting />
         </Overlay>
@@ -272,12 +274,13 @@ function RotateOverlay() {
         left: "0",
         width: "100%",
         height: "100%",
-        zIndex: "100",
+        zIndex: z.rotatePrompt,
       }}
     >
       <Overlay
         isActive={true}
         isBlurred={true}
+        layer="system"
       >
         <RotateDevice />
       </Overlay>
