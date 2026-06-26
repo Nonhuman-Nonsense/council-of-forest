@@ -7,6 +7,8 @@
 export const z = {
   background: -5,
   forestBackdrop: -3,
+  /** River chair layer inside Forest scene. */
+  forestRiver: -4,
   backgroundZoomedOut: -2,
   backgroundZoomedIn: -1,
   /** Backdrop blur pseudo-element inside `.blur` overlays. */

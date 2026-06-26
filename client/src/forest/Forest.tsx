@@ -4,6 +4,7 @@ import { dvh, minWindowHeight, useMobile } from "@/utils";
 import forestCharacters from "@shared/prompts/forest_characters.json";
 import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
+import { z } from "@/zIndexLayers";
 import {
     characterAmbienceUrl,
     characterImageAvifUrl,
@@ -83,7 +84,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext, metaAgentActive = fa
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: "-3",
+        zIndex: z.forestBackdrop,
         transform: `scale(${zoomInValue}) translate(${translate[0]}, ${translate[1]})`,
         transformOrigin: `${transformOrigin[0]} ${transformOrigin[1]}`,
         transition: !disableAnimations && `transform 2s ease-out, transform-origin ${animateTransformOrigin ? "2s" : "0.0001s"} ease-out`
@@ -160,8 +161,8 @@ function Forest({ currentSpeakerId, isPaused, audioContext, metaAgentActive = fa
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
-            <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
-            <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
+            <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
+            <div style={{ zIndex: z.forestRiver, height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
                 <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
             </div>
