@@ -35,6 +35,11 @@
     "lang": "Det går inte att byta språk mitt i ett möte.\nVill du börja om från början?"
   },
   "restart": "Starta om",
+  "autoplayWarning": {
+    "title": "Är du fortfarande här?",
+    "body": "Du har varit inaktiv ett tag,\ntryck på knappen om du fortfarande är här.",
+    "confirm": "Jag är fortfarande här!"
+  },
   "name": {
     "title": "SÄG NÅT",
     "1": "Vill du tala i Skogsrådet?",
@@ -50,7 +55,11 @@
   },
   "human": {
     "1": "Skriv din fråga eller börja inspelning...",
-    "panelist": "Vad har {{name}} att säga om det här?"
+    "panelist": "Vad har {{name}} att säga om det här?",
+    "button_museum": "Håll in knappen för att tala, släpp för att skicka"
+  },
+  "metaAgent": {
+    "holdToSpeak": "Tryck på knappen för att tala"
   },
   "completed": {
     "title": "Var det allt?",
@@ -103,7 +112,8 @@
   },
   "replayModeBanner": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
-    "click": "Klicka här för att starta ett nytt möte."
+    "click": "Klicka här för att starta ett nytt möte.",
+    "pressButton": "Tryck på knappen för att starta ett nytt möte."
   },
   "selectissue": "välj ett ämne för dagens diskussion",
   "writetopic": "Skriv ett eget ämne...",
