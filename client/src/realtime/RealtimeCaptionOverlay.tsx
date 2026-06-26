@@ -137,13 +137,14 @@ export default function RealtimeCaptionOverlay(props: RealtimeCaptionOverlayProp
           {hasText ? (
             <>
               {lastUserTranscript ? (
-                <p style={{ ...secondaryStyle, margin: 0 }} data-testid="voice-guide-user">
+                <p style={{ ...secondaryStyle, margin: 0 }} data-testid="voice-guide-user" className="subtitle-text">
                   {lastUserTranscript}
                 </p>
               ) : null}
               {lastCaption ? (
                 <p
                   style={{ ...paragraphStyle, margin: lastUserTranscript ? "8px 0 0" : 0 }}
+                  className="subtitle-text"
                   data-testid="voice-guide-caption"
                 >
                   {lastCaption}

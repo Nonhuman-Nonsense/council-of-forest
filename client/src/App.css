@@ -471,6 +471,10 @@ nav.blur::before {
   }
 }
 
+.subtitle-text {
+  background-color: rgba(0,0,0,0.6);
+}
+
 /* Shared rolling marquee banner (replay mode, push-to-talk hint, etc.) */
 .bottom-ui-banner-anchor {
   position: fixed;
