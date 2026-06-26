@@ -149,6 +149,7 @@ function Council({
     handleOnSkipBackward,
     handleOnSkipForward,
     handleOnSubmitHumanMessage,
+    handleOnAbandonHumanTurn,
     handleOnContinueMeetingLonger,
     handleOnAttemptResume,
     handleOnGenerateSummary,
@@ -246,6 +247,7 @@ function Council({
           isPanelist={councilState === 'human_panelist'}
           currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""}
           onSubmitHumanMessage={handleOnSubmitHumanMessage}
+          onAbandonHumanTurn={handleOnAbandonHumanTurn}
           isButtonMuseumMode={isButtonMuseumMode}
         />
       )}

@@ -138,6 +138,11 @@ export class MeetingManager implements IMeetingManager {
                     this.humanInputHandler.handleSubmitHumanPanelist(SubmitHumanPanelistSchema.parse(payload))
                 );
                 break;
+            case "skip_human_turn":
+                await this.withConversationTransition(() =>
+                    this.humanInputHandler.handleSkipHumanTurn()
+                );
+                break;
             case "submit_injection":
                 await this.withConversationTransition(() =>
                     this.humanInputHandler.handleSubmitInjection(InjectionMessageSchema.parse(payload))
@@ -392,7 +397,9 @@ export class MeetingManager implements IMeetingManager {
                 if (action.speaker) {
                     const panelistId = action.speaker.id;
                     const isFirstPanelistTurn = !meeting.conversation.some(
-                        (msg) => msg.type === "panelist" && msg.speaker === panelistId
+                        (msg) =>
+                            msg.speaker === panelistId &&
+                            (msg.type === "panelist" || msg.type === "skipped")
                     );
 
                     if (isFirstPanelistTurn) {
@@ -516,6 +523,9 @@ export class MeetingManager implements IMeetingManager {
 
         this.broadcaster.broadcastConversationUpdate(meeting.conversation);
         Logger.info(`meeting ${meeting._id}`, `message generated, index ${message_index}, speaker ${message.speaker}`);
+        if (message.askParticular) {
+            Logger.info(`meeting ${meeting._id}`, `${message.speaker} asked directly to ${message.askParticular}`);
+        }
 
         // Queue audio generation
         this.audioSystem.queueAudioGeneration(
