@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useMobile } from "@/utils";
+import { z } from "@/zIndexLayers";
 import { Sentence } from "@shared/ModelTypes";
 import React from 'react';
 import type { PlaybackStartInfo } from "./AudioOutputMessage";
@@ -190,14 +191,13 @@ function TextOutput({
 
   const textStyle: React.CSSProperties = {
     maxWidth: isMobile ? "85%" : "70%",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    zIndex: "3",
+    zIndex: z.councilControls,
     pointerEvents: 'auto'
   };
 
   return (
     <div style={{ ...textStyle, ...style }}>
-      <p style={paragraphStyle} data-testid="subtitle-text">{currentSnippet}</p>
+      <p style={paragraphStyle} data-testid="subtitle-text" className="subtitle-text">{currentSnippet}</p>
     </div>
   );
 }

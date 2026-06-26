@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fetchButtonBridgeHealth } from "@/museum/button/health";
+import { fetchButtonBridgeHealth } from "@/museum/button/buttonBridge";
 
 const runningHealth = {
   ok: true,
@@ -8,8 +8,8 @@ const runningHealth = {
   version: "1.0.0",
   serialDetail: "connected",
   serialMessage: "Council button connected at /dev/mock",
-  expectedVendorId: "239a",
-  scannedPorts: [{ path: "/dev/mock", vendorId: "239a", productId: "8014" }],
+  expectedVendorId: "2341",
+  scannedPorts: [{ path: "/dev/mock", vendorId: "2341", productId: "8037" }],
 };
 
 describe("fetchButtonBridgeHealth", () => {
@@ -29,8 +29,8 @@ describe("fetchButtonBridgeHealth", () => {
       version: "1.0.0",
       serialDetail: "connected",
       serialMessage: "Council button connected at /dev/mock",
-      expectedVendorId: "239a",
-      scannedPorts: [{ path: "/dev/mock", vendorId: "239a", productId: "8014" }],
+      expectedVendorId: "2341",
+      scannedPorts: [{ path: "/dev/mock", vendorId: "2341", productId: "8037" }],
     });
   });
 

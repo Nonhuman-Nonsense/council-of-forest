@@ -18,7 +18,7 @@ vi.mock('@utils/Logger.js', () => ({
 
 // Mock logic modules
 // We need to return mock instances so we can control their methods
-const mockHumanInputHandler = { handleSubmitHumanMessage: vi.fn(), handleSubmitHumanPanelist: vi.fn(), handleSubmitInjection: vi.fn() };
+const mockHumanInputHandler = { handleSubmitHumanMessage: vi.fn(), handleSubmitHumanPanelist: vi.fn(), handleSubmitInjection: vi.fn(), handleSkipHumanTurn: vi.fn() };
 const mockHandRaisingHandler = { handleRaiseHand: vi.fn() };
 const mockMeetingLifecycleHandler = {
     handleWrapUpMeeting: vi.fn(),
@@ -98,6 +98,12 @@ describe('Async Error Propagation (Comprehensive)', () => {
             mockObj: mockHumanInputHandler,
             method: 'handleSubmitHumanPanelist',
             payload: { text: 'Answer', speaker: 'Expert', type: 'panelist' }
+        },
+        {
+            event: 'skip_human_turn',
+            mockObj: mockHumanInputHandler,
+            method: 'handleSkipHumanTurn',
+            payload: undefined
         },
         {
             event: 'submit_injection',
@@ -193,7 +199,8 @@ describe('Async Error Propagation (Comprehensive)', () => {
             expect(Logger.error).toHaveBeenCalledWith(
                 expect.stringMatching(/^(meeting \d+|socket mock-socket)$/),
                 expect.stringContaining(`Error handling event ${event}; notifying client (500):`),
-                expect.any(Error)
+                expect.any(Error),
+                { clientImpact: 'terminal' },
             );
             Logger.error.mockClear();
         });
@@ -234,7 +241,8 @@ describe('Async Error Propagation (Comprehensive)', () => {
             expect(Logger.error).toHaveBeenCalledWith(
                 expect.stringMatching(/^(meeting \d+|socket mock-socket)$/),
                 expect.stringContaining(`Error handling event ${event}; notifying client (500):`),
-                expect.any(Error)
+                expect.any(Error),
+                { clientImpact: 'terminal' },
             );
             Logger.error.mockClear();
 
@@ -287,7 +295,8 @@ describe('Async Error Propagation (Comprehensive)', () => {
         expect(Logger.warn).toHaveBeenCalledWith(
             expect.stringMatching(/^(meeting \d+|socket mock-socket)$/),
             expect.stringContaining(`Validation error for ${event}; notifying client (400):`),
-            expect.any(ZodError)
+            expect.any(ZodError),
+            { clientImpact: 'notified' },
         );
     });
 
@@ -308,7 +317,8 @@ describe('Async Error Propagation (Comprehensive)', () => {
         expect(Logger.warn).toHaveBeenCalledWith(
             expect.stringMatching(/^(meeting \d+|socket mock-socket)$/),
             expect.stringContaining(`Validation error for ${event}; notifying client (400):`),
-            expect.any(ZodError)
+            expect.any(ZodError),
+            { clientImpact: 'notified' },
         );
     });
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Council from '@council/Council';
 import '@testing-library/jest-dom';
@@ -57,8 +57,25 @@ vi.mock('@council/FoodItem', () => ({ default: () => <div data-testid="food-item
 vi.mock('@main/overlay/Overlay', () => ({ default: ({ children }: any) => <div>{children}</div> }));
 vi.mock('@council/overlays/CouncilOverlays', () => ({ default: () => <div>Council Overlays</div> }));
 vi.mock('@main/Loading', () => ({ default: () => <div>Loading...</div> }));
-vi.mock('@council/output/Output', () => ({ default: () => <div>Output</div> }));
+vi.mock('@council/output/Output', () => ({
+    default: () => <div data-testid="output">Output</div>,
+}));
 vi.mock('@council/humanInput/HumanInput', () => ({ default: () => <div>Human Input</div> }));
+
+let mockMetaAgentActivate = false;
+
+vi.mock('@museum/metaAgent/MeetingMetaAgent', async () => {
+    const React = await import('react');
+    return {
+        default: (props: { setMetaAgentActive: (active: boolean) => void }) => {
+            React.useEffect(() => {
+                if (!mockMetaAgentActivate) return;
+                props.setMetaAgentActive(true);
+            }, []);
+            return null;
+        },
+    };
+});
 
 
 // Mock useCouncilMachine Hook
@@ -74,7 +91,6 @@ const mockCouncilStateMachine = {
         playNextIndex: 1,
         activeOverlay: null,
         summary: null,
-        humanName: '',
         isRaisedHand: false,
         currentMeetingId: 123,
         canGoBack: true,
@@ -95,7 +111,6 @@ const mockCouncilStateMachine = {
         handleHumanNameEntered: vi.fn(),
         handleOnRaiseHand: vi.fn(),
         cancelOverlay: vi.fn(),
-        setHumanName: vi.fn(),
         setIsRaisedHand: vi.fn(),
         setCurrentSnippetIndex: vi.fn(),
         toggleMute: mockToggleMute
@@ -107,10 +122,16 @@ vi.mock('@council/hooks/useCouncilMachine', () => ({
     useCouncilMachine: (...args: any[]) => mockUseCouncilMachine(...args)
 }));
 
-const mockUseAppMode = vi.fn(() => ({ isMuseumMode: false, mode: 'web' as const, setAppMode: vi.fn() }));
+const mockUseCouncilSettings = vi.fn(() => ({
+  isMuseumMode: false,
+  mode: 'web' as const,
+  setAppMode: vi.fn(),
+  pushToTalkMode: false,
+  setPushToTalkMode: vi.fn(),
+}));
 
-vi.mock('@/museum/useAppMode', () => ({
-    useAppMode: () => mockUseAppMode(),
+vi.mock('@/settings/councilSettings', () => ({
+    useCouncilSettings: () => mockUseCouncilSettings(),
 }));
 
 
@@ -124,16 +145,18 @@ describe('Council Component', () => {
         setConnectionError: vi.fn(),
         connectionError: false,
         audioContext: { current: null },
-        setAudioPaused: vi.fn(),
         currentSpeakerId: '',
         setCurrentSpeakerId: vi.fn(),
         isPaused: false,
         setPaused: vi.fn(),
+        metaAgentActive: false,
+        setMetaAgentActive: vi.fn(),
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
         mockNavigate.mockClear();
+        mockMetaAgentActivate = false;
         mockUseCouncilMachine.mockReturnValue(mockCouncilStateMachine);
         // Reset mock state defaults if needed
         mockCouncilStateMachine.state.councilState = 'playing';
@@ -183,15 +206,22 @@ describe('Council Component', () => {
         render(<Council {...defaultProps} />);
 
         expect(mockUseCouncilMachine).toHaveBeenCalledWith(expect.objectContaining({
+            humanName: '',
+            setHumanName: expect.any(Function),
             audioContext: defaultProps.audioContext,
             isPaused: defaultProps.isPaused,
             setPaused: defaultProps.setPaused,
-            setAudioPaused: defaultProps.setAudioPaused,
         }));
     });
 
     it('hides conversation controls in museum mode but keeps them in the layout', () => {
-        mockUseAppMode.mockReturnValue({ isMuseumMode: true, mode: 'museum', setAppMode: vi.fn() });
+        mockUseCouncilSettings.mockReturnValue({
+          isMuseumMode: true,
+          mode: 'museum',
+          setAppMode: vi.fn(),
+          pushToTalkMode: false,
+          setPushToTalkMode: vi.fn(),
+        });
 
         render(<Council {...defaultProps} />);
 
@@ -206,7 +236,10 @@ describe('Council Component', () => {
         render(<Council {...defaultProps} />);
 
         expect(defaultProps.setUnrecoverableError).toHaveBeenCalledWith(
-            'Internal state mismatch: human_panelist state requires an awaiting_human_panelist message.'
+            expect.objectContaining({
+                message: 'Internal state mismatch: human_panelist state requires an awaiting_human_panelist message.',
+                source: 'Council.human_panelist_state',
+            }),
         );
     });
 
@@ -243,5 +276,22 @@ describe('Council Component', () => {
         render(<Council {...defaultProps} />);
 
         expect(screen.getByText('Human Input')).toBeInTheDocument();
+    });
+
+    it('unmounts meeting output when meta agent is active', async () => {
+        mockMetaAgentActivate = true;
+        mockUseCouncilSettings.mockReturnValue({
+          isMuseumMode: true,
+          mode: 'museum',
+          setAppMode: vi.fn(),
+          pushToTalkMode: true,
+          setPushToTalkMode: vi.fn(),
+        });
+
+        render(<Council {...defaultProps} metaAgentActive={true} />);
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('output')).not.toBeInTheDocument();
+        });
     });
 });

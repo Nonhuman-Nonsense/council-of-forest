@@ -14,6 +14,7 @@
 import type { RealtimeSessionConfig } from "@realtime/realtimeProtocol";
 import type { ToolHandler, ToolResult } from "./guideTools";
 import type { CaptionScheduler } from "./captionScheduler";
+import { log as devLog, summarizeLogPayload } from "@/logger";
 
 export type RealtimeEventCtx = {
   /** Tool name -> handler. May change per render. */
@@ -31,6 +32,8 @@ export type EventLoopCallbacks = {
   onSessionReady?: () => void;
   /** Fired when an assistant response begins, before audio is audible. */
   onResponseStarted?: () => void;
+  /** Fired when an assistant response completes (`response.done`). */
+  onResponseDone?: () => void;
   /** Fired when the data channel reports that the audio content part exists. */
   onAudioPartReady?: () => void;
   /** Optional debug hook. */
@@ -68,6 +71,8 @@ export type EventLoop = {
   configureSession: (session: RealtimeSessionConfig, options?: ConfigureSessionOptions) => void;
   /** Send a manual user message to the conversation transcript. */
   sendUserMessage: (text: string) => void;
+  /** Cancel any in-flight model response (sends response.cancel). */
+  cancelActiveResponse: () => void;
 };
 
 type FunctionCallMeta = { name?: string; call_id?: string };
@@ -119,6 +124,16 @@ export function createEventLoop(params: {
     return true;
   };
 
+  const cancelActiveResponse = (): void => {
+    if (activeResponses > 0) {
+      send({ type: "response.cancel" });
+    }
+    captionScheduler?.cancel();
+    if (!captionScheduler) {
+      callbacks.onCaption(null);
+    }
+  };
+
   const trySendJson = (payload: unknown) => {
     try {
       send(payload);
@@ -138,11 +153,19 @@ export function createEventLoop(params: {
     } else {
       pendingOpeningGreeting = null;
     }
+    devLog.event("REALTIME", "OUT session.update", summarizeLogPayload({
+      model: session.model,
+      toolCount: session.tools?.length ?? 0,
+      toolNames: session.tools?.map((tool) => tool.name),
+      instructionsPreview: session.instructions,
+      triggerGreetingOnReady: options?.triggerGreetingOnReady ?? false,
+    }));
     log("send session.update", session);
     trySendJson({ type: "session.update", session });
   };
   
   const sendUserMessage = (text: string): void => {
+    devLog.event("REALTIME", "OUT user message", summarizeLogPayload({ text }));
     log("send user message", text);
     trySendJson({
       type: "conversation.item.create",
@@ -163,6 +186,7 @@ export function createEventLoop(params: {
 
     if (type === "session.updated") {
       sessionReady = true;
+      devLog.event("REALTIME", "IN session.updated");
       callbacks.onSessionReady?.();
       if (pendingOpeningGreeting != null) {
         const userText = pendingOpeningGreeting;
@@ -187,6 +211,7 @@ export function createEventLoop(params: {
 
     if (type === "response.created") {
       activeResponses += 1;
+      devLog.event("REALTIME", "IN response.created", { activeResponses });
       captionScheduler?.beginResponse();
       callbacks.onResponseStarted?.();
       return true;
@@ -195,10 +220,18 @@ export function createEventLoop(params: {
     if (type === "response.done") {
       activeResponses = Math.max(0, activeResponses - 1);
       const r = obj.response as { status?: string; status_details?: unknown } | undefined;
-      if (r?.status === "failed") log("response.failed", r.status_details);
+      if (r?.status === "failed") {
+        devLog.event("ERROR", "response.failed", r.status_details);
+        log("response.failed", r.status_details);
+      }
+      if (r?.status === "cancelled") {
+        devLog.event("REALTIME", "IN response.cancelled");
+      }
+      devLog.event("REALTIME", "IN response.done", { status: r?.status, activeResponses });
       if (r?.status === "cancelled" || r?.status === "failed") {
         captionScheduler?.cancel();
       }
+      callbacks.onResponseDone?.();
       if (pendingDeferredResponse && sessionReady && activeResponses === 0) {
         pendingDeferredResponse = false;
         send({ type: "response.create" });
@@ -239,9 +272,11 @@ export function createEventLoop(params: {
       }
 
       const handler = getCtx().toolHandlers[name];
+      devLog.event("AGENT", `tool ${name}`, summarizeLogPayload({ args: parsedArgs }));
       const result: ToolResult = handler
         ? await Promise.resolve(handler(parsedArgs))
         : { ok: false, error: `No handler for tool: ${name}` };
+      devLog.event("AGENT", `tool ${name} result`, summarizeLogPayload(result));
 
       trySendJson({
         type: "conversation.item.create",
@@ -256,7 +291,12 @@ export function createEventLoop(params: {
       // a response. With semantic_vad + create_response: true the server may
       // already be producing one for the next user turn; queueing another one
       // here is what caused the cancel-cascade in the old hook.
-      requestResponseIfIdle();
+      if (result.ok && result.suppressContinuation) {
+        cancelActiveResponse();
+        log("skip response.create: tool requested suppressContinuation");
+      } else {
+        requestResponseIfIdle();
+      }
       functionCallMeta.delete(itemId);
       return true;
     }
@@ -293,6 +333,7 @@ export function createEventLoop(params: {
     }
 
     if (type === "error") {
+      devLog.event("ERROR", "realtime event error", summarizeLogPayload(obj));
       log("event error raw", obj);
       const errRaw = obj.error;
       let message = "Voice guide error";
@@ -328,5 +369,12 @@ export function createEventLoop(params: {
     return false;
   };
 
-  return { handleEvent, requestResponseIfIdle, isResponseActive, configureSession, sendUserMessage };
+  return {
+    handleEvent,
+    requestResponseIfIdle,
+    isResponseActive,
+    configureSession,
+    sendUserMessage,
+    cancelActiveResponse,
+  };
 }

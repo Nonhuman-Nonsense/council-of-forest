@@ -9,6 +9,7 @@
 
 import type { RealtimeSessionServerDefaults } from "./realtimeProtocol";
 import type { IceServer, RealtimeBootstrapResponse } from "@shared/RealtimeSessionTypes";
+import { councilFetch } from "@/api/http";
 
 export type ConnectionLogger = (...args: unknown[]) => void;
 
@@ -72,7 +73,7 @@ async function fetchWithTimeout(
   externalSignal?.addEventListener("abort", onExternalAbort);
   try {
     if (externalSignal?.aborted) controller.abort();
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await councilFetch(input, { ...init, signal: controller.signal });
   } finally {
     window.clearTimeout(timeout);
     externalSignal?.removeEventListener("abort", onExternalAbort);
@@ -140,18 +141,22 @@ function parseRealtimeSessionServerDefaults(
 
 /**
  * One HTTP round-trip: shared app realtime bootstrap for a given feature.
+ *
+ * Pass `extraHeaders` to include additional headers such as `Authorization`
+ * for protected features like `meta-agent` and `human-input`.
  */
 export async function fetchRealtimeBootstrap(
   requestBody: Record<string, unknown>,
   log: ConnectionLogger = () => undefined,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  extraHeaders?: HeadersInit
 ): Promise<RealtimeBootstrapResponse & { session: RealtimeSessionServerDefaults }> {
   log("POST /api/realtime/bootstrap");
   const resp = await fetchWithTimeout(
     "/api/realtime/bootstrap",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(extraHeaders ?? {}) },
       body: JSON.stringify(requestBody),
     },
     FETCH_TIMEOUT_MS,

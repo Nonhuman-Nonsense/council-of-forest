@@ -119,6 +119,40 @@ export const MockFactory = {
             audioConcurrency: 2,
             voiceGuideRealtimeModel: "google-ai-studio/gemini-2.5-flash",
             voiceGuideRealtimeTranscriptionModel: "assemblyai/u3-rt-pro",
+            voiceGuideOpenAIRealtimeModel: "gpt-realtime",
+            chairRealtime: {
+                strategy: "unified",
+                languages: {
+                    en: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        ttsModel: "inworld-tts-1.5-max",
+                        transcriptionModel: "assemblyai/u3-rt-pro",
+                        agentVoice: null,
+                    },
+                    sv: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        ttsModel: "inworld-tts-2",
+                        transcriptionModel: "soniox/stt-rt-v4",
+                        agentVoice: null,
+                    },
+                },
+            },
+            humanInputRealtime: {
+                languages: {
+                    en: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        transcriptionModel: "assemblyai/u3-rt-pro",
+                    },
+                    sv: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        transcriptionModel: "soniox/stt-rt-v4",
+                    },
+                },
+            },
             speakerClassifierModel: "google-ai-studio/gemini-2.5-flash",
             directedSpeakerRouting: false,
             ...overrides,

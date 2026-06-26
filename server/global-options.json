@@ -43,5 +43,48 @@
   "voiceGuideRealtimeModel": "google-ai-studio/gemini-2.5-flash",
   "voiceGuideOpenAIRealtimeModel": "gpt-realtime",
   "voiceGuideRealtimeTranscriptionModel": "assemblyai/u3-rt-pro",
-  "speakerClassifierModel": "google-ai-studio/gemini-2.5-flash"
+  "humanInputRealtime": {
+    "languages": {
+      "en": {
+        "provider": "inworld",
+        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "transcriptionModel": "assemblyai/u3-rt-pro"
+      },
+      "sv": {
+        "provider": "inworld",
+        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "transcriptionModel": "soniox/stt-rt-v4"
+      }
+    }
+  },
+  "chairRealtime": {
+    "strategy": "split",
+    "languages": {
+      "en": {
+        "provider": "inworld",
+        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "ttsModel": "inworld-tts-1.5-max",
+        "transcriptionModel": "assemblyai/u3-rt-pro",
+        "agentVoice": {
+          "voice": "Ashley",
+          "voiceProvider": "inworld",
+          "voiceTemperature": 1.5
+        }
+      },
+      "sv": {
+        "provider": "inworld",
+        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "ttsModel": "inworld-tts-2",
+        "transcriptionModel": "soniox/stt-rt-v4",
+        "agentVoice": {
+          "voice": "Ashley",
+          "voiceProvider": "inworld",
+          "voiceLocale": "sv",
+          "voiceTemperature": 1.5
+        }
+      }
+    }
+  },
+  "speakerClassifierModel": "google-ai-studio/gemini-2.5-flash",
+  "autoplayEarliestMeetingDate": "2025-01-01T00:00:00.000Z"
 }

@@ -16,6 +16,9 @@
         "noEmit": true,
         "jsx": "react-jsx",
         "paths": {
+            "@/logger": [
+                "./src/logger.prod.ts"
+            ],
             "@/*": [
                 "./src/*"
             ],
@@ -45,6 +48,9 @@
             ],
             "@realtime/*": [
                 "./src/realtime/*"
+            ],
+            "@museum/*": [
+                "./src/museum/*"
             ],
             "@shared/*": [
                 "../shared/*"

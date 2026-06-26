@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useMobile, dvh } from "@/utils";
 import { useTranslation } from 'react-i18next';
 import { useRouting } from "@/routing";
-import { useAppMode } from "@/museum/useAppMode";
+import { useCouncilSettings } from "@/settings/councilSettings";
 import nonhumanLogo from "@assets/logos/nonhuman_nonsense_logo.png";
 import biosphereLogo from "@assets/logos/logo_biosphere.svg?url";
 
@@ -22,7 +22,7 @@ const Landing: React.FC = () => {
   const { newMeetingPath } = useRouting();
   const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
   const isMobile = useMobile();
-  const { isMuseumMode } = useAppMode();
+  const { isMuseumMode } = useCouncilSettings();
   const { t } = useTranslation();
 
   const wrapper: React.CSSProperties = {
@@ -37,10 +37,10 @@ const Landing: React.FC = () => {
   const welcomeStyle: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    height: "80%",
+    height: "77%",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: "5%"
+    justifyContent: isMuseumMode ? "center" : "space-between",
+    paddingBottom: "7%"
   };
 
   const logosRowStyle: React.CSSProperties = {
@@ -76,17 +76,18 @@ const Landing: React.FC = () => {
           <div style={{ textAlign: "center" }}>
             <h2 style={{ marginBottom: "-10px", marginTop: isMobile ? "0" : "" }}>{t('landing.welcome')}</h2>
             <h1 style={{ margin: isMobile ? "5px 0 0 0" : "" }}>{t('council').toUpperCase()}</h1>
-            <p>{t('landing.projectBy')}</p>
           </div>
 
-          <div style={logosRowStyle}>
-            <Link to={{ hash: "contact" }}>
-              <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
-            </Link>
-            <Link to={{ hash: "contact" }}>
-              <img src={biosphereLogo} alt={t('biosphere')} style={biosphereLogoStyle} />
-            </Link>
-          </div>
+          {!isMuseumMode && (
+            <div style={logosRowStyle}>
+              <Link to={{ hash: "contact" }}>
+                <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
+              </Link>
+              <Link to={{ hash: "contact" }}>
+                <img src={biosphereLogo} alt={t('biosphere')} style={biosphereLogoStyle} />
+              </Link>
+            </div>
+          )}
         </div>
 
         {isPortrait ?

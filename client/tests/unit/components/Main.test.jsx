@@ -1,6 +1,6 @@
 
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import Main from '@main/Main';
 import routes from '@/routes.json';
@@ -58,6 +58,9 @@ vi.mock('@main/overlay/RotateDevice', () => ({
 vi.mock('@voice/MeetingVoiceGuide', () => ({
     default: () => null,
 }));
+vi.mock('@/museum/button/MuseumButton', () => ({
+    default: () => <div data-testid="museum-button">MuseumButton</div>,
+}));
 vi.mock('@main/FullscreenButton', () => ({
     default: () => <div data-testid="fullscreen-btn">Fullscreen</div>
 }));
@@ -99,6 +102,32 @@ window.AudioContext = class {
 };
 
 describe('Main Component', () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
+    it('does not mount MuseumButton when push-to-talk is off', () => {
+        render(
+            <MemoryRouter initialEntries={['/']}>
+                <Main lang="en" />
+            </MemoryRouter>
+        );
+
+        expect(screen.queryByTestId('museum-button')).not.toBeInTheDocument();
+    });
+
+    it('mounts MuseumButton when push-to-talk is on', async () => {
+        localStorage.setItem('councilPushToTalk', 'true');
+
+        render(
+            <MemoryRouter initialEntries={['/']}>
+                <Main lang="en" />
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByTestId('museum-button')).toBeInTheDocument();
+    });
+
     it('renders Council on meeting route', () => {
         render(
             <MemoryRouter initialEntries={[`/en/${routes.meeting}/42`]}>
@@ -113,9 +142,10 @@ describe('Main Component', () => {
             currentSpeakerId: '',
             isPaused: false,
             audioContext: expect.objectContaining({ current: expect.any(window.AudioContext) }),
-            setAudioPaused: expect.any(Function),
             setCurrentSpeakerId: expect.any(Function),
             setPaused: expect.any(Function),
+            metaAgentActive: false,
+            setMetaAgentActive: expect.any(Function),
         }));
     });
 });

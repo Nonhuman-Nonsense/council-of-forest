@@ -3,9 +3,13 @@ import { useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useCouncilSocket } from "./useCouncilSocket";
 import type { Character, Message, Meeting, Topic } from "@shared/ModelTypes";
-import type { PublicAudioClipResponse, DecodedAudioMessage } from "@shared/SocketTypes";
+import type { DecodedAudioMessage } from "@shared/SocketTypes";
 import { CouncilOverlayType } from "../overlays/CouncilOverlays";
 import { resumeMeeting, ResumeMeetingError } from "@api/resumeMeeting";
+import { councilFetch } from "@api/http";
+import { httpErrorMessage } from "@api/httpErrorMessage";
+import type { SetUnrecoverableError } from "@main/overlay/CouncilError";
+import { notifyAutoplay } from "@/autoplay/autoplayStore";
 
 /** Keep the loading UI visible this long on first paint so the Loading animation can run. */
 const MIN_INITIAL_LOADING_DISPLAY_MS = import.meta.env.VITEST ? 0 : 2000;
@@ -17,14 +21,14 @@ export interface UseCouncilMachineProps {
     replayManifest: Meeting | null;
     topic: Topic | null;
     participants: Character[] | null;
-    initialHumanName?: string;
+    humanName: string;
+    setHumanName: (name: string) => void;
     audioContext: React.RefObject<AudioContext | null>;
-    setUnrecoverableError: (message: string) => void;
+    setUnrecoverableError: SetUnrecoverableError;
     setConnectionError: (error: boolean) => void;
     connectionError: boolean;
     isPaused: boolean;
     setPaused: (paused: boolean) => void;
-    setAudioPaused?: (paused: boolean) => void;
 }
 
 export type CouncilState =
@@ -44,14 +48,14 @@ export function useCouncilMachine({
     replayManifest,
     topic: _topic,
     participants: _participants,
-    initialHumanName,
+    humanName,
+    setHumanName,
     audioContext,
     setUnrecoverableError,
     setConnectionError,
     connectionError,
     isPaused,
     setPaused,
-    setAudioPaused,
 }: UseCouncilMachineProps) {
 
     const { t } = useTranslation();
@@ -70,14 +74,7 @@ export function useCouncilMachine({
     const [activeOverlay, setActiveOverlay] = useState<CouncilOverlayType | null>(null);
     const [summary, setSummary] = useState<Message | null>(null);
 
-    const [humanName, setHumanName] = useState(initialHumanName ?? "");
     const [isRaisedHand, setIsRaisedHand] = useState(false);
-
-    useEffect(() => {
-        if (initialHumanName && initialHumanName.trim().length > 0) {
-            setHumanName(initialHumanName.trim());
-        }
-    }, [initialHumanName]);
 
     // Connection variables
     const [attemptingReconnect, setAttemptingReconnect] = useState(false);
@@ -141,7 +138,12 @@ export function useCouncilMachine({
         onError: (error) => {
             console.error(error);
             const msg = error.message?.trim() ? error.message : t("error.1");
-            setUnrecoverableError(msg);
+            setUnrecoverableError({
+                message: msg,
+                source: "useCouncilMachine.conversation_error",
+                cause: error,
+                meetingId: currentMeetingId,
+            });
         },
         onConnectionError: (err) => {
             console.error(err);
@@ -169,15 +171,16 @@ export function useCouncilMachine({
 
     const decodeReplayClip = useCallback(
         async (audioId: string, signal: AbortSignal): Promise<DecodedAudioMessage> => {
-            const res = await fetch(`/api/audio/${encodeURIComponent(audioId)}`, {
+            const res = await councilFetch(`/api/audio/${encodeURIComponent(audioId)}`, {
                 method: "GET",
                 headers: { Accept: "application/json" },
                 signal,
             });
             if (!res.ok) {
-                throw new Error(`Replay audio fetch failed (${res.status})`);
+                const message = await httpErrorMessage(res, `Replay audio fetch failed (${res.status})`);
+                throw new Error(message);
             }
-            const clip = (await res.json()) as PublicAudioClipResponse;
+            const clip = await res.json();
             const ctx = audioContext.current;
             if (!ctx) {
                 throw new Error("AudioContext not available");
@@ -214,7 +217,13 @@ export function useCouncilMachine({
             }
         } catch (e) {
             if (!ac.signal.aborted) {
-                setUnrecoverableError(t("error.audioLoad"));
+                const msg = t("error.audioLoad");
+                setUnrecoverableError({
+                    message: msg,
+                    source: "useCouncilMachine.audioDownload",
+                    cause: e,
+                    meetingId: currentMeetingId,
+                });
                 console.error("Audio download error", e);
             }
         }
@@ -394,6 +403,10 @@ export function useCouncilMachine({
     /* -------------------------------------------------------------------------- */
 
     function handleOnFinishedPlaying() {
+        const activeMessage = textMessages[playingNowIndex];
+        if (councilState === "summary" && activeMessage?.type === "summary") {
+            notifyAutoplay({ type: "summary-playback-finished" });
+        }
         calculateNextAction(true);
     }
 
@@ -420,7 +433,11 @@ export function useCouncilMachine({
             if (pendingMessage?.type !== 'awaiting_human_panelist') {
                 const detail = "Internal state mismatch: expected awaiting_human_panelist before submitting panelist response.";
                 console.error(detail);
-                setUnrecoverableError(detail);
+                setUnrecoverableError({
+                    message: detail,
+                    source: "useCouncilMachine.submit_panelist",
+                    meetingId: currentMeetingId,
+                });
                 return;
             }
 
@@ -446,6 +463,47 @@ export function useCouncilMachine({
             setIsRaisedHand(false);
             calculateNextAction();
         }
+    }
+
+    function handleOnAbandonHumanTurn() {
+        const expectedType =
+            councilState === "human_panelist" ? "awaiting_human_panelist" : "awaiting_human_question";
+        const awaitingMsg = textMessages[playNextIndex];
+        if (awaitingMsg?.type !== expectedType) {
+            const detail = `Internal state mismatch: expected ${expectedType} before abandoning human turn.`;
+            console.error(detail);
+            setUnrecoverableError({
+                message: detail,
+                source: "useCouncilMachine.skip_human_turn",
+                meetingId: currentMeetingId,
+            });
+            return;
+        }
+
+        if (socketRef.current) socketRef.current.emit("skip_human_turn");
+
+        const speaker =
+            awaitingMsg.type === "awaiting_human_panelist" ? awaitingMsg.speaker : humanName;
+
+        const now =
+            textMessages[playingNowIndex]?.type === "invitation" ? playingNowIndex - 1 : playingNowIndex;
+        const next =
+            textMessages[playingNowIndex]?.type === "invitation" ? playNextIndex - 1 : playNextIndex;
+
+        setTextMessages((prevMessages) => {
+            const base = prevMessages.slice(0, next);
+            base.push({
+                type: "skipped",
+                speaker,
+                text: "",
+                id: `skip-local-${Date.now()}`,
+            });
+            return base;
+        });
+        setPlayingNowIndex(now);
+        setPlayNextIndex(next);
+        setIsRaisedHand(false);
+        calculateNextAction();
     }
 
     function cancelOverlay() {
@@ -543,7 +601,12 @@ export function useCouncilMachine({
                     : err instanceof Error && err.message.trim().length > 0
                       ? err.message
                       : t("error.1");
-            setUnrecoverableError(msg);
+            setUnrecoverableError({
+                message: msg,
+                source: "useCouncilMachine.resume",
+                cause: err,
+                meetingId: currentMeetingId,
+            });
         }
     }
 
@@ -645,22 +708,7 @@ export function useCouncilMachine({
         } else if (connectionError) {
             setPaused(true);
         }
-
-        // Audio Context Suspension
-        if (isPaused) {
-            if (setAudioPaused) {
-                setAudioPaused(true);
-            } else if (audioContext.current && audioContext.current.state !== "suspended") {
-                audioContext.current.suspend();
-            }
-        } else {
-            if (setAudioPaused) {
-                setAudioPaused(false);
-            } else if (audioContext.current && audioContext.current.state === "suspended") {
-                audioContext.current.resume();
-            }
-        }
-    }, [isPaused, activeOverlay, location, connectionError, setAudioPaused, councilState]);
+    }, [isPaused, activeOverlay, location, connectionError, setPaused]);
 
     useEffect(() => {
         if (councilState === 'waiting') {
@@ -694,7 +742,6 @@ export function useCouncilMachine({
             playNextIndex,
             activeOverlay,
             summary,
-            humanName,
             isRaisedHand,
             currentMeetingId,
             canGoBack,
@@ -710,13 +757,13 @@ export function useCouncilMachine({
             handleOnSkipBackward,
             handleOnSkipForward,
             handleOnSubmitHumanMessage,
+            handleOnAbandonHumanTurn,
             handleOnContinueMeetingLonger,
             handleOnAttemptResume,
             handleOnGenerateSummary,
             handleHumanNameEntered,
             handleOnRaiseHand,
             cancelOverlay,
-            setHumanName,
             setIsRaisedHand,
             setCurrentSnippetIndex,
             toggleMute
