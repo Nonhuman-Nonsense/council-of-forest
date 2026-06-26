@@ -37,10 +37,10 @@ const Landing: React.FC = () => {
   const welcomeStyle: React.CSSProperties = {
     display: "flex",
     flexDirection: "column",
-    height: "80%",
+    height: "77%",
     alignItems: "center",
     justifyContent: isMuseumMode ? "center" : "space-between",
-    paddingBottom: "5%"
+    paddingBottom: "7%"
   };
 
   const logosRowStyle: React.CSSProperties = {
