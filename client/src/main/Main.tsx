@@ -26,11 +26,7 @@ import FullscreenButton from "./FullscreenButton";
 import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
-import {
-  createMeetingAudioContext,
-  useMeetingPlaybackSuspended,
-} from "@/audio/meetingAudio";
-import { createSceneAudioContext } from "@/audio/sceneAudio";
+import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait, dvh } from "@/utils";
 import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
@@ -67,24 +63,17 @@ export default function Main(props: MainProps) {
   //Had to lift up navbar state to this level to be able to close it from main overlay
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
 
-  // Lift speaker + pause state to Main: Forest mounts outside the routed Council tree.
-  // Meeting playback uses its own bus; scene bed (ambient + BeingAudio) stays on a
-  // separate context that meta-agent freeze must not suspend.
+  // Lifted for Forest (always-mounted scene outside Council).
   const [currentSpeakerId, setCurrentSpeakerId] = useState("");
   const [isPaused, setPaused] = useState(false);
   const [metaAgentActive, setMetaAgentActive] = useState(false);
-  const meetingAudioContext = useRef<AudioContext | null>(null);
-  const sceneAudioContext = useRef<AudioContext | null>(null);
-  const [meetingPlaybackPaused, setMeetingPlaybackPaused] = useState(false);
+  const audioContext = useRef<AudioContext | null>(null);
 
-  if (meetingAudioContext.current === null) {
-    meetingAudioContext.current = createMeetingAudioContext();
-  }
-  if (sceneAudioContext.current === null) {
-    sceneAudioContext.current = createSceneAudioContext();
+  if (audioContext.current === null) {
+    audioContext.current = createAudioContext();
   }
 
-  useMeetingPlaybackSuspended(meetingAudioContext, meetingPlaybackPaused);
+  useAudioSuspended(audioContext, isPaused);
   const { i18n } = useTranslation();
   const { rootPath, newMeetingPath } = useRouting();
   const location = useLocation();
@@ -185,7 +174,7 @@ export default function Main(props: MainProps) {
         currentSpeakerId={currentSpeakerId}
         metaAgentActive={metaAgentActive}
         isPaused={isPaused}
-        sceneAudioContext={sceneAudioContext}
+        audioContext={audioContext}
       />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: 1 }} />
       {!(unrecoverableError != null || connectionError) && ( !isMuseumMode &&
@@ -234,8 +223,7 @@ export default function Main(props: MainProps) {
                   setPaused={setPaused}
                   metaAgentActive={metaAgentActive}
                   setMetaAgentActive={setMetaAgentActive}
-                  meetingAudioContext={meetingAudioContext}
-                  setMeetingPlaybackPaused={setMeetingPlaybackPaused}
+                  audioContext={audioContext}
                 />
               }
             />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, createRef, CSSProperties, type RefObject } from "react";
 import FoodAnimation from "@council/FoodAnimation";
-import { dvh, minWindowHeight, useMobile, useDocumentVisibility } from "@/utils";
+import { dvh, minWindowHeight, useMobile } from "@/utils";
 import forestCharacters from "@shared/prompts/forest_characters.json";
 import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
@@ -20,7 +20,7 @@ type ForestCharacter = ForestManifestEntry & {
 type ForestProps = {
     currentSpeakerId: string;
     isPaused: boolean;
-    sceneAudioContext: RefObject<AudioContext | null>;
+    audioContext: RefObject<AudioContext | null>;
     metaAgentActive?: boolean;
 };
 
@@ -33,7 +33,7 @@ function ratioFor(id: string): number {
     return r;
 }
 
-function Forest({ currentSpeakerId, isPaused, sceneAudioContext, metaAgentActive = false }: ForestProps) {
+function Forest({ currentSpeakerId, isPaused, audioContext, metaAgentActive = false }: ForestProps) {
 
     const isMobile = useMobile();
 
@@ -159,11 +159,11 @@ function Forest({ currentSpeakerId, isPaused, sceneAudioContext, metaAgentActive
 
     return (
         <div style={container} ref={containerRef}>
-            <AmbientAudio sceneAudioContext={sceneAudioContext} />
+            <AmbientAudio audioContext={audioContext} />
             <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
-                <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} sceneAudioContext={sceneAudioContext} />
+                <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
             </div>
             {characters.map((character) => (
                 <div key={character.id}>
@@ -178,7 +178,7 @@ function Forest({ currentSpeakerId, isPaused, sceneAudioContext, metaAgentActive
                         isPaused={isPaused}
                         currentSpeakerId={currentSpeakerId}
                     />
-                    {character.audio && <BeingAudio id={character.id} volume={character.audio} currentSpeakerId={currentSpeakerId} sceneAudioContext={sceneAudioContext} />}
+                    {character.audio && <BeingAudio id={character.id} volume={character.audio} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />}
                 </div>
             ))}
         </div >
@@ -215,10 +215,10 @@ type BeingAudioProps = {
     id: string;
     currentSpeakerId: string;
     volume: number;
-    sceneAudioContext: RefObject<AudioContext | null>;
+    audioContext: RefObject<AudioContext | null>;
 };
 
-function BeingAudio({ id, currentSpeakerId, volume, sceneAudioContext }: BeingAudioProps) {
+function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
     const gainNode = useRef(null); //The general volume control node
     const sourceNode = useRef(null);
 
@@ -234,17 +234,17 @@ function BeingAudio({ id, currentSpeakerId, volume, sceneAudioContext }: BeingAu
 
     useEffect(() => {
         if (play) {
-            gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
-            gainNode.current.gain.linearRampToValueAtTime(volume, sceneAudioContext.current.currentTime + 2);
+            gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
+            gainNode.current.gain.linearRampToValueAtTime(volume, audioContext.current.currentTime + 2);
         } else {
-            gainNode.current.gain.linearRampToValueAtTime(0, sceneAudioContext.current.currentTime + 2);
+            gainNode.current.gain.linearRampToValueAtTime(0, audioContext.current.currentTime + 2);
         }
     }, [play]);
 
-    if (sceneAudioContext.current && gainNode.current === null) {
-        gainNode.current = sceneAudioContext.current.createGain();
-        gainNode.current.connect(sceneAudioContext.current.destination);
-        sourceNode.current = sceneAudioContext.current.createBufferSource();
+    if (audioContext.current && gainNode.current === null) {
+        gainNode.current = audioContext.current.createGain();
+        gainNode.current.connect(audioContext.current.destination);
+        sourceNode.current = audioContext.current.createBufferSource();
 
         loadBeingAudio();
     }
@@ -253,12 +253,12 @@ function BeingAudio({ id, currentSpeakerId, volume, sceneAudioContext }: BeingAu
 
         const audioBuffer = await fetch(characterMp3Url(id))
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => sceneAudioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
 
         sourceNode.current.buffer = audioBuffer;
         sourceNode.current.loop = true;
         sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
+        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
         sourceNode.current.start();
     }
 
@@ -266,49 +266,38 @@ function BeingAudio({ id, currentSpeakerId, volume, sceneAudioContext }: BeingAu
 }
 
 type AmbientAudioProps = {
-    sceneAudioContext: RefObject<AudioContext | null>;
+    audioContext: RefObject<AudioContext | null>;
 };
 
-function AmbientAudio({ sceneAudioContext }: AmbientAudioProps) {
+function AmbientAudio({ audioContext }: AmbientAudioProps) {
     const gainNode = useRef(null); //The general volume control node
     const sourceNode = useRef(null);
 
     //Global ambience volume
     const onVolume = 0.05;
 
-    const isDocumentVisible = useDocumentVisibility();
-
-    //Fade out ambience on tab onfocus
-    useEffect(() => {
-        if (!isDocumentVisible) {
-            gainNode.current.gain.linearRampToValueAtTime(0, sceneAudioContext.current.currentTime + 0.5);
-        } else {
-            gainNode.current.gain.linearRampToValueAtTime(onVolume, sceneAudioContext.current.currentTime + 5);
-        }
-    }, [isDocumentVisible]);
-
-    if (sceneAudioContext.current && gainNode.current === null) {
-        gainNode.current = sceneAudioContext.current.createGain();
-        gainNode.current.connect(sceneAudioContext.current.destination);
+    if (audioContext.current && gainNode.current === null) {
+        gainNode.current = audioContext.current.createGain();
+        gainNode.current.connect(audioContext.current.destination);
 
         //Set ambience volume
-        gainNode.current.gain.setValueAtTime(onVolume, sceneAudioContext.current.currentTime);
+        gainNode.current.gain.setValueAtTime(onVolume, audioContext.current.currentTime);
 
 
-        sourceNode.current = sceneAudioContext.current.createBufferSource();
+        sourceNode.current = audioContext.current.createBufferSource();
         loadAmbience();
     }
 
     async function loadAmbience() {
         const audioBuffer = await fetch(characterAmbienceUrl)
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => sceneAudioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
 
         sourceNode.current.buffer = audioBuffer;
         sourceNode.current.loop = true;
         sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, sceneAudioContext.current.currentTime);
-        gainNode.current.gain.linearRampToValueAtTime(onVolume, sceneAudioContext.current.currentTime + 5);
+        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
+        gainNode.current.gain.linearRampToValueAtTime(onVolume, audioContext.current.currentTime + 5);
         sourceNode.current.start();
     }
 

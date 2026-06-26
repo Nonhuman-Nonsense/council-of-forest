@@ -53,7 +53,7 @@ describe('Forest Content & Branding', () => {
             }
         };
 
-        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} sceneAudioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />);
 
         // Characters might be images or videos depending on the type/browser support mocked.
         // Easiest is to check that their source files are present in the DOM.
