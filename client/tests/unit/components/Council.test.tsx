@@ -98,7 +98,6 @@ const mockCouncilStateMachine = {
         canRaiseHand: true,
         currentSnippetIndex: 0,
         isMuted: false, // Default
-        canExtendMeeting: true,
     },
     actions: {
         tryToFindTextAndAudio: vi.fn().mockReturnValue(true),
