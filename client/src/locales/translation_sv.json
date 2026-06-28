@@ -61,12 +61,12 @@
   "metaAgent": {
     "holdToSpeak": "Tryck på knappen för att tala"
   },
-  "completed": {
+  "queryExtension": {
     "title": "Var det allt?",
     "1": "Mötet börjar bli långdraget,",
     "2": "är det dags att komma till ett avslut?",
-    "3": "Ja, vi sammanfattar!",
-    "4": "Nej, fortsätt lite till."
+    "3": "Ja, avsluta mötet!",
+    "4": "Nej, förläng mötet lite till."
   },
   "incomplete": {
     "title": "Ofullständigt möte",

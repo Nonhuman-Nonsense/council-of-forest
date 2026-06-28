@@ -1,5 +1,5 @@
 import type { Message } from '@shared/ModelTypes.js';
-import type { SetupOptions } from '@shared/SocketTypes.js';
+import type { ConcludeMeetingMessage, SetupOptions } from '@shared/SocketTypes.js';
 import type { ILifecycleContext } from "@interfaces/MeetingInterfaces.js";
 import type { Message as AudioMessage } from "@logic/AudioSystem.js";
 import { splitSentences } from "@shared/textUtils.js";
@@ -7,13 +7,9 @@ import { Logger } from "@utils/Logger.js";
 import removeMd from 'remove-markdown';
 import type { StoredMeeting } from "@models/DBModels.js";
 
-interface WrapUpMessage {
-    date: string;
-}
-
 /**
- * Manages the high-level lifecycle of a meeting: Start, Wrap-Up, and Continuation.
- * Handles initialization of session state, emitting lifecycle events, and managing the End-of-Meeting summary flow.
+ * Manages the high-level lifecycle of a meeting: Start, Conclude, Extend, and Summarize.
+ * Handles initialization of session state, emitting lifecycle events, and managing the end-of-meeting flow.
  */
 export class MeetingLifecycleHandler {
     manager: ILifecycleContext;
@@ -47,32 +43,83 @@ export class MeetingLifecycleHandler {
     }
 
     /**
-     * Ends the meeting by generating a final summary from the Chair.
-     * Persists the summary to DB and emits update.
+     * Concludes the meeting: chair closing line (broadcast immediately), then summary.
      */
-    async handleWrapUpMeeting(message: WrapUpMessage): Promise<void> {
+    async handleConcludeMeeting(message: ConcludeMeetingMessage): Promise<void> {
         const { manager } = this;
         const m = manager.meeting;
         if (!m) return;
 
-        Logger.info(`meeting ${m._id}`, "attempting to wrap up");
+        Logger.info(`meeting ${m._id}`, "attempting to conclude meeting");
 
-        //remove the max reached message
         const queryExtensionIndex = m.conversation.findIndex((m) => m.type === "query_extension");
         if (queryExtensionIndex !== -1) {
             m.conversation = m.conversation.slice(0, queryExtensionIndex);
         } else {
-            Logger.info(`meeting ${m._id}`, 'wrap up without query_extension sentinel (hard cap auto conclude)');
+            Logger.info(`meeting ${m._id}`, 'conclude meeting without query_extension sentinel (hard cap auto conclude)');
         }
 
-        //generate the summary
-        const summaryPrompt = manager.serverOptions.finalizeMeetingPrompt[m.language].replace("[DATE]", message.date);
+        const chair = m.characters[0];
+        const closingIndex = m.conversation.length;
+        const closingPrompt = manager.serverOptions.concludeMeetingPrompt[m.language];
+        const { response: closingResponse, id: closingId } = await manager.dialogGenerator.chairInterjection(
+            closingPrompt,
+            closingIndex,
+            manager.serverOptions.concludeMeetingLength,
+            true,
+            m,
+            manager.broadcaster
+        );
 
-        // Note: chairInterjection is on manager (delegated to DialogGenerator)
+        const firstNewLineIndex = closingResponse.indexOf("\n\n");
+        const closingText = firstNewLineIndex !== -1
+            ? closingResponse.substring(0, firstNewLineIndex)
+            : closingResponse;
+        const closingMessage: Message = {
+            id: closingId || "",
+            speaker: chair.id,
+            text: closingText,
+            type: "message",
+            sentences: splitSentences(closingText),
+        };
+
+        m.conversation.push(closingMessage);
+        Logger.info(`meeting ${m._id}`, `closing statement generated on index ${closingIndex}`);
+
+        manager.broadcaster.broadcastConversationUpdate(m.conversation);
+
+        if (m._id !== null) {
+            await manager.services.meetingsCollection.updateOne(
+                { _id: m._id },
+                { $set: { conversation: m.conversation } }
+            );
+
+            manager.audioSystem.queueAudioGeneration(
+                { ...closingMessage, id: closingMessage.id as string, text: closingMessage.text as string, sentences: closingMessage.sentences! },
+                chair,
+                m,
+                manager.environment,
+                manager.serverOptions
+            );
+        }
+
+        await this.summarizeMeeting(message.date);
+    }
+
+    /**
+     * Generates and persists the meeting summary after the chair closing line.
+     */
+    private async summarizeMeeting(date: string): Promise<void> {
+        const { manager } = this;
+        const m = manager.meeting;
+        if (!m) return;
+
+        const chair = m.characters[0];
+        const summaryPrompt = manager.serverOptions.summarizeMeetingPrompt[m.language].replace("[DATE]", date);
         const { response, id } = await manager.dialogGenerator.chairInterjection(
             summaryPrompt,
             m.conversation.length,
-            manager.serverOptions.finalizeMeetingLength,
+            manager.serverOptions.summarizeMeetingLength,
             true,
             m,
             manager.broadcaster
@@ -83,8 +130,8 @@ export class MeetingLifecycleHandler {
 
         const summary: Message = {
             id: id || "",
-            speaker: m.characters[0].id,
-            text: response, // Keep markdown for display
+            speaker: chair.id,
+            text: response,
             type: "summary",
             sentences: []
         };
@@ -115,7 +162,7 @@ export class MeetingLifecycleHandler {
         if (m._id !== null) {
             void manager.audioSystem.generateAudio(
                 audioMessage as AudioMessage,
-                m.characters[0],
+                chair,
                 m.language,
                 manager.serverOptions,
                 m,
@@ -128,17 +175,17 @@ export class MeetingLifecycleHandler {
     /**
      * Extends the meeting length and resumes the conversation loop if it had stopped due to length limits.
      */
-    async handleContinueConversation(): Promise<void> {
+    async handleExtendMeeting(): Promise<void> {
         const { manager } = this;
         const m = manager.meeting;
         if (!m) return;
 
-        Logger.info(`meeting ${m._id}`, "continuing conversation");
+        Logger.info(`meeting ${m._id}`, "extending meeting");
 
-        //remove the max reached message
+        // Strip query_extension sentinel before extending.
         const queryExtensionIndex = m.conversation.findIndex((m) => m.type === "query_extension");
         if (queryExtensionIndex === -1) {
-            throw new Error("Attempted to continue meeting but not at query_extension sentinel");
+            throw new Error("Attempted to extend meeting but not at query_extension sentinel");
         }
         m.conversation = m.conversation.slice(0, queryExtensionIndex);
 

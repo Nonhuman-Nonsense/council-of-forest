@@ -149,9 +149,9 @@ function Council({
     handleOnSkipForward,
     handleOnSubmitHumanMessage,
     handleOnAbandonHumanTurn,
-    handleOnContinueMeetingLonger,
+    handleOnExtendMeeting,
     handleOnAttemptResume,
-    handleOnGenerateSummary,
+    handleOnConcludeMeeting,
     handleHumanNameEntered,
     handleOnRaiseHand,
     cancelOverlay,
@@ -296,9 +296,9 @@ function Council({
         {activeOverlay !== null && (
           <CouncilOverlays
             activeOverlay={activeOverlay}
-            onContinue={handleOnContinueMeetingLonger}
+            onExtendMeeting={handleOnExtendMeeting}
             onAttemptResume={handleOnAttemptResume}
-            onWrapItUp={handleOnGenerateSummary}
+            onConcludeMeeting={handleOnConcludeMeeting}
             proceedWithHumanName={handleHumanNameEntered}
             cancelOverlay={cancelOverlay}
             summary={{ text: summary?.text || "" }}

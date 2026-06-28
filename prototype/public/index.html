@@ -223,7 +223,7 @@
               <button v-if="status === 'PAUSED'" class="primary" @click="resumeConversation">Resume</button>
               <button v-if="status === 'ACTIVE' || status === 'CONNECTING'" @click="pauseConversation">Pause</button>
               <button v-if="status === 'PAUSED' || status === 'ENDED'" @click="restartConversation">Restart</button>
-              <button v-if="status === 'ENDED' && canContinueMeeting" class="primary" @click="continueConversation">Keep Going</button>
+              <button v-if="status === 'ENDED' && hasQueryExtension" class="primary" @click="extendMeeting">Extend</button>
 
               <div style="border-left: 1px solid var(--border-color); margin: 0 5px;"></div>
 
@@ -277,7 +277,7 @@
 
               <template v-if="turn.type === 'query_extension'">
                 <div style="color: var(--text-secondary); font-size: 0.95em;">
-                  Conversation reached the current length limit — extend or wrap up.
+                  Conversation reached the current length limit — extend or conclude.
                 </div>
               </template>
 
