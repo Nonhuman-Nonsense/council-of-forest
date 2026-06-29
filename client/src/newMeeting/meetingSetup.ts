@@ -1,4 +1,6 @@
 import type { Character, Topic } from "@shared/ModelTypes";
+import { injectRandomAgendaPoint } from "@shared/agendaPointInjection";
+import { buildMeetingSystemPrompt, VISITOR_INPUT_PLACEHOLDER } from "@shared/topicPrompt";
 import { toTitleCase } from "@/utils";
 import type { TopicsData } from "@main/topicsBundle";
 import { getCharacterSetupBundle } from "./CharacterSetup";
@@ -9,6 +11,33 @@ export type MeetingCharactersI18n = {
 };
 
 export type MeetingSetupPhase = "landing" | "topic" | "characters";
+
+function isPanelistId(id: string): boolean {
+  return id.startsWith("panelist");
+}
+
+/**
+ * In museum mode, place human panelist(s) near the middle of the lineup.
+ * When the food count is odd, lean toward the later side (more foods before than after).
+ */
+export function orderSelectedCharactersForMuseum(selectedCharacters: string[]): string[] {
+  const panelists = selectedCharacters.filter(isPanelistId);
+  const nonPanelists = selectedCharacters.filter((id) => !isPanelistId(id));
+
+  if (panelists.length === 0 || nonPanelists.length === 0) {
+    return selectedCharacters;
+  }
+
+  const chair = nonPanelists[0];
+  const foods = nonPanelists.slice(1);
+
+  if (foods.length === 0) {
+    return [chair, ...panelists];
+  }
+
+  const insertAt = Math.ceil(foods.length / 2);
+  return [chair, ...foods.slice(0, insertAt), ...panelists, ...foods.slice(insertAt)];
+}
 
 export type MeetingSetupUserEvent =
   | {
@@ -58,16 +87,22 @@ export function buildTopicFromSelection(params: {
 
   const built = structuredClone(raw);
   if (built.id === topicsBundle.custom_topic.id) {
-    built.prompt = customTopic;
+    built.prompt = (built.prompt || "").replace(VISITOR_INPUT_PLACEHOLDER, customTopic.trim());
     built.description = customTopic;
+    built.agendaPoints = undefined;
   }
-  built.prompt = topicsBundle.system.replace("[TOPIC]", built.prompt);
+  built.prompt = buildMeetingSystemPrompt(
+    topicsBundle.system,
+    built.prompt,
+    built.agendaPoints,
+    topicsBundle.language,
+  );
   return built;
 }
 
 /**
  * Validates character-selection state and builds the meeting `characters` payload,
- * including chair `[CHARACTERS]` / `[HUMANS]` prompt injection.
+ * including chair `[CHARACTERS]`, `[HUMANS]`, and `[RANDOM_AGENDA_POINT]` prompt injection.
  */
 export function buildMeetingCharactersPayload(params: {
   language: string;
@@ -75,8 +110,15 @@ export function buildMeetingCharactersPayload(params: {
   humans: Character[];
   numberOfHumans: number;
   labels: MeetingCharactersI18n;
+  agendaPoints?: string[];
+  isMuseumMode?: boolean;
 }): { ok: true; characters: Character[] } | { ok: false; error: string } {
-  const { language, selectedCharacters, humans, numberOfHumans, labels } = params;
+  const { language, humans, numberOfHumans, labels, agendaPoints, isMuseumMode = false } = params;
+  let { selectedCharacters } = params;
+
+  if (isMuseumMode) {
+    selectedCharacters = orderSelectedCharactersForMuseum(selectedCharacters);
+  }
   const characterSetupData = getCharacterSetupBundle(language);
   const baseCharacters = characterSetupData.characters;
   const characters = [...baseCharacters, ...humans.slice(0, numberOfHumans)];
@@ -99,7 +141,13 @@ export function buildMeetingCharactersPayload(params: {
   for (const humanId of selectedHumans) {
     const index = Number(humanId.slice(-1));
     const human = humans[index];
-    if (human && (human.name.length === 0 || (human.description?.length ?? 0) === 0)) {
+    if (!human || human.name.length === 0) {
+      return {
+        ok: false,
+        error: "Each human panelist needs a name before starting.",
+      };
+    }
+    if (!isMuseumMode && (human.description?.length ?? 0) === 0) {
       return {
         ok: false,
         error: "Each human panelist needs a name and description before starting.",
@@ -153,7 +201,12 @@ export function buildMeetingCharactersPayload(params: {
     for (const id of participatingHumans) {
       const human = characters.find((character) => character.id === id);
       if (human) {
-        humanPresentation += `${toTitleCase(human.name)}, ${human.description}. `;
+        const description = human.description?.trim();
+        if (description) {
+          humanPresentation += `${toTitleCase(human.name)}, ${description}. `;
+        } else {
+          humanPresentation += `${toTitleCase(human.name)}. `;
+        }
       }
     }
     humanPresentation = humanPresentation.substring(0, humanPresentation.length - 2);
@@ -163,6 +216,7 @@ export function buildMeetingCharactersPayload(params: {
 
   if (replacedCharacters.length > 0 && replacedCharacters[0].prompt) {
     replacedCharacters[0].prompt = replacedCharacters[0].prompt.replace("[HUMANS]", humanPresentation);
+    replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints);
   }
 
   return { ok: true, characters: replacedCharacters };

@@ -3,20 +3,22 @@ import type { Character } from "@shared/ModelTypes";
 import { toTitleCase, useMobile, useMobileXs } from "@/utils";
 import { useTranslation } from "react-i18next";
 import VideoPreloader from "@main/VideoPreloader";
-import { globalClientOptions } from "@/globalClientOptions";
+import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 import { characterIconWebpUrl } from "@assets/characters/characterData";
-import { useMeetingSetupStore } from "@stores/useMeetingSetupStore";
-import { buildMeetingCharactersPayload } from "./meetingSetup";
+import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
+import { buildMeetingCharactersPayload, orderSelectedCharactersForMuseum } from "./meetingSetup";
+import { useCouncilSettings } from "@/settings/councilSettings";
 import { getCharacterSetupBundle } from "./CharacterSetup";
 
 import Lottie from "react-lottie-player";
 import loadingAnimation from "@assets/animations/loading.json";
 
 export type { Character, CharacterSetupData } from "./CharacterSetup";
-export { getCharacterSetupBundle, createDefaultHumans, createHuman } from "./CharacterSetup";
+export { getCharacterSetupBundle, createDefaultHumans, createHuman, CHAIR_ID } from "./CharacterSetup";
 
 export interface SelectCharactersProps {
   topicTitle: string;
+  agendaPoints?: string[];
   onContinueForward: (data: { characters: Character[] }) => void | Promise<void>;
   loading?: boolean;
 }
@@ -46,6 +48,7 @@ function panelistIndexFromId(id: string): number | null {
  */
 function SelectCharacters({
   topicTitle,
+  agendaPoints,
   onContinueForward,
   loading = false,
 }: SelectCharactersProps): React.ReactElement {
@@ -71,6 +74,7 @@ function SelectCharacters({
 
   const isMobile = useMobile();
   const isMobileXs = useMobileXs();
+  const { isMuseumMode } = useCouncilSettings();
   const { t, i18n } = useTranslation();
 
   const characterSetupData = useMemo(() => {
@@ -107,6 +111,8 @@ function SelectCharacters({
         oneHuman: t("selectfoods.human"),
         twoHumansSuffix: t("selectfoods.twohumans"),
       },
+      agendaPoints,
+      isMuseumMode,
     });
     if (built.ok) {
       onContinueForward({ characters: built.characters });
@@ -154,13 +160,24 @@ function SelectCharacters({
     for (const humanId of selectedHumans) {
       const index = panelistIndexFromId(humanId);
       if (index !== null && humans[index]) {
-        if (humans[index].name.length === 0 || humans[index].description.length === 0) {
+        const needsDescription = !isMuseumMode && humans[index].description.length === 0;
+        if (humans[index].name.length === 0 || needsDescription) {
           ready = false;
         }
       }
     }
     setHumansReady(ready);
-  }, [recheckHumansReady, selectedCharacters, humans]);
+  }, [recheckHumansReady, selectedCharacters, humans, isMuseumMode]);
+
+  useEffect(() => {
+    if (!isMuseumMode) return;
+    if (!selectedCharacters.some(isPanelistId)) return;
+
+    const sorted = orderSelectedCharactersForMuseum(selectedCharacters);
+    if (sorted.join(",") !== selectedCharacters.join(",")) {
+      setSelectedCharacters(sorted);
+    }
+  }, [isMuseumMode, selectedCharacters, setSelectedCharacters]);
 
   function infoToShow(): React.ReactNode {
     if (hoveredCharacter === "addhuman") {
@@ -321,14 +338,14 @@ function SelectCharacters({
               onMouseEnter={() => setHoveredCharacter(character.id)}
               onMouseLeave={() => setHoveredCharacter(null)}
               onSelectCharacter={
-                character.id === globalClientOptions.chairId ? undefined : selectCharacter
+                character.id === CHAIR_ID ? undefined : selectCharacter
               }
               onDeselectCharacter={deselectCharacter}
               isSelected={selectedCharacters.includes(character.id)}
               selectLimitReached={selectedCharacters.length >= maxCharacters}
             />
           ))}
-          {numberOfHumans < MAXHUMANS && (
+          {!isMuseumMode && numberOfHumans < MAXHUMANS && (
             <AddHumanButton
               onMouseEnter={() => setHoveredCharacter("addhuman")}
               onMouseLeave={() => setHoveredCharacter(null)}
@@ -338,9 +355,11 @@ function SelectCharacters({
             />
           )}
         </div>
-        <div style={{ display: "flex", justifyContent: "center", marginTop: isMobileXs ? "2px" : "5px" }}>
-          {buttonOrInfo()}
-        </div>
+        {!isMuseumMode ? (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: isMobileXs ? "2px" : "5px" }}>
+            {buttonOrInfo()}
+          </div>
+        ) : null}
       </div>
       <VideoPreloader
         foodIds={selectedCharacters.filter(

@@ -11,16 +11,15 @@ import {
   type MeetingSetupPhase,
   type MeetingSetupUserEvent,
 } from "@newMeeting/meetingSetup";
-import { useMeetingSetupStore } from "@stores/useMeetingSetupStore";
-import { usePushToTalkStore } from "@stores/usePushToTalkStore";
-import { getPushToTalk } from "@/settings/councilSettings";
+import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
+import { useButton, type ButtonLedMode } from "@/museum/button/useButton";
+import { useCouncilSettings } from "@/settings/councilSettings";
 import { buildGuidePrompt } from "./guidePrompt";
 import { createGuideToolHandlers, createGuideTools } from "./guideTools";
 import { getVoiceGuideBundle } from "./voiceGuideBundle";
 import { useHoldToSpeakHint } from "./useHoldToSpeakHint";
-import { computePttLedMode } from "./pttLedMode";
+import Loading from "@main/Loading";
 import { useVoiceGuide } from "./useVoiceGuide";
-
 type MeetingVoiceGuideProps = {
   phase: MeetingSetupPhase;
   lastUserEvent: MeetingSetupUserEvent | null;
@@ -39,9 +38,8 @@ export default function MeetingVoiceGuide({
   onStartMeeting,
 }: MeetingVoiceGuideProps) {
   const { i18n, t } = useTranslation();
-  const pushToTalkMode = getPushToTalk();
-  const pressed = usePushToTalkStore((state) => state.pressed);
-  const setLedMode = usePushToTalkStore((state) => state.setLedMode);
+  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const button = useButton("voice-guide");
   const {
     selectedTopic,
     customTopic,
@@ -82,10 +80,10 @@ export default function MeetingVoiceGuide({
       topics: guideTopics,
       characters: guideCharacters,
       phase,
-      pushToTalkMode,
+      agentMode,
       visitorName,
     });
-  }, [guideCharacters, guideTopics, phase, promptBundle, pushToTalkMode, visitorName]);
+  }, [guideCharacters, guideTopics, phase, promptBundle, agentMode, visitorName]);
 
   const voice = useVoiceGuide({
     language: guideLanguage,
@@ -111,37 +109,39 @@ export default function MeetingVoiceGuide({
         twoHumansSuffix: t("selectfoods.twohumans"),
       },
     }),
-    pushToTalkMode,
-    micOpen: pressed,
+    agentMode,
+    micOpen: button.pressed,
   });
   const { sendUserMessage, muted } = voice;
 
-  const showHoldToSpeakHint = useHoldToSpeakHint({
-    pushToTalkMode,
+  const showMuseumLandingLoading =
+    isMuseumMode && phase === "landing" && !muted && voice.isConnecting;
+
+  const { showHoldToSpeakHint } = useHoldToSpeakHint({
+    agentMode,
     sessionActive: !muted,
     isConnecting: voice.isConnecting,
-    micOpen: pressed,
+    micOpen: button.pressed,
     lastUserTranscript: voice.lastUserTranscript,
     lastCaption: voice.lastCaption,
   });
 
-  const ledMode = computePttLedMode({
-    pushToTalkMode,
-    muted,
-    isConnecting: voice.isConnecting,
-    voiceError: voice.error,
-    pressed,
-  });
+  const ledMode = useMemo((): ButtonLedMode => {
+    if (agentMode !== "ptt" || muted || voice.isConnecting || voice.error) return "off";
+    if (button.pressed) return "on";
+    return "pulse";
+  }, [agentMode, muted, voice.isConnecting, voice.error, button.pressed]);
 
   useEffect(() => {
-    void setLedMode(ledMode);
-  }, [ledMode, setLedMode]);
+    if (agentMode !== "ptt") return;
+    button.claim();
+    return () => button.release();
+  }, [button.claim, button.release, agentMode]);
 
   useEffect(() => {
-    return () => {
-      void setLedMode("off");
-    };
-  }, [setLedMode]);
+    if (agentMode !== "ptt") return;
+    button.setLed(ledMode);
+  }, [button.setLed, agentMode, ledMode]);
 
   useEffect(() => {
     if (!lastUserEvent) {
@@ -156,16 +156,23 @@ export default function MeetingVoiceGuide({
   }, [lastUserEvent, sendUserMessage]);
 
   return (
+    <>
+      {showMuseumLandingLoading && <Loading />}
     <VoiceGuideOverlay
       isConnecting={voice.isConnecting}
       error={voice.error}
       lastCaption={voice.lastCaption}
       lastUserTranscript={voice.lastUserTranscript}
       muted={voice.muted}
-      pushToTalkMode={pushToTalkMode}
+      isMuseumMode={isMuseumMode}
+      agentMode={agentMode}
       showHoldToSpeakHint={showHoldToSpeakHint}
+      subtitleLayout={isMuseumMode ? "council" : "compact"}
+      micStream={voice.micStream}
+      micActive={agentMode === "ptt" && !muted && button.pressed}
       onStart={voice.start}
       onStop={voice.stop}
     />
+    </>
   );
 }

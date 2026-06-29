@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SelectTopic from '@newMeeting/SelectTopic';
 import { getTopicsBundle } from '@main/topicsBundle';
-import { useState } from 'react';
-import { useMeetingSetupStore } from '@stores/useMeetingSetupStore';
+import { useMeetingSetupStore } from '@newMeeting/meetingSetupStore';
+import { useCouncilSettings } from '@/settings/councilSettings';
 
 // Mocks
 vi.mock('react-i18next', () => ({
@@ -29,6 +29,16 @@ vi.mock('@main/overlay/ResetWarning', () => ({
 
 vi.mock('@main/topicsBundle', () => ({
     getTopicsBundle: vi.fn(),
+}));
+
+vi.mock('@/settings/councilSettings', () => ({
+    useCouncilSettings: vi.fn(() => ({
+        isMuseumMode: false,
+        mode: 'web',
+        setAppMode: vi.fn(),
+        agentMode: "off",
+        setAgentMode: vi.fn(),
+    })),
 }));
 
 const mockTopics = [
@@ -63,6 +73,13 @@ describe('SelectTopic Component', () => {
         mockOnReset = vi.fn();
         mockOnCancel = vi.fn();
         vi.mocked(getTopicsBundle).mockReturnValue(defaultBundle);
+        vi.mocked(useCouncilSettings).mockReturnValue({
+            mode: 'web',
+            isMuseumMode: false,
+            setAppMode: vi.fn(),
+            agentMode: "off",
+            setAgentMode: vi.fn(),
+        });
     });
 
     it('should render topics and allow selection', () => {
@@ -342,5 +359,27 @@ describe('SelectTopic Component', () => {
         // Leave Custom -> Hidden
         fireEvent.mouseLeave(customBtn);
         expect(textarea).not.toBeVisible();
+    });
+
+    it('hides next button in museum mode', () => {
+        vi.mocked(useCouncilSettings).mockReturnValue({
+            mode: 'museum',
+            isMuseumMode: true,
+            setAppMode: vi.fn(),
+            agentMode: "off",
+            setAgentMode: vi.fn(),
+        });
+
+        render(
+            <ControlledSelectTopic
+                onContinueForward={mockOnContinue}
+                onReset={mockOnReset}
+                onCancel={mockOnCancel}
+                currentTopic={null}
+            />
+        );
+
+        fireEvent.click(screen.getByText('Topic One'));
+        expect(screen.queryByText('next')).not.toBeInTheDocument();
     });
 });

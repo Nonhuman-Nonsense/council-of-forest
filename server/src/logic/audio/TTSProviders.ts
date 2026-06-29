@@ -4,7 +4,14 @@ import { withNetworkRetry } from "@utils/NetworkUtils.js";
 import { Word } from "@shared/textUtils.js";
 import { AudioSystemOptions, Speaker } from "./AudioTypes.js";
 import { getGoogleLanguageCode } from "./AudioUtils.js";
-import { InworldPronunciationUtils } from "@utils/InworldPronunciationUtils.js";
+import { PronunciationUtils } from "@utils/PronunciationUtils.js";
+import { characterAlignmentToWords, type CharacterAlignment } from "@utils/ElevenLabsAlignmentUtils.js";
+
+const INWORLD_TTS_2_MODEL = "inworld-tts-2";
+/** Opus at 48 kHz sample rate, 128 kbps — matches our other OGG/Opus providers. */
+export const ELEVENLABS_OPUS_OUTPUT_FORMAT = "opus_48000_128";
+const ELEVENLABS_DEFAULT_STABILITY = 0.5;
+const ELEVENLABS_DEFAULT_STYLE = 0;
 
 interface GenerateParams {
     text: string;
@@ -94,14 +101,98 @@ export async function generateOpenAIAudio(params: GenerateParams): Promise<Audio
     return { audio: Buffer.from(await mp3.arrayBuffer()) };
 }
 
+export async function generateElevenLabsAudio(params: GenerateParams): Promise<AudioResult> {
+    const { text, speaker, options } = params;
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) throw new Error("ELEVENLABS_API_KEY required for ElevenLabs TTS");
+
+    const language = options.language ?? 'en';
+    const { processedText } = PronunciationUtils.processText(text, language, { includeIpa: false });
+
+    const voiceId = speaker.voice;
+    const modelId = options.elevenlabsVoiceModel;
+    const url = new URL(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`);
+    url.searchParams.set("output_format", ELEVENLABS_OPUS_OUTPUT_FORMAT);
+
+    const body: Record<string, unknown> = {
+        text: processedText.substring(0, 4096),
+        model_id: modelId,
+        voice_settings: {
+            speed: speaker.voiceSpeed ?? options.defaultAudioSpeed,
+            stability: speaker.voiceStability ?? ELEVENLABS_DEFAULT_STABILITY,
+            style: speaker.voiceStyle ?? ELEVENLABS_DEFAULT_STYLE,
+        },
+    };
+
+    const locale = speaker.voiceLocale?.trim();
+    if (locale) {
+        body.language_code = locale.split("-")[0];
+    }
+
+    const response = await withNetworkRetry(() => fetch(url.toString(), {
+        method: "POST",
+        headers: {
+            "xi-api-key": apiKey,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    }), "AudioSystemElevenLabs");
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`ElevenLabs TTS API Error: ${response.status} ${errText}`);
+    }
+
+    interface ElevenLabsTimestampResponse {
+        audio_base64?: string;
+        alignment?: CharacterAlignment | null;
+        normalized_alignment?: CharacterAlignment | null;
+    }
+
+    const data = (await response.json()) as ElevenLabsTimestampResponse;
+    if (!data.audio_base64) {
+        throw new Error("No audio content returned from ElevenLabs TTS");
+    }
+
+    const alignment = data.normalized_alignment ?? data.alignment;
+    let words: Word[] | undefined;
+    if (alignment?.characters?.length) {
+        words = characterAlignmentToWords(alignment);
+    }
+
+    return {
+        audio: Buffer.from(data.audio_base64, "base64"),
+        words,
+    };
+}
+
 export async function generateInworldAudio(params: GenerateParams): Promise<AudioResult> {
     const { text, speaker, options } = params;
     const apiKey = process.env.INWORLD_API_KEY;
 
-    // 1. Process text for IPA substitutions
-    const { processedText, replacedWords } = InworldPronunciationUtils.processTextWithIPA(text);
+    const language = options.language ?? 'en';
+    const { processedText, replacedWords } = PronunciationUtils.processText(text, language, { includeIpa: true });
 
     const url = 'https://api.inworld.ai/tts/v1/voice';
+    const locale = speaker.voiceLocale?.trim() || undefined;
+    const modelId = locale ? INWORLD_TTS_2_MODEL : options.inworldVoiceModel;
+
+    const payload: Record<string, unknown> = {
+        text: processedText,
+        voice_id: speaker.voice,
+        model_id: modelId,
+        timestampType: "WORD",
+        audio_config: {
+            audio_encoding: "OGG_OPUS",
+            speaking_rate: speaker.voiceSpeed ?? options.defaultAudioSpeed
+        },
+    };
+
+    if (locale) payload.language = locale;
+    // TTS-2 ignores temperature; deliveryMode is optional for later.
+    if (modelId !== INWORLD_TTS_2_MODEL) {
+        payload.temperature = speaker.voiceTemperature || 1.0;
+    }
 
     const response = await withNetworkRetry(() => fetch(url, {
         method: 'POST',
@@ -109,17 +200,7 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
             'Authorization': `Basic ${apiKey}`,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            text: processedText, // Use processed text
-            voice_id: speaker.voice,
-            model_id: options.inworldVoiceModel,
-            temperature: speaker.voiceTemperature || 1.0,
-            timestampType: "WORD",
-            audio_config: {
-                audio_encoding: "OGG_OPUS",
-                speaking_rate: speaker.voiceSpeed ?? options.defaultAudioSpeed
-            },
-        })
+        body: JSON.stringify(payload)
     }), "AudioSystemInworld");
 
     if (!response.ok) {
@@ -175,7 +256,7 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
 
 export async function getWhisperWords(buffer: Buffer, services: { getOpenAI: () => OpenAI }): Promise<Word[]> {
     const openai = services.getOpenAI();
-    // All our providers (OpenAI, Gemini, Inworld) now return OGG/Opus.
+    // All our providers (OpenAI, Gemini, Inworld, ElevenLabs) return OGG/Opus.
     // FFmpeg (used by Whisper) performs content sniffing, but correct extension helps.
     const audioFile = new File([new Uint8Array(buffer)], "speech.ogg", { type: "audio/ogg" });
     const transcription = await withNetworkRetry(() => openai.audio.transcriptions.create({

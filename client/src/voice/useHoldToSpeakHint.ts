@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AgentMode } from "@/settings/councilSettings";
 
 /** How long to wait after activity before nudging again with the hint. */
-export const PTT_IDLE_REMIND_MS = 10_000;
+export const BUTTON_IDLE_REMIND_MS = 10_000;
 
 export function computeShowHoldToSpeakHint(params: {
-  pushToTalkMode: boolean;
+  agentMode: AgentMode;
   sessionActive: boolean;
   isConnecting: boolean;
   micOpen: boolean;
   dismissedAfterFirstPtt: boolean;
   idleRemindVisible: boolean;
 }): boolean {
-  if (!params.pushToTalkMode || !params.sessionActive || params.isConnecting || params.micOpen) {
+  if (params.agentMode !== "ptt" || !params.sessionActive || params.isConnecting || params.micOpen) {
     return false;
   }
   return !params.dismissedAfterFirstPtt || params.idleRemindVisible;
@@ -21,7 +22,7 @@ export function shouldShowIdleRemind(
   dismissedAfterFirstPtt: boolean,
   lastActivityMs: number,
   nowMs: number,
-  idleRemindMs = PTT_IDLE_REMIND_MS,
+  idleRemindMs = BUTTON_IDLE_REMIND_MS,
 ): boolean {
   if (!dismissedAfterFirstPtt) {
     return false;
@@ -30,7 +31,7 @@ export function shouldShowIdleRemind(
 }
 
 export type UseHoldToSpeakHintParams = {
-  pushToTalkMode: boolean;
+  agentMode: AgentMode;
   sessionActive: boolean;
   isConnecting: boolean;
   micOpen: boolean;
@@ -38,13 +39,21 @@ export type UseHoldToSpeakHintParams = {
   lastCaption: string | null;
 };
 
+export type HoldToSpeakHintState = {
+  showHoldToSpeakHint: boolean;
+  /** True after the post-PTT idle window — the re-nudge, not the initial hint. */
+  idleRemindVisible: boolean;
+  /** Reset the idle clock and hide the pre-PTT banner (caller invokes on segment start). */
+  bumpActivity: () => void;
+};
+
 /**
  * PTT hint visibility: show while the button is up until the first press,
  * then hide until a long idle period (no PTT, captions, or transcripts).
  */
-export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
+export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): HoldToSpeakHintState {
   const {
-    pushToTalkMode,
+    agentMode,
     sessionActive,
     isConnecting,
     micOpen,
@@ -57,6 +66,12 @@ export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
   const lastActivityRef = useRef(Date.now());
   const hasUsedPttRef = useRef(false);
 
+  const bumpActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    setIdleRemindVisible(false);
+    setDismissedAfterFirstPtt(true);
+  }, []);
+
   useEffect(() => {
     if (sessionActive) {
       return;
@@ -68,7 +83,7 @@ export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
   }, [sessionActive]);
 
   useEffect(() => {
-    if (!pushToTalkMode || !sessionActive || !micOpen) {
+    if (agentMode !== "ptt" || !sessionActive || !micOpen) {
       return;
     }
     if (!hasUsedPttRef.current) {
@@ -77,7 +92,7 @@ export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
     }
     lastActivityRef.current = Date.now();
     setIdleRemindVisible(false);
-  }, [micOpen, pushToTalkMode, sessionActive]);
+  }, [micOpen, agentMode, sessionActive]);
 
   useEffect(() => {
     if (!lastUserTranscript) {
@@ -96,7 +111,7 @@ export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
   }, [lastCaption]);
 
   useEffect(() => {
-    if (!pushToTalkMode || !sessionActive || !dismissedAfterFirstPtt || micOpen || isConnecting) {
+    if (agentMode !== "ptt" || !sessionActive || !dismissedAfterFirstPtt || micOpen || isConnecting) {
       return;
     }
 
@@ -109,14 +124,16 @@ export function useHoldToSpeakHint(params: UseHoldToSpeakHintParams): boolean {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [pushToTalkMode, sessionActive, dismissedAfterFirstPtt, micOpen, isConnecting]);
+  }, [agentMode, sessionActive, dismissedAfterFirstPtt, micOpen, isConnecting]);
 
-  return computeShowHoldToSpeakHint({
-    pushToTalkMode,
+  const showHoldToSpeakHint = computeShowHoldToSpeakHint({
+    agentMode,
     sessionActive,
     isConnecting,
     micOpen,
     dismissedAfterFirstPtt,
     idleRemindVisible,
   });
+
+  return { showHoldToSpeakHint, idleRemindVisible, bumpActivity };
 }

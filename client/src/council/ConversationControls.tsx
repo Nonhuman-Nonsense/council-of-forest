@@ -1,6 +1,7 @@
 import React from 'react';
 import ConversationControlIcon from "./ConversationControlIcon";
 import { useMobile } from "@/utils";
+import { z } from "@/zIndexLayers";
 import { useTranslation } from "react-i18next";
 
 interface ConversationControlsProps {
@@ -18,6 +19,7 @@ interface ConversationControlsProps {
   canRaiseHand: boolean;
   onTopOfOverlay: boolean;
   humanName: string;
+  hidden?: boolean;
 }
 
 /**
@@ -45,7 +47,8 @@ function ConversationControls({
   canGoForward,
   canRaiseHand,
   onTopOfOverlay,
-  humanName
+  humanName,
+  hidden = false,
 }: ConversationControlsProps) {
   const isMobile = useMobile();
 
@@ -58,7 +61,15 @@ function ConversationControls({
 
   return (
     <>
-      <div style={{ pointerEvents: "auto", zIndex: onTopOfOverlay ? "10" : "3", position: "relative" }}>
+      <div
+        aria-hidden={hidden}
+        style={{
+          pointerEvents: hidden ? "none" : "auto",
+          visibility: hidden ? "hidden" : "visible",
+          zIndex: onTopOfOverlay ? z.councilControlsRaised : z.councilControls,
+          position: "relative",
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div style={divStyle}>
             {!isPaused &&

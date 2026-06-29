@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Council from '@council/Council';
 import '@testing-library/jest-dom';
@@ -8,8 +8,8 @@ import { MockFactory } from '../factories/MockFactory';
 
 // Mock Child Components
 vi.mock('@council/ConversationControls', () => ({
-    default: ({ onMuteUnmute, isMuted }: any) => (
-        <div data-testid="conversation-controls">
+    default: ({ onMuteUnmute, isMuted, hidden }: any) => (
+        <div data-testid="conversation-controls" aria-hidden={hidden}>
             <button
                 data-testid="mock-mute-button"
                 onClick={onMuteUnmute}
@@ -57,8 +57,25 @@ vi.mock('@council/FoodItem', () => ({ default: () => <div data-testid="food-item
 vi.mock('@main/overlay/Overlay', () => ({ default: ({ children }: any) => <div>{children}</div> }));
 vi.mock('@council/overlays/CouncilOverlays', () => ({ default: () => <div>Council Overlays</div> }));
 vi.mock('@main/Loading', () => ({ default: () => <div>Loading...</div> }));
-vi.mock('@council/output/Output', () => ({ default: () => <div>Output</div> }));
+vi.mock('@council/output/Output', () => ({
+    default: () => <div data-testid="output">Output</div>,
+}));
 vi.mock('@council/humanInput/HumanInput', () => ({ default: () => <div>Human Input</div> }));
+
+let mockMetaAgentActivate = false;
+
+vi.mock('@museum/metaAgent/MeetingMetaAgent', async () => {
+    const React = await import('react');
+    return {
+        default: (props: { setMetaAgentPhase: (phase: "interruption") => void }) => {
+            React.useEffect(() => {
+                if (!mockMetaAgentActivate) return;
+                props.setMetaAgentPhase("interruption");
+            }, []);
+            return null;
+        },
+    };
+});
 
 
 // Mock useCouncilMachine Hook
@@ -72,9 +89,9 @@ const mockCouncilStateMachine = {
         audioMessages: [],
         playingNowIndex: 0,
         playNextIndex: 1,
-        activeOverlay: null,
+        visibleOverlay: null,
+        nameOverlayOpen: false,
         summary: null,
-        humanName: '',
         isRaisedHand: false,
         currentMeetingId: 123,
         canGoBack: true,
@@ -82,7 +99,6 @@ const mockCouncilStateMachine = {
         canRaiseHand: true,
         currentSnippetIndex: 0,
         isMuted: false, // Default
-        canExtendMeeting: true,
     },
     actions: {
         tryToFindTextAndAudio: vi.fn().mockReturnValue(true),
@@ -90,12 +106,11 @@ const mockCouncilStateMachine = {
         handleOnSkipBackward: vi.fn(),
         handleOnSkipForward: vi.fn(),
         handleOnSubmitHumanMessage: vi.fn(),
-        handleOnContinueMeetingLonger: vi.fn(),
-        handleOnGenerateSummary: vi.fn(),
+        handleOnExtendMeeting: vi.fn(),
+        handleOnConcludeMeeting: vi.fn(),
         handleHumanNameEntered: vi.fn(),
         handleOnRaiseHand: vi.fn(),
-        cancelOverlay: vi.fn(),
-        setHumanName: vi.fn(),
+        declineOverlay: vi.fn(),
         setIsRaisedHand: vi.fn(),
         setCurrentSnippetIndex: vi.fn(),
         toggleMute: mockToggleMute
@@ -105,6 +120,20 @@ const mockCouncilStateMachine = {
 
 vi.mock('@council/hooks/useCouncilMachine', () => ({
     useCouncilMachine: (...args: any[]) => mockUseCouncilMachine(...args)
+}));
+
+const mockUseCouncilSettings = vi.fn(() => ({
+  isMuseumMode: false,
+  mode: 'web' as const,
+  setAppMode: vi.fn(),
+  agentMode: "off",
+  setAgentMode: vi.fn(),
+}));
+
+vi.mock('@/settings/councilSettings', () => ({
+    useCouncilSettings: () => mockUseCouncilSettings(),
+    getDevLogEnabled: () => false,
+    isDevLogCategoryEnabled: () => false,
 }));
 
 
@@ -118,7 +147,6 @@ describe('Council Component', () => {
         setConnectionError: vi.fn(),
         connectionError: false,
         audioContext: { current: null },
-        setAudioPaused: vi.fn(),
         currentSpeakerId: '',
         setCurrentSpeakerId: vi.fn(),
         isPaused: false,
@@ -128,6 +156,7 @@ describe('Council Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockNavigate.mockClear();
+        mockMetaAgentActivate = false;
         mockUseCouncilMachine.mockReturnValue(mockCouncilStateMachine);
         // Reset mock state defaults if needed
         mockCouncilStateMachine.state.councilState = 'playing';
@@ -177,11 +206,26 @@ describe('Council Component', () => {
         render(<Council {...defaultProps} />);
 
         expect(mockUseCouncilMachine).toHaveBeenCalledWith(expect.objectContaining({
+            humanName: '',
+            setHumanName: expect.any(Function),
             audioContext: defaultProps.audioContext,
             isPaused: defaultProps.isPaused,
             setPaused: defaultProps.setPaused,
-            setAudioPaused: defaultProps.setAudioPaused,
         }));
+    });
+
+    it('hides conversation controls in museum mode but keeps them in the layout', () => {
+        mockUseCouncilSettings.mockReturnValue({
+          isMuseumMode: true,
+          mode: 'museum',
+          setAppMode: vi.fn(),
+          agentMode: "off",
+          setAgentMode: vi.fn(),
+        });
+
+        render(<Council {...defaultProps} />);
+
+        expect(screen.getByTestId('conversation-controls')).toHaveAttribute('aria-hidden', 'true');
     });
 
     it('surfaces an unrecoverable error if human_panelist has no awaiting marker', () => {
@@ -192,7 +236,62 @@ describe('Council Component', () => {
         render(<Council {...defaultProps} />);
 
         expect(defaultProps.setUnrecoverableError).toHaveBeenCalledWith(
-            'Internal state mismatch: human_panelist state requires an awaiting_human_panelist message.'
+            expect.objectContaining({
+                message: 'Internal state mismatch: human_panelist state requires an awaiting_human_panelist message.',
+                source: 'Council.human_panelist_state',
+            }),
         );
+    });
+
+    it('mounts HumanInput during warm phase (upcoming awaiting marker)', () => {
+        mockCouncilStateMachine.state.councilState = 'playing';
+        mockCouncilStateMachine.state.playingNowIndex = 0;
+        mockCouncilStateMachine.state.textMessages = [
+            { id: 'm1', type: 'message', speaker: 's1', text: 'hello' },
+            { id: 'm2', type: 'awaiting_human_question', speaker: 'human', text: '' },
+        ];
+
+        render(<Council {...defaultProps} />);
+
+        expect(screen.getByText('Human Input')).toBeInTheDocument();
+    });
+
+    it('does not mount HumanInput when next message is a regular speaker', () => {
+        mockCouncilStateMachine.state.councilState = 'playing';
+        mockCouncilStateMachine.state.playingNowIndex = 0;
+        mockCouncilStateMachine.state.textMessages = [
+            { id: 'm1', type: 'message', speaker: 's1', text: 'hello' },
+            { id: 'm2', type: 'message', speaker: 's2', text: 'world' },
+        ];
+
+        render(<Council {...defaultProps} />);
+
+        expect(screen.queryByText('Human Input')).not.toBeInTheDocument();
+    });
+
+    it('mounts HumanInput for human_input state (active phase)', () => {
+        mockCouncilStateMachine.state.councilState = 'human_input';
+        mockCouncilStateMachine.state.textMessages = [];
+
+        render(<Council {...defaultProps} />);
+
+        expect(screen.getByText('Human Input')).toBeInTheDocument();
+    });
+
+    it('unmounts meeting output when meta agent is active', async () => {
+        mockMetaAgentActivate = true;
+        mockUseCouncilSettings.mockReturnValue({
+          isMuseumMode: true,
+          mode: 'museum',
+          setAppMode: vi.fn(),
+          agentMode: "ptt",
+          setAgentMode: vi.fn(),
+        });
+
+        render(<Council {...defaultProps} />);
+
+        await waitFor(() => {
+            expect(screen.queryByTestId('output')).not.toBeInTheDocument();
+        });
     });
 });

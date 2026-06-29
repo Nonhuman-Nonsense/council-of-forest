@@ -29,8 +29,19 @@ vi.mock('@main/overlay/RotateDevice', () => ({
     default: () => <div data-testid="rotate-device">Rotate Device</div>,
 }));
 
+vi.mock('@/settings/councilSettings', () => ({
+    useCouncilSettings: vi.fn(() => ({
+        isMuseumMode: false,
+        mode: 'web',
+        setAppMode: vi.fn(),
+        agentMode: "off",
+        setAgentMode: vi.fn(),
+    })),
+}));
+
 import { useMediaQuery } from 'react-responsive';
 import { useMobile } from '@/utils';
+import { useCouncilSettings } from '@/settings/councilSettings';
 
 describe('Landing', () => {
     beforeEach(() => {
@@ -38,6 +49,13 @@ describe('Landing', () => {
         // Default to landscape (not portrait) and not mobile for base case
         (useMediaQuery as ReturnType<typeof vi.fn>).mockReturnValue(false); // isPortrait = false
         (useMobile as ReturnType<typeof vi.fn>).mockReturnValue(false);
+        vi.mocked(useCouncilSettings).mockReturnValue({
+            mode: 'web',
+            isMuseumMode: false,
+            setAppMode: vi.fn(),
+            agentMode: "off",
+            setAgentMode: vi.fn(),
+        });
     });
 
     afterEach(() => {
@@ -50,7 +68,7 @@ describe('Landing', () => {
                 <Landing />
             </MemoryRouter>
         );
-        expect(screen.getByText('welcome')).toBeInTheDocument();
+        expect(screen.getByText('landing.welcome')).toBeInTheDocument();
         expect(screen.getByText('COUNCIL')).toBeInTheDocument();
     });
 
@@ -61,8 +79,8 @@ describe('Landing', () => {
                 <Landing />
             </MemoryRouter>
         );
-        expect(screen.getByText('go')).toBeInTheDocument();
-        expect(screen.getByText('description')).toBeInTheDocument();
+        expect(screen.getByText('landing.go')).toBeInTheDocument();
+        expect(screen.getByText('landing.description')).toBeInTheDocument();
         expect(screen.queryByTestId('rotate-device')).not.toBeInTheDocument();
     });
 
@@ -74,7 +92,7 @@ describe('Landing', () => {
             </MemoryRouter>
         );
         expect(screen.getByTestId('rotate-device')).toBeInTheDocument();
-        expect(screen.queryByText('go')).not.toBeInTheDocument();
+        expect(screen.queryByText('landing.go')).not.toBeInTheDocument();
     });
 
     it('Go link points at newMeetingPath', () => {
@@ -86,5 +104,24 @@ describe('Landing', () => {
         const link = screen.getByTestId('landing-go');
         expect(link).toHaveAttribute('href', '/en/new');
         fireEvent.click(link);
+    });
+
+    it('hides description and go button in museum mode', () => {
+        vi.mocked(useCouncilSettings).mockReturnValue({
+            mode: 'museum',
+            isMuseumMode: true,
+            setAppMode: vi.fn(),
+            agentMode: "off",
+            setAgentMode: vi.fn(),
+        });
+
+        render(
+            <MemoryRouter>
+                <Landing />
+            </MemoryRouter>
+        );
+
+        expect(screen.queryByText('landing.description')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('landing-go')).not.toBeInTheDocument();
     });
 });

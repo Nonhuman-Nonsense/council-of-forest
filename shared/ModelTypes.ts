@@ -20,6 +20,8 @@ export interface Topic {
     title: string;
     description: string;
     prompt: string;
+    /** Optional agenda items; rendered via [AGENDA_POINTS] in the system prompt at meeting setup. */
+    agendaPoints?: string[];
 }
 
 export interface BaseMeeting {
@@ -56,10 +58,12 @@ export interface Character {
     voice: VoiceOption | string;
     description: string;
     prompt: string;
-    voiceProvider?: 'openai' | 'gemini' | 'inworld';
+    voiceProvider?: 'openai' | 'gemini' | 'inworld' | 'elevenlabs';
     voiceLocale?: string;
     voiceInstruction?: string;
     voiceTemperature?: number;
+    voiceStability?: number;
+    voiceStyle?: number;
     voiceSpeed?: number;
     size?: number;
     // type?: string;
@@ -82,7 +86,7 @@ export interface CharacterSetupData {
 
 // For Zod validation
 export const MessageTypeValues = ["message", "human", "panelist", "summary", "response", "invitation", "interjection"] as const;
-export const SyntheticMessageTypeValues = ["skipped", "awaiting_human_question", "awaiting_human_panelist", "meeting_incomplete", "max_reached"] as const;
+export const SyntheticMessageTypeValues = ["skipped", "awaiting_human_question", "awaiting_human_panelist", "meeting_incomplete", "query_extension"] as const;
 
 // Derive the types from the arrays
 export type MessageType = (typeof MessageTypeValues)[number];
@@ -126,8 +130,7 @@ type GeneratedTurnType =
 export interface GeneratedTurnMessage
     extends BaseMessage, SpeakerFields, TextFields, IdentifiedFields, SentenceFields, GeneratedDebugFields {
     type: GeneratedTurnType;
-    askParticular?: never;
-    canContinue?: never;
+    askParticular?: string;
 }
 
 export interface HumanMessage extends BaseMessage, SpeakerFields, TextFields, IdentifiedFields, SentenceFields {
@@ -135,15 +138,13 @@ export interface HumanMessage extends BaseMessage, SpeakerFields, TextFields, Id
     askParticular?: string;
     trimmed?: never;
     pretrimmed?: never;
-    canContinue?: never;
 }
 
 export interface PanelistMessage extends BaseMessage, SpeakerFields, TextFields, IdentifiedFields, SentenceFields {
     type: "panelist";
-    askParticular?: never;
+    askParticular?: string;
     trimmed?: never;
     pretrimmed?: never;
-    canContinue?: never;
 }
 
 export interface AwaitingHumanQuestionMessage extends BaseMessage, SpeakerFields, TextFields {
@@ -153,7 +154,6 @@ export interface AwaitingHumanQuestionMessage extends BaseMessage, SpeakerFields
     askParticular?: never;
     trimmed?: never;
     pretrimmed?: never;
-    canContinue?: never;
 }
 
 export interface AwaitingHumanPanelistMessage extends BaseMessage, SpeakerFields, TextFields {
@@ -163,7 +163,6 @@ export interface AwaitingHumanPanelistMessage extends BaseMessage, SpeakerFields
     askParticular?: never;
     trimmed?: never;
     pretrimmed?: never;
-    canContinue?: never;
 }
 
 export interface MeetingIncompleteMessage extends BaseMessage {
@@ -175,12 +174,10 @@ export interface MeetingIncompleteMessage extends BaseMessage {
     askParticular?: never;
     trimmed?: never;
     pretrimmed?: never;
-    canContinue?: never;
 }
 
-export interface MaxReachedMessage extends BaseMessage {
-    type: "max_reached";
-    canContinue: boolean;
+export interface QueryExtensionMessage extends BaseMessage {
+    type: "query_extension";
     id?: never;
     text?: never;
     sentences?: never;
@@ -202,7 +199,7 @@ export type SyntheticMessage =
     | AwaitingHumanQuestionMessage
     | AwaitingHumanPanelistMessage
     | MeetingIncompleteMessage
-    | MaxReachedMessage;
+    | QueryExtensionMessage;
 
 export type Message =
     | GeneratedTurnMessage
@@ -211,7 +208,7 @@ export type Message =
     | AwaitingHumanQuestionMessage
     | AwaitingHumanPanelistMessage
     | MeetingIncompleteMessage
-    | MaxReachedMessage;
+    | QueryExtensionMessage;
 
 export function isSpeakerMessage(message: Message): message is SpeakerMessage {
     return "speaker" in message;

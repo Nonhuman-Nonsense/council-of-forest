@@ -1,12 +1,11 @@
 {
-    "conversationModel": "mistral/mistral-medium-latest",
-    "conversationReasoning": "none",
     "voiceModel": "gpt-4o-mini-tts",
     "inworldVoiceModel": "inworld-tts-1.5-mini",
-    "maxTokens": 150,
-    "chairMaxTokens": 150,
+    "maxTokens": 70,
+    "chairMaxTokens": 70,
     "conversationMaxLength": 5,
-    "defaultAudioSpeed": 1.25,
+    "defaultAudioSpeed": 1.20,
     "raiseHandInvitationLength": 100,
-    "finalizeMeetingLength": 100
+    "panelistInvitationLength": 60,
+    "summarizeMeetingLength": 100
 }

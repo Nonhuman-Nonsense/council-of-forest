@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo, createRef, CSSProperties, type RefObject } from "react";
 import FoodAnimation from "@council/FoodAnimation";
-import { dvh, minWindowHeight, useMobile, useDocumentVisibility } from "@/utils";
+import { dvh, minWindowHeight, useMobile } from "@/utils";
 import forestCharacters from "@shared/prompts/forest_characters.json";
 import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
+import { z } from "@/zIndexLayers";
 import {
     characterAmbienceUrl,
     characterImageAvifUrl,
@@ -82,22 +83,26 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: "-3",
+        zIndex: z.forestBackdrop,
         transform: `scale(${zoomInValue}) translate(${translate[0]}, ${translate[1]})`,
         transformOrigin: `${transformOrigin[0]} ${transformOrigin[1]}`,
         transition: !disableAnimations && `transform 2s ease-out, transform-origin ${animateTransformOrigin ? "2s" : "0.0001s"} ease-out`
     };
 
 
+    // Only beings in forest_characters zoom in. Chair (river) and "" keep the wide forest shot
+    // (including during meta-agent — Council publishes CHAIR_ID or "" for currentSpeakerId).
+    const zoomSpeakerId = currentSpeakerId;
+
     useEffect(() => {
         //find the current speaker in the list of characters
-        const found = characters.find((char) => char.id === currentSpeakerId);
+        const found = characters.find((char) => char.id === zoomSpeakerId);
         if (found) {
             setZoomInOnBeing(found);
         } else {
             setZoomInOnBeing(null);
         }
-    }, [currentSpeakerId, characters]);
+    }, [zoomSpeakerId, characters]);
 
     useEffect(() => {
         if (zoomInOnBeing) {
@@ -156,9 +161,9 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
-            <img style={{ zIndex: "-5", height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
-            <div style={{ zIndex: "-4", height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
-                <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} currentSpeakerId={currentSpeakerId} />
+            <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
+            <div style={{ zIndex: z.forestRiver, height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
+                <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
                 <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
             </div>
             {characters.map((character) => (
@@ -194,11 +199,12 @@ type BeingProps = {
 };
 
 function Being({ id, ref, type, height, left, bottom, always_on, isPaused, currentSpeakerId }: BeingProps) {
+    const isPerforming = Boolean(always_on) || currentSpeakerId === id;
     // One ref object is reused per character; only one of div / img mounts — narrow per branch for ref types.
     return (<>
         {type === "video" &&
             <div ref={ref as RefObject<HTMLDivElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }}>
-                <FoodAnimation character={{ id: id }} isPaused={isPaused} always_on={always_on} currentSpeakerId={currentSpeakerId} styles={{}} />
+                <FoodAnimation character={{ id: id }} isPaused={isPaused} isPerforming={isPerforming} always_on={always_on} styles={{}} />
             </div>
         }
         {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={characterImageAvifUrl(id)} alt="" />}
@@ -270,17 +276,6 @@ function AmbientAudio({ audioContext }: AmbientAudioProps) {
 
     //Global ambience volume
     const onVolume = 0.05;
-
-    const isDocumentVisible = useDocumentVisibility();
-
-    //Fade out ambience on tab onfocus
-    useEffect(() => {
-        if (!isDocumentVisible) {
-            gainNode.current.gain.linearRampToValueAtTime(0, audioContext.current.currentTime + 0.5);
-        } else {
-            gainNode.current.gain.linearRampToValueAtTime(onVolume, audioContext.current.currentTime + 5);
-        }
-    }, [isDocumentVisible]);
 
     if (audioContext.current && gainNode.current === null) {
         gainNode.current = audioContext.current.createGain();

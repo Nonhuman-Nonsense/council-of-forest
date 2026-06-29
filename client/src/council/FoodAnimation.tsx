@@ -6,15 +6,25 @@ interface FoodAnimationProps {
   character: { id: string };
   styles: CSSProperties;
   isPaused: boolean;
+  /** When set, controls play/pause. When omitted, falls back to currentSpeakerId match. */
+  isPerforming?: boolean;
   always_on?: boolean;
-  currentSpeakerId: string;
+  currentSpeakerId?: string;
 }
 
-function FoodAnimation({ character, styles, isPaused, always_on, currentSpeakerId }: FoodAnimationProps) {
+function FoodAnimation({
+  character,
+  styles,
+  isPaused,
+  isPerforming,
+  always_on,
+  currentSpeakerId = "",
+}: FoodAnimationProps) {
   const isMobile = useMobile();
   const video = useRef<HTMLVideoElement>(null);
   const [vidLoaded, setVidLoaded] = useState(false);
   const hasCharacter = Boolean(character?.id);
+  const performing = isPerforming ?? (currentSpeakerId === character.id);
 
   useEffect(() => {
     async function startVid() {
@@ -33,13 +43,13 @@ function FoodAnimation({ character, styles, isPaused, always_on, currentSpeakerI
 
   useEffect(() => {
     if (vidLoaded && video.current) {
-      if (!isPaused && (currentSpeakerId === character.id || always_on === true)) {
+      if (!isPaused && (always_on === true || performing)) {
         video.current.play().catch(e => console.log(e));
       } else {
         video.current.pause();
       }
     }
-  }, [isPaused, vidLoaded, currentSpeakerId, character.id, always_on]);
+  }, [isPaused, vidLoaded, performing, always_on]);
 
   if (!hasCharacter) return null;
 

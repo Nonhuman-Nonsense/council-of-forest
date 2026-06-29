@@ -6,7 +6,7 @@ import type {
     HandRaisedOptions,
     ReconnectionOptions,
     ReportMaximumPlayedIndexPayload,
-    WrapUpMessage,
+    ConcludeMeetingMessage,
     SetupOptions,
     CreateMeetingBody,
     SubmitHumanMessagePayload,
@@ -26,10 +26,12 @@ const CharacterSchema: z.ZodType<Character> = z.object({
     description: z.string(),
     prompt: z.string(),
     voice: z.string(),
-    voiceProvider: z.enum(['openai', 'gemini', 'inworld']).optional().default('openai'),
+    voiceProvider: z.enum(['openai', 'gemini', 'inworld', 'elevenlabs']).optional().default('openai'),
     voiceLocale: z.string().optional(),
     voiceInstruction: z.string().optional(),
     voiceTemperature: z.number().min(0.1).max(2.0).optional(),
+    voiceStability: z.number().min(0).max(1).optional(),
+    voiceStyle: z.number().min(0).max(1).optional(),
     voiceSpeed: z.number().min(0.8).max(1.5).optional(),
     size: z.number().optional(),
 }).superRefine((data, ctx) => {
@@ -118,7 +120,7 @@ export const InjectionMessageSchema: z.ZodType<InjectionMessage> = z.object({
     length: z.number(),
 });
 
-// 6. wrap_up_meeting
-export const WrapUpMessageSchema: z.ZodType<WrapUpMessage> = z.object({
+// 6. conclude_meeting
+export const ConcludeMeetingMessageSchema: z.ZodType<ConcludeMeetingMessage> = z.object({
     date: z.string(),
 });

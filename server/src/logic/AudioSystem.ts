@@ -1,5 +1,6 @@
 import type { IMeetingBroadcaster } from "@interfaces/MeetingInterfaces.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
+import { CHAIR_ID, getChairMeetingVoice } from "@logic/characterSetupBundle.js";
 import { Logger } from "@utils/Logger.js";
 import { mapSentencesToWords, splitSentences, Word, type MappedSentence } from "@shared/textUtils.js";
 import type { StoredMeeting, SubtitleTimingType } from "@models/DBModels.js";
@@ -8,6 +9,7 @@ import { parseBuffer } from 'music-metadata';
 import {
     generateGeminiAudio,
     generateInworldAudio,
+    generateElevenLabsAudio,
     generateOpenAIAudio,
     getWhisperWords,
     AudioResult
@@ -33,7 +35,7 @@ export * from "./audio/AudioUtils.js";
 
 // Limit for text-to-speech requests
 const MAX_AUDIO_CHUNK_LENGTH = 2000;
-const DEFAULT_SUBTITLE_TIMING_PRIORITIES: SubtitleTimingType[] = ['inworld', 'estimated', 'whisper'];
+const DEFAULT_SUBTITLE_TIMING_PRIORITIES: GlobalOptions["subtitleTimingPriorities"] = ['elevenlabs', 'inworld', 'estimated', 'whisper'];
 
 export class AudioSystem {
     broadcaster: IMeetingBroadcaster;
@@ -101,6 +103,11 @@ export class AudioSystem {
 
         if (effectiveOptions.skipAudio) return;
 
+        const resolvedSpeaker =
+            speaker.id === serverOptions.chairId || speaker.id === CHAIR_ID
+                ? { ...speaker, ...getChairMeetingVoice(language) }
+                : speaker;
+
         if (message.type === "skipped") {
             if (generationToken !== this.generationToken) {
                 return;
@@ -149,9 +156,9 @@ export class AudioSystem {
             let providerWords: (Word[] | undefined)[] = [];
 
             if (generateNew || buffers.length === 0) {
-                Logger.info("AudioSystem", `Generating new audio for message ${message.id} (${speaker.voiceProvider}/${speaker.voice})`);
+                Logger.info("AudioSystem", `Generating new audio for message ${message.id} (${resolvedSpeaker.voiceProvider}/${resolvedSpeaker.voice})`);
                 // Generate audio for all chunks in parallel
-                const results = await Promise.all(textChunks.map(chunk => this.generateProviderAudio(chunk, speaker, effectiveOptions)));
+                const results = await Promise.all(textChunks.map(chunk => this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions)));
                 buffers = results.map(r => r.audio);
                 providerWords = results.map(r => r.words);
                 generateNew = true;
@@ -174,11 +181,20 @@ export class AudioSystem {
                     effectiveOptions.subtitleTimingPriorities ?? DEFAULT_SUBTITLE_TIMING_PRIORITIES;
 
                 for (const timingType of subtitleTimingPriorities) {
-                    if (timingType === 'inworld' && speaker.voiceProvider === 'inworld') {
-                        const nativeSentences = this.getInworldSentenceTimings(providerWords, buffers, durations, sentenceTexts);
+                    if (timingType === 'inworld' && resolvedSpeaker.voiceProvider === 'inworld') {
+                        const nativeSentences = this.getProviderSentenceTimings(providerWords, buffers, durations, sentenceTexts);
                         if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, message.id)) {
                             sentencesWithTimings = nativeSentences;
                             subtitleTimingType = 'inworld';
+                            break;
+                        }
+                    }
+
+                    if (timingType === 'elevenlabs' && resolvedSpeaker.voiceProvider === 'elevenlabs') {
+                        const nativeSentences = this.getProviderSentenceTimings(providerWords, buffers, durations, sentenceTexts);
+                        if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, message.id)) {
+                            sentencesWithTimings = nativeSentences;
+                            subtitleTimingType = 'elevenlabs';
                             break;
                         }
                     }
@@ -281,6 +297,8 @@ export class AudioSystem {
             return generateGeminiAudio({ ...baseParams, auth });
         } else if (speaker.voiceProvider === 'inworld') {
             return generateInworldAudio(baseParams);
+        } else if (speaker.voiceProvider === 'elevenlabs') {
+            return generateElevenLabsAudio(baseParams);
         } else {
             // OpenAI
             return generateOpenAIAudio({ ...baseParams, services: this.services });
@@ -330,7 +348,7 @@ export class AudioSystem {
         return this.getAudioDuration(combinedBuffer);
     }
 
-    private getInworldSentenceTimings(
+    private getProviderSentenceTimings(
         providerWords: (Word[] | undefined)[],
         buffers: Buffer[],
         durations: number[],

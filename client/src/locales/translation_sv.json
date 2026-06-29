@@ -1,9 +1,11 @@
 {
-  "welcome": "Välkommen till",
   "council": "Skogsrådet",
   "meeting": "Möte",
-  "description": "En politisk arena där skogen själv får tala, med hjälp av artificiell intelligens. Följ skogens invånare när de diskuterar avskogning, återvildning och ödet för deras gemensamma hem.",
-  "go": "Nu kör vi!",
+  "landing": {
+    "welcome": "Välkommen till",
+    "description": "En politisk arena där skogen själv får tala, med hjälp av artificiell intelligens. Följ skogens invånare när de diskuterar avskogning, återvildning och ödet för deras gemensamma hem.",
+    "go": "Nu kör vi!"
+  },
   "start": "Starta",
   "about": "Info",
   "contact": "Kontakt",
@@ -23,7 +25,8 @@
     "5": " och är en fortsättning av projektet ",
     "6": " som har fått stöd av Europeiska\u00a0Unionens ",
     "7": " forsknings och innovationsprogram under avtal",
-    "8": "Finansierat av EU, som en del av S+T+ARTS"
+    "8": "Finansierat av EU, som en del av S+T+ARTS",
+    "9": "Baserat på intervjuer med"
   },
   "reset": {
     "title": "Börja om?",
@@ -32,6 +35,11 @@
     "lang": "Det går inte att byta språk mitt i ett möte.\nVill du börja om från början?"
   },
   "restart": "Starta om",
+  "autoplayWarning": {
+    "title": "Är du fortfarande här?",
+    "body": "Du har varit inaktiv ett tag,\ntryck på knappen om du fortfarande är här.",
+    "confirm": "Jag är fortfarande här!"
+  },
   "name": {
     "title": "SÄG NÅT",
     "1": "Vill du tala i Skogsrådet?",
@@ -47,14 +55,18 @@
   },
   "human": {
     "1": "Skriv din fråga eller börja inspelning...",
-    "panelist": "Vad har {{name}} att säga om det här?"
+    "panelist": "Vad har {{name}} att säga om det här?",
+    "button_museum": "Håll in knappen för att tala, släpp för att skicka"
   },
-  "completed": {
+  "metaAgent": {
+    "holdToSpeak": "Tryck på knappen för att tala"
+  },
+  "queryExtension": {
     "title": "Var det allt?",
     "1": "Mötet börjar bli långdraget,",
     "2": "är det dags att komma till ett avslut?",
-    "3": "Ja, vi sammanfattar!",
-    "4": "Nej, fortsätt lite till."
+    "3": "Ja, avsluta mötet!",
+    "4": "Nej, förläng mötet lite till."
   },
   "incomplete": {
     "title": "Ofullständigt möte",
@@ -100,7 +112,8 @@
   },
   "replayModeBanner": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
-    "click": "Klicka här för att starta ett nytt möte."
+    "click": "Klicka här för att starta ett nytt möte.",
+    "pressButton": "Tryck på knappen för att starta ett nytt möte."
   },
   "selectissue": "välj ett ämne för dagens diskussion",
   "writetopic": "Skriv ett eget ämne...",

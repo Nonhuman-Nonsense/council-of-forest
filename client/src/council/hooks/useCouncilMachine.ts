@@ -1,12 +1,17 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useCouncilSocket } from "./useCouncilSocket";
-import { useRouting } from "@/routing";
 import type { Character, Message, Meeting, Topic } from "@shared/ModelTypes";
-import type { PublicAudioClipResponse, DecodedAudioMessage } from "@shared/SocketTypes";
-import { CouncilOverlayType } from "../overlays/CouncilOverlays";
+import type { DecodedAudioMessage } from "@shared/SocketTypes";
 import { resumeMeeting, ResumeMeetingError } from "@api/resumeMeeting";
+import { councilFetch } from "@api/http";
+import { httpErrorMessage } from "@api/httpErrorMessage";
+import type { SetUnrecoverableError } from "@main/overlay/CouncilError";
+import { notifyAutoplay } from "@/autoplay/autoplayStore";
+import type { MetaAgentPhase } from "@museum/metaAgent/useMetaAgent";
+import type { AgentMode } from "@/settings/councilSettings";
+import { useDocumentVisibility } from "@/utils";
 
 /** Keep the loading UI visible this long on first paint so the Loading animation can run. */
 const MIN_INITIAL_LOADING_DISPLAY_MS = import.meta.env.VITEST ? 0 : 2000;
@@ -18,14 +23,18 @@ export interface UseCouncilMachineProps {
     replayManifest: Meeting | null;
     topic: Topic | null;
     participants: Character[] | null;
-    initialHumanName?: string;
+    humanName: string;
+    setHumanName: (name: string) => void;
     audioContext: React.RefObject<AudioContext | null>;
-    setUnrecoverableError: (message: string) => void;
+    setUnrecoverableError: SetUnrecoverableError;
     setConnectionError: (error: boolean) => void;
     connectionError: boolean;
     isPaused: boolean;
     setPaused: (paused: boolean) => void;
-    setAudioPaused?: (paused: boolean) => void;
+    isMuseumMode: boolean;
+    agentMode: AgentMode;
+    setMetaAgentPhase: React.Dispatch<React.SetStateAction<MetaAgentPhase>>;
+    metaAgentPhase: MetaAgentPhase;
 }
 
 export type CouncilState =
@@ -36,7 +45,62 @@ export type CouncilState =
     | "human_panelist"
     | "summary"
     | "meeting_incomplete"
-    | "max_reached";
+    | "query_extension";
+
+/** Council states that show a modal overlay (same name as the state). */
+export type OverlayCouncilState = Extract<
+    CouncilState,
+    "query_extension" | "meeting_incomplete" | "summary"
+>;
+
+/** Overlay council states share names with `councilState`; `name` is user-initiated only. */
+export type CouncilOverlayType = OverlayCouncilState | "name" | null;
+
+const OVERLAY_COUNCIL_STATES: readonly OverlayCouncilState[] = [
+    "query_extension",
+    "meeting_incomplete",
+    "summary",
+];
+
+function isOverlayCouncilState(
+    state: CouncilState,
+): state is OverlayCouncilState {
+    return (OVERLAY_COUNCIL_STATES as readonly CouncilState[]).includes(state);
+}
+
+function resolveVisibleCouncilOverlay(params: {
+    councilState: CouncilState;
+    nameOverlayOpen: boolean;
+    isMuseumMode: boolean;
+    agentMode: AgentMode;
+}): CouncilOverlayType {
+    if (params.nameOverlayOpen) {
+        return "name";
+    }
+    if (
+        params.councilState === "query_extension" &&
+        params.isMuseumMode &&
+        params.agentMode === "ptt"
+    ) {
+        return null;
+    }
+    if (isOverlayCouncilState(params.councilState)) {
+        return params.councilState;
+    }
+    return null;
+}
+
+function playIndexBeforeOverlayState(
+    messages: Message[],
+    overlayState: OverlayCouncilState,
+): number {
+    const markerIndex = messages.findIndex((m) => m.type === overlayState);
+    if (overlayState === "summary") {
+        return Math.max(0, markerIndex > 0 ? markerIndex - 1 : messages.length - 2);
+    }
+    const lastContent = markerIndex >= 0 ? markerIndex - 1 : messages.length - 1;
+    return Math.max(0, lastContent);
+}
 
 export function useCouncilMachine({
     currentMeetingId,
@@ -45,17 +109,22 @@ export function useCouncilMachine({
     replayManifest,
     topic: _topic,
     participants: _participants,
-    initialHumanName,
+    humanName,
+    setHumanName,
     audioContext,
     setUnrecoverableError,
     setConnectionError,
     connectionError,
     isPaused,
     setPaused,
-    setAudioPaused,
+    isMuseumMode,
+    agentMode,
+    setMetaAgentPhase,
+    metaAgentPhase,
 }: UseCouncilMachineProps) {
 
     const { t } = useTranslation();
+    const isDocumentVisible = useDocumentVisibility();
 
     /* -------------------------------------------------------------------------- */
     /*                             Main State Variables                           */
@@ -68,17 +137,10 @@ export function useCouncilMachine({
 
     const [textMessages, setTextMessages] = useState<Message[]>([]); // State to store conversation updates
     const [audioMessages, setAudioMessages] = useState<DecodedAudioMessage[]>([]); // To store multiple ArrayBuffers
-    const [activeOverlay, setActiveOverlay] = useState<CouncilOverlayType | null>(null);
+    const [nameOverlayOpen, setNameOverlayOpen] = useState(false);
     const [summary, setSummary] = useState<Message | null>(null);
 
-    const [humanName, setHumanName] = useState(initialHumanName ?? "");
     const [isRaisedHand, setIsRaisedHand] = useState(false);
-
-    useEffect(() => {
-        if (initialHumanName && initialHumanName.trim().length > 0) {
-            setHumanName(initialHumanName.trim());
-        }
-    }, [initialHumanName]);
 
     // Connection variables
     const [attemptingReconnect, setAttemptingReconnect] = useState(false);
@@ -112,6 +174,16 @@ export function useCouncilMachine({
     const [canGoForward, setCanGoForward] = useState(false);
     const [canRaiseHand, setCanRaiseHand] = useState(false);
 
+    const visibleOverlay = useMemo(
+        () => resolveVisibleCouncilOverlay({
+            councilState,
+            nameOverlayOpen,
+            isMuseumMode,
+            agentMode,
+        }),
+        [councilState, nameOverlayOpen, isMuseumMode, agentMode],
+    );
+
     /* -------------------------------------------------------------------------- */
     /*                             Socket & Startup                               */
     /* -------------------------------------------------------------------------- */
@@ -142,7 +214,12 @@ export function useCouncilMachine({
         onError: (error) => {
             console.error(error);
             const msg = error.message?.trim() ? error.message : t("error.1");
-            setUnrecoverableError(msg);
+            setUnrecoverableError({
+                message: msg,
+                source: "useCouncilMachine.conversation_error",
+                cause: error,
+                meetingId: currentMeetingId,
+            });
         },
         onConnectionError: (err) => {
             console.error(err);
@@ -170,15 +247,16 @@ export function useCouncilMachine({
 
     const decodeReplayClip = useCallback(
         async (audioId: string, signal: AbortSignal): Promise<DecodedAudioMessage> => {
-            const res = await fetch(`/api/audio/${encodeURIComponent(audioId)}`, {
+            const res = await councilFetch(`/api/audio/${encodeURIComponent(audioId)}`, {
                 method: "GET",
                 headers: { Accept: "application/json" },
                 signal,
             });
             if (!res.ok) {
-                throw new Error(`Replay audio fetch failed (${res.status})`);
+                const message = await httpErrorMessage(res, `Replay audio fetch failed (${res.status})`);
+                throw new Error(message);
             }
-            const clip = (await res.json()) as PublicAudioClipResponse;
+            const clip = await res.json();
             const ctx = audioContext.current;
             if (!ctx) {
                 throw new Error("AudioContext not available");
@@ -215,7 +293,13 @@ export function useCouncilMachine({
             }
         } catch (e) {
             if (!ac.signal.aborted) {
-                setUnrecoverableError(t("error.audioLoad"));
+                const msg = t("error.audioLoad");
+                setUnrecoverableError({
+                    message: msg,
+                    source: "useCouncilMachine.audioDownload",
+                    cause: e,
+                    meetingId: currentMeetingId,
+                });
                 console.error("Audio download error", e);
             }
         }
@@ -302,8 +386,8 @@ export function useCouncilMachine({
         }
 
         // Conversation length cap (server-sent synthetic)
-        if (councilState !== 'max_reached' && textMessages[playNextIndex]?.type === 'max_reached') {
-            setCouncilState('max_reached');
+        if (councilState !== 'query_extension' && textMessages[playNextIndex]?.type === 'query_extension') {
+            setCouncilState('query_extension');
             return;
         }
 
@@ -338,11 +422,8 @@ export function useCouncilMachine({
                 }
                 break;
             case 'meeting_incomplete':
-                if (activeOverlay !== "incomplete") {
-                    setActiveOverlay("incomplete");
-                }
                 if (textMessages[playNextIndex]?.type !== 'meeting_incomplete') {
-                    cancelOverlay();
+                    rewindOverlayCouncilState(councilState);
                     return;
                 }
                 break;
@@ -354,11 +435,8 @@ export function useCouncilMachine({
                 if (summary === null && textMessages[playNextIndex]?.type === 'summary') {
                     setSummary(textMessages[playNextIndex]);
                 }
-                if (activeOverlay === null) {
-                    setActiveOverlay("summary");
-                }
                 if (textMessages[playNextIndex]?.type !== 'summary') {
-                    cancelOverlay();
+                    rewindOverlayCouncilState(councilState);
                     return;
                 }
                 if (tryToFindTextAndAudio()) {
@@ -376,25 +454,37 @@ export function useCouncilMachine({
                     }, 1000);
                 }
                 break;
-            case 'max_reached':
-                if (activeOverlay !== "completed") {
-                    setActiveOverlay("completed");
+            case 'query_extension':
+                if (isMuseumMode && agentMode === "ptt") {
+                    setMetaAgentPhase("extension");
                 }
-                if (textMessages[playNextIndex]?.type !== 'max_reached') {
-                    cancelOverlay();
+                if (textMessages[playNextIndex]?.type !== 'query_extension') {
+                    rewindOverlayCouncilState(councilState);
                     return;
                 }
                 break;
             default:
                 break;
         }
-    }, [councilState, textMessages, audioMessages, playingNowIndex, playNextIndex, activeOverlay, liveKey, summary, initialLoadingMinElapsed]);
+    }, [councilState, textMessages, audioMessages, playingNowIndex, playNextIndex, liveKey, summary, initialLoadingMinElapsed, isMuseumMode, agentMode, setMetaAgentPhase]);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Actions                                    */
     /* -------------------------------------------------------------------------- */
 
+    function rewindOverlayCouncilState(state: CouncilState) {
+        if (!isOverlayCouncilState(state)) {
+            return;
+        }
+        setPlayNextIndex(playIndexBeforeOverlayState(textMessages, state));
+        setCouncilState("playing");
+    }
+
     function handleOnFinishedPlaying() {
+        const activeMessage = textMessages[playingNowIndex];
+        if (councilState === "summary" && activeMessage?.type === "summary") {
+            notifyAutoplay({ type: "summary-playback-finished" });
+        }
         calculateNextAction(true);
     }
 
@@ -421,16 +511,21 @@ export function useCouncilMachine({
             if (pendingMessage?.type !== 'awaiting_human_panelist') {
                 const detail = "Internal state mismatch: expected awaiting_human_panelist before submitting panelist response.";
                 console.error(detail);
-                setUnrecoverableError(detail);
+                setUnrecoverableError({
+                    message: detail,
+                    source: "useCouncilMachine.submit_panelist",
+                    meetingId: currentMeetingId,
+                });
                 return;
             }
 
             if (socketRef.current) socketRef.current.emit("submit_human_panelist", { text: newTopic, speaker: pendingMessage.speaker });
 
-            //Slice off the waiting for panelist
-            setTextMessages((prevMessages) => {
-                return prevMessages.slice(0, playNextIndex);
-            });
+            const now = textMessages[playingNowIndex]?.type === 'invitation' ? playingNowIndex - 1 : playingNowIndex;
+            const next = textMessages[playingNowIndex]?.type === 'invitation' ? playNextIndex - 1 : playNextIndex;
+            setTextMessages((prevMessages) => prevMessages.slice(0, next));
+            setPlayingNowIndex(now);
+            setPlayNextIndex(next);
             calculateNextAction();
         } else {
             if (socketRef.current) socketRef.current.emit("submit_human_message", { text: newTopic });
@@ -448,53 +543,69 @@ export function useCouncilMachine({
         }
     }
 
-    function cancelOverlay() {
-        setActiveOverlay(null);
-
-        // Are these actually needed?
-        // const pathSuffix = currentMeetingId > 0 ? String(currentMeetingId) : "new";
-        // const pathname = `${meetingRoutesBase}/${pathSuffix}`;
-        // navigate({ pathname, hash: "" }, { replace: true });
-
-        //TODO rewrite this to be more DRY, shouldnt be as a side effect here in cancelOverlay?
-        //TODO if reaching a synthetic message from the end of the previous one, going back should reset the audio but it doesnt at the moment
-        if (councilState === 'max_reached') {
-            // Reliably set the play state to the last content before the synthetic max_reached message
-            const mr = textMessages.findIndex((m) => m.type === 'max_reached');
-            const lastContent = mr >= 0 ? mr - 1 : textMessages.length - 1;
-            setPlayNextIndex(Math.max(0, lastContent));
-            setCouncilState('playing');
-        } else if (councilState === 'summary') {
-            // Reliably set the play state to the last content before the  summary message
-            // Why 2?
-            const si = textMessages.findIndex((m) => m.type === 'summary');
-            const before = si > 0 ? si - 1 : Math.max(0, textMessages.length - 2);
-            setPlayNextIndex(Math.max(0, before));
-            setCouncilState('playing');
-        } else if (councilState === 'meeting_incomplete') {
-            // Reliably set the play state to the last content before the synthetic meeting_incomplete message
-            const mi = textMessages.findIndex((m) => m.type === 'meeting_incomplete');
-            const lastContent = mi >= 0 ? mi - 1 : textMessages.length - 1;
-            setPlayNextIndex(Math.max(0, lastContent));
-            setCouncilState('playing');
+    function handleOnAbandonHumanTurn() {
+        const expectedType =
+            councilState === "human_panelist" ? "awaiting_human_panelist" : "awaiting_human_question";
+        const awaitingMsg = textMessages[playNextIndex];
+        if (awaitingMsg?.type !== expectedType) {
+            const detail = `Internal state mismatch: expected ${expectedType} before abandoning human turn.`;
+            console.error(detail);
+            setUnrecoverableError({
+                message: detail,
+                source: "useCouncilMachine.skip_human_turn",
+                meetingId: currentMeetingId,
+            });
+            return;
         }
+
+        if (socketRef.current) socketRef.current.emit("skip_human_turn");
+
+        const speaker =
+            awaitingMsg.type === "awaiting_human_panelist" ? awaitingMsg.speaker : humanName;
+
+        const now =
+            textMessages[playingNowIndex]?.type === "invitation" ? playingNowIndex - 1 : playingNowIndex;
+        const next =
+            textMessages[playingNowIndex]?.type === "invitation" ? playNextIndex - 1 : playNextIndex;
+
+        setTextMessages((prevMessages) => {
+            const base = prevMessages.slice(0, next);
+            base.push({
+                type: "skipped",
+                speaker,
+                text: "",
+                id: `skip-local-${Date.now()}`,
+            });
+            return base;
+        });
+        setPlayingNowIndex(now);
+        setPlayNextIndex(next);
+        setIsRaisedHand(false);
+        calculateNextAction();
     }
 
-    function handleOnContinueMeetingLonger() {
-        const mr = textMessages.findIndex((m) => m.type === 'max_reached');
-        setTextMessages(prevMessages => prevMessages.slice(0, mr));
-        setActiveOverlay(null);
+    function declineOverlay() {
+        if (nameOverlayOpen) {
+            setNameOverlayOpen(false);
+            return;
+        }
+        rewindOverlayCouncilState(councilState);
+    }
+
+    function handleOnExtendMeeting() {
+        const queryExtensionIndex = textMessages.findIndex((m) => m.type === 'query_extension');
+        setTextMessages(prevMessages => prevMessages.slice(0, queryExtensionIndex));
         setPaused(false);
-        if (socketRef.current) socketRef.current.emit("continue_conversation");
+        if (socketRef.current) socketRef.current.emit("extend_meeting");
         setCouncilState('loading');
     }
 
-    function handleOnGenerateSummary() {
-        const mr = textMessages.findIndex((m) => m.type === 'max_reached');
-        setTextMessages(prevMessages => prevMessages.slice(0, mr));
-        setActiveOverlay(null);
+    function handleOnConcludeMeeting() {
+        const queryExtensionIndex = textMessages.findIndex((m) => m.type === 'query_extension');
+        setTextMessages(prevMessages => prevMessages.slice(0, queryExtensionIndex));
+        setPaused(false);
         const browserDate = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-        if (socketRef.current) socketRef.current.emit("wrap_up_meeting", { date: browserDate });
+        if (socketRef.current) socketRef.current.emit("conclude_meeting", { date: browserDate });
         setCouncilState('loading');
     }
 
@@ -513,7 +624,6 @@ export function useCouncilMachine({
 
         // Go to loading state, and remove the overlay once the state is set
         setCouncilState(("loading"));
-        setActiveOverlay(null);
         setPaused(false);
 
 
@@ -543,7 +653,12 @@ export function useCouncilMachine({
                     : err instanceof Error && err.message.trim().length > 0
                       ? err.message
                       : t("error.1");
-            setUnrecoverableError(msg);
+            setUnrecoverableError({
+                message: msg,
+                source: "useCouncilMachine.resume",
+                cause: err,
+                meetingId: currentMeetingId,
+            });
         }
     }
 
@@ -553,13 +668,13 @@ export function useCouncilMachine({
             setHumanName(input.humanName);
             setIsRaisedHand(true);
             setPaused(false);
-            cancelOverlay();
+            setNameOverlayOpen(false);
         }
     }
 
     function handleOnRaiseHand() {
         if (humanName === "") {
-            setActiveOverlay("name");
+            setNameOverlayOpen(true);
         } else {
             setIsRaisedHand(true);
         }
@@ -636,31 +751,67 @@ export function useCouncilMachine({
         }
     }, [isRaisedHand]);
 
-    // Pause Logic
+    // Auto-pause / auto-resume for meeting playback (split into three effects).
+    //
+    // Council overlays (name, overlay council states) pause on show; dismissing without acting stays paused.
+    //
+    // Environmental interrupts (hash overlays, tab hidden, socket drop) also pause automatically.
+    // Resume rules:
+    // - Web: reconnect only (play button handles hash dismiss etc.).
+    // - Museum: resume when all environmental interrupts are gone (controls are hidden).
+
     useEffect(() => {
-        if (activeOverlay !== null && activeOverlay !== "summary" && !isPaused) {
+        const overlayPause = visibleOverlay !== null && visibleOverlay !== "summary";
+        const hashPause = Boolean(location.hash);
+        const connectionPause = connectionError;
+        const visibilityPause = !isDocumentVisible && metaAgentPhase === "inactive";
+
+        if ((overlayPause || hashPause || connectionPause || visibilityPause) && !isPaused) {
             setPaused(true);
-        } else if (location.hash && !isPaused) {
-            setPaused(true);
-        } else if (connectionError) {
-            setPaused(true);
+        }
+    }, [
+        isPaused,
+        visibleOverlay,
+        location.hash,
+        connectionError,
+        isDocumentVisible,
+        metaAgentPhase,
+        setPaused,
+    ]);
+
+    // Museum resume: only environmental deps — visibleOverlay omitted so overlay dismiss (X)
+    // does not trigger auto-resume. Stacked interrupts (e.g. #setup + hidden tab) resume only
+    // when hash, connection, and visibility are all clear again.
+    useEffect(() => {
+        if (!isMuseumMode || !isPaused) {
+            return;
         }
 
-        // Audio Context Suspension
-        if (isPaused) {
-            if (setAudioPaused) {
-                setAudioPaused(true);
-            } else if (audioContext.current && audioContext.current.state !== "suspended") {
-                audioContext.current.suspend();
-            }
-        } else {
-            if (setAudioPaused) {
-                setAudioPaused(false);
-            } else if (audioContext.current && audioContext.current.state === "suspended") {
-                audioContext.current.resume();
-            }
+        const hashPause = Boolean(location.hash);
+        const connectionPause = connectionError;
+        const visibilityPause = !isDocumentVisible && metaAgentPhase === "inactive";
+        if (hashPause || connectionPause || visibilityPause) {
+            return;
         }
-    }, [isPaused, activeOverlay, location, connectionError, setAudioPaused, councilState]);
+
+        setPaused(false);
+    }, [
+        location.hash,
+        connectionError,
+        isDocumentVisible,
+        metaAgentPhase,
+        isMuseumMode,
+        isPaused,
+        setPaused,
+    ]);
+
+    // Web reconnect resume: only connectionError in deps so manual pause does not re-trigger this.
+    useEffect(() => {
+        if (isPaused && !connectionError) {
+            setPaused(false);
+        }
+        // isPaused intentionally omitted — only resume when connectionError transitions.
+    }, [connectionError, setPaused]);
 
     useEffect(() => {
         if (councilState === 'waiting') {
@@ -680,11 +831,6 @@ export function useCouncilMachine({
         setIsMuted(!isMuted);
     }
 
-    // TODO, make this nicer somehow?
-    const maxReachedMessage = textMessages.find((m) => m.type === "max_reached");
-    const canExtendMeeting = liveKey !== undefined && (maxReachedMessage?.canContinue ?? false);
-
-
     return {
         state: {
             councilState,
@@ -692,9 +838,9 @@ export function useCouncilMachine({
             audioMessages,
             playingNowIndex,
             playNextIndex,
-            activeOverlay,
+            visibleOverlay,
+            nameOverlayOpen,
             summary,
-            humanName,
             isRaisedHand,
             currentMeetingId,
             canGoBack,
@@ -702,7 +848,6 @@ export function useCouncilMachine({
             canRaiseHand,
             currentSnippetIndex,
             isMuted,
-            canExtendMeeting,
         },
         actions: {
             tryToFindTextAndAudio,
@@ -710,13 +855,13 @@ export function useCouncilMachine({
             handleOnSkipBackward,
             handleOnSkipForward,
             handleOnSubmitHumanMessage,
-            handleOnContinueMeetingLonger,
+            handleOnAbandonHumanTurn,
+            handleOnExtendMeeting,
             handleOnAttemptResume,
-            handleOnGenerateSummary,
+            handleOnConcludeMeeting,
             handleHumanNameEntered,
             handleOnRaiseHand,
-            cancelOverlay,
-            setHumanName,
+            declineOverlay,
             setIsRaisedHand,
             setCurrentSnippetIndex,
             toggleMute

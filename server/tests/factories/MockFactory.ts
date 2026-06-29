@@ -95,11 +95,12 @@ export const MockFactory = {
             voiceModel: "gpt-4o-mini-tts",
             geminiVoiceModel: "gemini-2.5-flash-tts",
             inworldVoiceModel: "inworld-tts-1.5-mini",
+            elevenlabsVoiceModel: "eleven_flash_v2_5",
             temperature: 1,
             maxTokens: 100,
             chairMaxTokens: 50,
             defaultAudioSpeed: 1.25,
-            subtitleTimingPriorities: ["inworld", "estimated", "whisper"],
+            subtitleTimingPriorities: ["elevenlabs", "inworld", "estimated", "whisper"],
             trimSentance: false,
             trimParagraph: true,
             chairId: CHAIR_ID,
@@ -110,15 +111,54 @@ export const MockFactory = {
             meetingVeryMaxLength: 30,
             raiseHandPrompt: { en: "Raise Hand" },
             raiseHandInvitationLength: 50,
-            finalizeMeetingPrompt: { en: "Finalize" },
-            finalizeMeetingLength: 5,
+            panelistInvitationPrompt: { en: "Welcome [NAME]" },
+            panelistInvitationLength: 50,
+            concludeMeetingPrompt: { en: "Closing line" },
+            concludeMeetingLength: 50,
+            summarizeMeetingPrompt: { en: "Summarize" },
+            summarizeMeetingLength: 5,
             extraMessageCount: 2,
             transcribeModel: "whisper-1",
             transcribePrompt: { en: "Transcribe" },
             audioConcurrency: 2,
             voiceGuideRealtimeModel: "google-ai-studio/gemini-2.5-flash",
             voiceGuideRealtimeTranscriptionModel: "assemblyai/u3-rt-pro",
-            humanTargetingModel: "google-ai-studio/gemini-2.5-flash",
+            voiceGuideOpenAIRealtimeModel: "gpt-realtime",
+            chairRealtime: {
+                strategy: "unified",
+                languages: {
+                    en: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        ttsModel: "inworld-tts-1.5-max",
+                        transcriptionModel: "assemblyai/u3-rt-pro",
+                        agentVoice: null,
+                    },
+                    sv: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        ttsModel: "inworld-tts-2",
+                        transcriptionModel: "soniox/stt-rt-v4",
+                        agentVoice: null,
+                    },
+                },
+            },
+            humanInputRealtime: {
+                languages: {
+                    en: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        transcriptionModel: "assemblyai/u3-rt-pro",
+                    },
+                    sv: {
+                        provider: "inworld",
+                        llmModel: "google-ai-studio/gemini-2.5-flash",
+                        transcriptionModel: "soniox/stt-rt-v4",
+                    },
+                },
+            },
+            speakerClassifierModel: "google-ai-studio/gemini-2.5-flash",
+            directedSpeakerRouting: false,
             ...overrides,
         }) as GlobalOptions,
 
@@ -147,7 +187,7 @@ export const MockFactory = {
 
     createMeeting: (overrides: Partial<Meeting> = {}): Meeting => {
         const storedMeeting = MockFactory.createStoredMeeting();
-        const { liveKey, ...meeting } = storedMeeting;
+        const { liveKey: _liveKey, ...meeting } = storedMeeting;
         return { ...meeting, ...overrides };
     },
 

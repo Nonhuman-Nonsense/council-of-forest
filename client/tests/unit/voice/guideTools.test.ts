@@ -1,5 +1,5 @@
 import { createGuideToolHandlers, GuideToolContext } from '@voice/guideTools';
-import { useMeetingSetupStore } from '@stores/useMeetingSetupStore';
+import { useMeetingSetupStore } from '@newMeeting/meetingSetupStore';
 
 vi.mock('@newMeeting/meetingSetup', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@newMeeting/meetingSetup')>();
@@ -207,6 +207,12 @@ describe('guideTools', () => {
 
     it('starts when the visitor name is known', async () => {
       useMeetingSetupStore.getState().setVisitorName('Leo');
+      vi.mocked(ctx.buildSelectedTopic).mockReturnValue({
+        id: 'topic1',
+        title: 'Topic One',
+        description: 'Desc One',
+        prompt: 'Prompt',
+      });
       const handlers = createGuideToolHandlers(ctx);
       const res = await handlers.start_meeting({});
       expect(res).toEqual({

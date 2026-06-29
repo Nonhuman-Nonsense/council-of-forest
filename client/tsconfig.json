@@ -40,17 +40,14 @@
             "@newMeeting/*": [
                 "./src/newMeeting/*"
             ],
-            "@stores/*": [
-                "./src/stores/*"
-            ],
             "@voice/*": [
                 "./src/voice/*"
             ],
-            "@serial/*": [
-                "./src/serial/*"
-            ],
             "@realtime/*": [
                 "./src/realtime/*"
+            ],
+            "@museum/*": [
+                "./src/museum/*"
             ],
             "@shared/*": [
                 "../shared/*"

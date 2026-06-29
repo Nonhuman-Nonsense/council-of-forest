@@ -1,11 +1,11 @@
-import type { Character, HumanMessage, Message, PanelistMessage } from "@shared/ModelTypes.js";
+import type { HumanMessage, Message, PanelistMessage } from "@shared/ModelTypes.js";
 import type { SubmitHumanMessagePayload, SubmitHumanPanelistPayload } from "@shared/SocketTypes.js";
 import type { IHumanInputContext } from "@interfaces/MeetingInterfaces.js";
 import type { Message as AudioQueueMessage } from "@logic/audio/AudioTypes.js";
 import { Logger } from "@utils/Logger.js";
 import { v4 as uuidv4 } from "uuid";
 import { splitSentences } from "@shared/textUtils.js";
-import { HumanTargetClassifier } from "@logic/HumanTargetClassifier.js";
+import { annotateDirectedHandoff } from "@logic/directedHandoff.js";
 
 export interface InjectionMessage {
     text: string;
@@ -20,11 +20,9 @@ export interface InjectionMessage {
  */
 export class HumanInputHandler {
     manager: IHumanInputContext;
-    targetClassifier: HumanTargetClassifier;
 
     constructor(meetingManager: IHumanInputContext) {
         this.manager = meetingManager;
-        this.targetClassifier = new HumanTargetClassifier(meetingManager.serverOptions);
     }
 
     /**
@@ -39,26 +37,32 @@ export class HumanInputHandler {
 
         Logger.info(`meeting ${m._id}`, `human input on index ${m.conversation.length - 1} `);
 
-        if (m.conversation[m.conversation.length - 1].type !== 'awaiting_human_question') {
-            Logger.error(`meeting ${m._id}`, "Received a human question but was not expecting one!");
+        const lastMessage = m.conversation[m.conversation.length - 1];
+        if (lastMessage?.type !== 'awaiting_human_question') {
+            Logger.reportAndCrashClient(
+                `meeting ${m._id}`,
+                "Received a human question but was not expecting one!",
+                new Error(
+                    `Expected last message to be 'awaiting_human_question' but found '${lastMessage?.type ?? "none"}'`
+                ),
+                manager.broadcaster
+            );
             return;
         }
         m.conversation.pop();
 
-        if (m.conversation[m.conversation.length - 1].type === 'invitation') {
+        if (m.conversation[m.conversation.length - 1]?.type === 'invitation') {
             Logger.info(`meeting ${m._id}`, `popping invitation down to index ${m.conversation.length - 1} `);
             m.conversation.pop();
         }
 
         const humanName = m.state.humanName || "Human";
-        const targetedCharacter = this.resolveTargetCharacter(
-            await this.targetClassifier.inferTarget(m, payload.text),
-            m.characters
-        );
+        const askParticular = await this.manager.speakerTargetClassifier.inferTarget(m, {
+            mode: "humanQuestion",
+            text: payload.text,
+            speakerId: humanName,
+        });
 
-        if (targetedCharacter) {
-            Logger.info(`meeting ${m._id}`, `specifically asked to ${targetedCharacter.id} `);
-        }
         const renderedText = humanName + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + payload.text;
 
         const msgId = "human-" + uuidv4();
@@ -67,10 +71,14 @@ export class HumanInputHandler {
             type: "human",
             speaker: humanName,
             text: renderedText,
-            askParticular: targetedCharacter?.id,
+            askParticular,
         };
 
         m.conversation.push(message);
+
+        if (askParticular) {
+            Logger.info(`meeting ${m._id}`, `${humanName} asked directly to ${askParticular}`);
+        }
 
         await manager.services.meetingsCollection.updateOne(
             { _id: m._id },
@@ -100,12 +108,6 @@ export class HumanInputHandler {
         manager.startLoop();
     }
 
-    private resolveTargetCharacter(target: string | undefined, characters: Character[]): Character | undefined {
-        if (!target) return undefined;
-
-        return characters.find((character) => character.id === target || character.name === target);
-    }
-
     /**
      * Handles input from a 'human panelist' (a human participant acting as a character/expert).
      * Validates that the state is 'awaiting_human_panelist'.
@@ -117,11 +119,24 @@ export class HumanInputHandler {
 
         Logger.info(`meeting ${m._id}`, `human panelist ${payload.speaker} on index ${m.conversation.length - 1} `);
 
-        if (m.conversation[m.conversation.length - 1].type !== 'awaiting_human_panelist') {
-            Logger.error(`meeting ${m._id}`, "Received a human panelist but was not expecting one!");
+        const lastMessage = m.conversation[m.conversation.length - 1];
+        if (lastMessage?.type !== 'awaiting_human_panelist') {
+            Logger.reportAndCrashClient(
+                `meeting ${m._id}`,
+                "Received a human panelist but was not expecting one!",
+                new Error(
+                    `Expected last message to be 'awaiting_human_panelist' but found '${lastMessage?.type ?? "none"}'`
+                ),
+                manager.broadcaster
+            );
             return;
         }
         m.conversation.pop();
+
+        if (m.conversation[m.conversation.length - 1]?.type === 'invitation') {
+            Logger.info(`meeting ${m._id}`, `popping panelist invitation down to index ${m.conversation.length - 1} `);
+            m.conversation.pop();
+        }
 
         const charName = m.characters.find(c => c.id === payload.speaker)?.name || "Unknown";
         const message: PanelistMessage = {
@@ -131,7 +146,13 @@ export class HumanInputHandler {
             text: charName + (m.language === 'en' ? " said:\xa0" : " sa:\xa0") + payload.text,
         };
 
+        await annotateDirectedHandoff(this.manager.speakerTargetClassifier, this.manager.serverOptions, m, message);
+
         m.conversation.push(message);
+
+        if (message.askParticular) {
+            Logger.info(`meeting ${m._id}`, `${payload.speaker} asked directly to ${message.askParticular}`);
+        }
 
         await manager.services.meetingsCollection.updateOne(
             { _id: m._id },
@@ -154,6 +175,68 @@ export class HumanInputHandler {
             manager.environment,
             manager.serverOptions
         );
+
+        manager.isPaused = false;
+        manager.handRaised = false;
+        manager.startLoop();
+    }
+
+    /**
+     * Skips the visitor's turn when they abandon input (e.g. museum idle timeout).
+     * Validates awaiting state, replaces invitation+awaiting with a skipped marker, resumes the loop.
+     */
+    async handleSkipHumanTurn(): Promise<void> {
+        const { manager } = this;
+        const m = manager.meeting;
+        if (!m) return;
+
+        const lastMessage = m.conversation[m.conversation.length - 1];
+        if (lastMessage?.type !== "awaiting_human_question" && lastMessage?.type !== "awaiting_human_panelist") {
+            Logger.reportAndCrashClient(
+                `meeting ${m._id}`,
+                "Received skip_human_turn but was not awaiting human input!",
+                new Error(
+                    `Expected last message to be awaiting human input but found '${lastMessage?.type ?? "none"}'`
+                ),
+                manager.broadcaster
+            );
+            return;
+        }
+
+        const speaker =
+            lastMessage.type === "awaiting_human_panelist"
+                ? lastMessage.speaker
+                : (m.state.humanName || "Human");
+
+        m.conversation.pop();
+
+        if (m.conversation[m.conversation.length - 1]?.type === "invitation") {
+            Logger.info(`meeting ${m._id}`, `popping invitation on skip down to index ${m.conversation.length - 1}`);
+            m.conversation.pop();
+        }
+
+        const skipped: Message = {
+            id: `skipped-${uuidv4()}`,
+            type: "skipped",
+            speaker,
+            text: "",
+        };
+
+        m.conversation.push(skipped);
+
+        const skippedIndex = m.conversation.length - 1;
+        if (lastMessage.type === "awaiting_human_panelist") {
+            Logger.info(`meeting ${m._id}`, `human panelist ${speaker} skipped on index ${skippedIndex}`);
+        } else {
+            Logger.info(`meeting ${m._id}`, `human question skipped for ${speaker} on index ${skippedIndex}`);
+        }
+
+        await manager.services.meetingsCollection.updateOne(
+            { _id: m._id },
+            { $set: { conversation: m.conversation } }
+        );
+
+        manager.broadcaster.broadcastConversationUpdate(m.conversation);
 
         manager.isPaused = false;
         manager.handRaised = false;
