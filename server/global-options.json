@@ -30,8 +30,8 @@
   },
   "panelistInvitationLength": 150,
   "concludeMeetingPrompt": {
-    "en": "The meeting is coming to a close. As chair, say one brief closing line to the council and the visitor — thank them, reflect lightly on the discussion. Say something actually meaningful, not just empty words. Think about something that would inspire people to take action. End with the words: This concludes Council of Forest meeting #[MEETING_ID]",
-    "sv": "Mötet närmar sig sitt slut. Som ordförande, säg en kort avslutande replik till rådet och besökaren — tacka dem och reflektera lätt över diskussionen. Säg något faktiskt meningsfullt, inte bara tomma ord. Tänk på något som skulle inspirera människor till handling. Avsluta med orden: Detta avslutar Skogsrådets möte #[MEETING_ID]"
+    "en": "The meeting is coming to a close. As chair, say one brief closing line to the council and the visitor — thank them, reflect lightly on the discussion. Say something actually meaningful, not just empty words. Think about something that would inspire people to take action. End with the words: This concludes Council of Forest meeting #[MEETING_ID].",
+    "sv": "Mötet närmar sig sitt slut. Som ordförande, säg en kort avslutande replik till rådet och besökaren — tacka dem och reflektera lätt över diskussionen. Säg något faktiskt meningsfullt, inte bara tomma ord. Tänk på något som skulle inspirera människor till handling. Avsluta med orden: Detta avslutar Skogsrådets möte #[MEETING_ID]."
   },
   "concludeMeetingLength": 150,
   "summarizeMeetingPrompt": {
