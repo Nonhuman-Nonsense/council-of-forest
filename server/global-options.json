@@ -36,7 +36,7 @@
   "concludeMeetingLength": 150,
   "summarizeMeetingPrompt": {
     "en": "Please summarise the meeting held on [DATE] making a document that could work as a meeting protocol and a policy recommendation, that could be sent to the Swedish government for consideration. Meeting #[MEETING_ID]. Maximum 1500 characters. Use markdown headings and horizontal rules as needed. Output raw markdown only — do not wrap the document in code fences. Do not continue the debate.",
-    "sv": "Sammanfatta mötet, som hölls på datumet [DATE], och skapa ett dokument som kan användas som mötesprotokoll och rekommendation av lagändringar, som skulle kunna skickas till Sveriges Regering."
+    "sv": "Sammanfatta mötet som hölls den [DATE] och skapa ett dokument som kan fungera som mötesprotokoll och policerekommendation som skulle kunna skickas till Sveriges regering för övervägande. Möte #[MEETING_ID]. Maximalt 1500 tecken. Använd markdown-rubriker och horisontella linjer vid behov. Skriv endast rå markdown — omslut inte dokumentet i kodstaket. Fortsätt inte debatten."
   },
   "summarizeMeetingLength": 512,
   "transcribeModel": "gpt-4o-transcribe",
