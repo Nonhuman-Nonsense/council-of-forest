@@ -42,7 +42,7 @@
     "voiceGuide": "Voice Guide",
     "alwaysOn": "Always On",
     "pushToTalk": "Push to Talk",
-    "holdToSpeak": "Push the button to speak",
+    "holdToSpeak": "Push and hold the button to speak",
     "button": {
       "title": "Button",
       "bridgeLabel": "Bridge",

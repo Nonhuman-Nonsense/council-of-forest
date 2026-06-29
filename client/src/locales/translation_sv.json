@@ -59,7 +59,7 @@
     "button_museum": "Håll in knappen för att tala, släpp för att skicka"
   },
   "metaAgent": {
-    "holdToSpeak": "Tryck på knappen för att tala"
+    "holdToSpeak": "Tryck och håll in knappen för att tala"
   },
   "queryExtension": {
     "title": "Var det allt?",

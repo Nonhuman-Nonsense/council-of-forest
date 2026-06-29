@@ -24,7 +24,6 @@ import Close from './close.svg?react';
 import CloseFullscreen from './close_fullscreen.svg?react';
 import Fullscreen from './fullscreen.svg?react';
 import Hamburger from './hamburger.svg?react';
-import Tomato from './tomato.svg?react';
 import Ai from './ai.svg?react';
 import AiFilled from './ai_filled.svg?react';
 
@@ -53,7 +52,6 @@ export const Icons = {
     close_fullscreen: CloseFullscreen,
     fullscreen: Fullscreen,
     hamburger: Hamburger,
-    tomato: Tomato,
     ai: Ai,
     ai_filled: AiFilled,
 } as const;

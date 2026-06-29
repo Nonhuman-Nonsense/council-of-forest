@@ -1,6 +1,5 @@
 import type { Meeting } from "@shared/ModelTypes";
 import { useTranslation } from "react-i18next";
-import { Icons } from "@assets/icons";
 import { useRouting } from "@/routing";
 import { Link } from "react-router";
 import MarqueeRollingBanner from "./MarqueeRollingBanner";
@@ -38,7 +37,7 @@ export default function ReplayModeBanner({
 
   const content = (
     <>
-      <Icons.tomato className="marquee-rolling-banner__tomato" />
+      <span className="marquee-rolling-banner__dot" aria-hidden />
       {preamble}
       {callToAction}
     </>

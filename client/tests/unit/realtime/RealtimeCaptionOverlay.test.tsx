@@ -62,7 +62,7 @@ describe("RealtimeCaptionOverlay", () => {
   });
 
   it("shows hold-to-speak banner in PTT mode when hint is visible", () => {
-    render(
+    const { container } = render(
       <RealtimeCaptionOverlay
         error={null}
         lastCaption={null}
@@ -73,6 +73,8 @@ describe("RealtimeCaptionOverlay", () => {
     );
 
     expect(screen.getByTestId("voice-guide-hold-to-speak")).toBeInTheDocument();
+    expect(container.querySelectorAll(".marquee-rolling-banner__dot").length).toBeGreaterThan(0);
+    expect(container.innerHTML).not.toContain("tomato");
   });
 
   it("hides hold-to-speak banner when not in PTT mode", () => {

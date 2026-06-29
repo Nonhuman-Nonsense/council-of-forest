@@ -1,7 +1,6 @@
 import { type CSSProperties, type ReactElement, useRef } from "react";
 import MarqueeRollingBanner from "@council/MarqueeRollingBanner";
 import { LiveAudioVisualizerPair } from "@council/humanInput/LiveAudioVisualizer";
-import { Icons } from "@assets/icons";
 import { useMobile } from "@/utils";
 import type { AgentMode } from "@/settings/councilSettings";
 import { z } from "@/zIndexLayers";
@@ -188,9 +187,9 @@ export default function RealtimeCaptionOverlay(props: RealtimeCaptionOverlayProp
               testId="voice-guide-hold-to-speak"
               renderSegment={(index) => (
                 <>
-                  <Icons.tomato className="marquee-rolling-banner__tomato" aria-hidden={index !== 0} />
+                  <span className="marquee-rolling-banner__dot" aria-hidden={index !== 0} />
                   <span aria-hidden={index !== 0}>{holdToSpeakMessage}</span>
-                  <Icons.tomato className="marquee-rolling-banner__tomato" aria-hidden />
+                  <span className="marquee-rolling-banner__dot" aria-hidden />
                   <span aria-hidden={index !== 0}>{holdToSpeakMessage}</span>
                 </>
               )}

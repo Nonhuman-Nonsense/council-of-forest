@@ -554,11 +554,13 @@ nav.blur::before {
   vertical-align: middle;
 }
 
-.marquee-rolling-banner__tomato {
-  width: 13px;
-  height: 13px;
+.marquee-rolling-banner__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
   display: inline-block;
-  opacity: 0.6;
+  flex-shrink: 0;
   margin-right: 10px;
   margin-left: 10px;
 }
