@@ -104,12 +104,18 @@ describe('MeetingManager - Conversation Flow', () => {
         await manager.runLoop();
 
         expect(spy).not.toHaveBeenCalled();
-        expect(manager.meeting.conversation.at(-1)?.type).toBe('max_reached');
-        expect(manager.meeting.conversation.at(-1)?.canContinue).toBe(true);
+        expect(manager.meeting.conversation.at(-1)?.type).toBe('query_extension');
         expect(manager.services.meetingsCollection.updateOne).toHaveBeenCalled();
     });
 
-    it('sets canContinue false on max_reached when at meetingVeryMaxLength', async () => {
+    it('concludes directly at hard cap without query_extension sentinel', async () => {
+        vi.spyOn(manager.dialogGenerator, 'chairInterjection').mockResolvedValue({
+            response: 'Summary text',
+            id: 'sum1',
+        });
+        vi.spyOn(manager.audioSystem, 'generateAudio').mockResolvedValue(undefined);
+        const endSpy = vi.spyOn(manager.broadcaster, 'broadcastConversationEnd');
+
         manager.serverOptions.conversationMaxLength = 5;
         manager.serverOptions.meetingVeryMaxLength = 5;
         manager.meeting.conversationExtraSlots = 0;
@@ -118,9 +124,11 @@ describe('MeetingManager - Conversation Flow', () => {
 
         await manager.runLoop();
 
-        expect(manager.meeting.conversation.at(-1)).toEqual(
-            expect.objectContaining({ type: 'max_reached', canContinue: false }),
-        );
+        expect(manager.meeting.conversation.at(-1)?.type).toBe('summary');
+        expect(manager.meeting.conversation.at(-2)?.type).toBe('message');
+        expect(manager.meeting.conversation.some((m) => m.type === 'query_extension')).toBe(false);
+        expect(endSpy).not.toHaveBeenCalled();
+        expect(manager.services.meetingsCollection.updateOne).toHaveBeenCalled();
     });
 
     it('should handle conversation turns (single turn verification) using DI', async () => {
@@ -234,7 +242,7 @@ describe('MeetingManager - Conversation Flow', () => {
         expect(manager.meeting.conversation[1].speaker).toBe('panelist0');
     });
 
-    it('should successfully wrap up meeting without ReferenceError (Regression Test)', async () => {
+    it('should successfully conclude meeting without ReferenceError (Regression Test)', async () => {
         // Setup mock OpenAI with audio capability
         const mockOpenAI = {
             chat: {
@@ -266,10 +274,10 @@ describe('MeetingManager - Conversation Flow', () => {
 
         diManager.meeting.conversation = [
             { id: 'pre', type: 'message', text: 'before', speaker: diManager.meeting.characters[0].id },
-            { type: 'max_reached' },
+            { type: 'query_extension' },
         ];
 
-        await diManager.meetingLifecycleHandler.handleWrapUpMeeting({ date: "2024-01-01" });
+        await diManager.meetingLifecycleHandler.handleConcludeMeeting({ date: "2024-01-01" });
 
         // Verify audio generation was attempted regardless of the chair's current voice provider.
         if (!diManager.serverOptions.skipAudio) {
@@ -278,17 +286,17 @@ describe('MeetingManager - Conversation Flow', () => {
         }
     });
 
-    it('should extend meeting on continue_conversation', async () => {
+    it('should extend meeting on extend_meeting', async () => {
         const { manager } = createTestManager('test', { ...setupTestOptions(), extraMessageCount: 5 });
         manager.serverOptions.conversationMaxLength = 5;
         manager.meeting.conversationExtraSlots = 0;
-        manager.meeting.conversation = [...new Array(5).fill({ type: 'message' }), { type: 'max_reached' }];
+        manager.meeting.conversation = [...new Array(5).fill({ type: 'message' }), { type: 'query_extension' }];
 
         // Spy on startLoop/runLoop to verify resumption
         const loopSpy = vi.spyOn(manager, 'startLoop');
 
         // Trigger continue
-        await manager.handleEvent('continue_conversation', null);
+        await manager.handleEvent('extend_meeting', null);
 
         expect(manager.meeting.conversationExtraSlots).toBe(5);
         expect(manager.meeting.conversation.map((m) => m.type)).toEqual([

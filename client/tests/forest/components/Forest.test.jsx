@@ -64,11 +64,17 @@ describe('Forest Visual Logic', () => {
         }));
     });
 
-    it('stays zoomed out during meta-agent (chair is the river backdrop, not a forest character)', () => {
-        const { container } = render(
-            <Forest currentSpeakerId="" metaAgentActive={true} isPaused={false} audioContext={mockAudioContext} />
+    it('stays zoomed out when currentSpeakerId is chair or empty (meta-agent)', () => {
+        const { container, rerender } = render(
+            <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
         );
-        const forestContainer = container.firstChild;
+        let forestContainer = container.firstChild;
+        expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
+
+        rerender(
+            <Forest currentSpeakerId="river" isPaused={false} audioContext={mockAudioContext} />
+        );
+        forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
     });
 

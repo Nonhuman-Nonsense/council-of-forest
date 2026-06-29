@@ -12,7 +12,7 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                 _id: 123,
                 language: "sv",
                 characters: [{ id: "mock-char", name: "Mock Char" }],
-                conversation: [{ type: "max_reached" }],
+                conversation: [{ type: "query_extension" }],
                 state: {},
             },
             environment: "test",
@@ -22,11 +22,16 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                 getOpenAI: vi.fn().mockReturnValue({ apiKey: "mock-key" }),
             },
             serverOptions: {
-                finalizeMeetingPrompt: {
+                concludeMeetingPrompt: {
+                    en: "Closing",
+                    sv: "Avslutande replik",
+                },
+                concludeMeetingLength: 50,
+                summarizeMeetingPrompt: {
                     en: "Summarize [DATE]",
                     sv: "Sammanfatta [DATE]",
                 },
-                finalizeMeetingLength: 5,
+                summarizeMeetingLength: 5,
                 transcribeModel: "whisper-1",
                 transcribePrompt: {
                     en: "Transcribe",
@@ -34,9 +39,14 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                 },
             },
             dialogGenerator: {
-                chairInterjection: vi.fn().mockResolvedValue({ response: "Summary text", id: "msg_456" }),
+                chairInterjection: vi.fn()
+                    .mockResolvedValueOnce({ response: "Tack för samtalet.", id: "close_1" })
+                    .mockResolvedValueOnce({ response: "Summary text", id: "msg_456" }),
             },
-            audioSystem: { generateAudio: vi.fn() },
+            audioSystem: {
+                generateAudio: vi.fn(),
+                queueAudioGeneration: vi.fn(),
+            },
             broadcaster: {
                 broadcastConversationUpdate: vi.fn(),
                 broadcastError: vi.fn(),
@@ -46,10 +56,13 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
         handler = new MeetingLifecycleHandler(mockManager);
     });
 
-    it("calls chairInterjection with the Swedish finalizeMeetingPrompt", async () => {
-        await handler.handleWrapUpMeeting({ date: "2024-01-01" });
-        const callArgs = (mockManager.dialogGenerator.chairInterjection as ReturnType<typeof vi.fn>).mock.calls[0];
-        expect(callArgs[0]).toContain("Sammanfatta");
-        expect(callArgs[0]).toContain("2024-01-01");
+    it("calls chairInterjection with Swedish conclude then summarize prompts", async () => {
+        await handler.handleConcludeMeeting({ date: "2024-01-01" });
+
+        const calls = (mockManager.dialogGenerator.chairInterjection as ReturnType<typeof vi.fn>).mock.calls;
+        expect(calls).toHaveLength(2);
+        expect(calls[0][0]).toBe("Avslutande replik");
+        expect(calls[1][0]).toContain("Sammanfatta");
+        expect(calls[1][0]).toContain("2024-01-01");
     });
 });

@@ -64,10 +64,11 @@ export default function Main(props: MainProps) {
   //Had to lift up navbar state to this level to be able to close it from main overlay
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
 
-  // Lifted for Forest (always-mounted scene outside Council).
+  // Meeting runtime lifted to Main for Forest: `Forest` mounts as a sibling outside the
+  // routed Council tree and needs speaker + pause + shared audio while a meeting plays.
+  // Meta-agent state (`metaAgentPhase`) stays in Council — Forest zoom uses `currentSpeakerId` only.
   const [currentSpeakerId, setCurrentSpeakerId] = useState("");
   const [isPaused, setPaused] = useState(false);
-  const [metaAgentActive, setMetaAgentActive] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
   if (audioContext.current === null) {
@@ -81,7 +82,7 @@ export default function Main(props: MainProps) {
   const navigate = useNavigate();
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode } = useCouncilSettings();
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
 
   useEffect(() => {
@@ -123,9 +124,6 @@ export default function Main(props: MainProps) {
     const withoutLang = stripLanguagePrefix(location.pathname);
     if (withoutLang === `/${routes.newMeeting}` || isRootPath(location.pathname)) {
       setMeetingliveKey(null);
-    }
-    if (!isMeetingPath(location.pathname)) {
-      setMetaAgentActive(false);
     }
   }, [location.pathname]);
 
@@ -174,14 +172,13 @@ export default function Main(props: MainProps) {
           />
         </Suspense>
       )}
-      {pushToTalkMode && (
+      {agentMode === "ptt" && (
         <Suspense fallback={null}>
           <MuseumButton />
         </Suspense>
       )}
       <Forest
         currentSpeakerId={currentSpeakerId}
-        metaAgentActive={metaAgentActive}
         isPaused={isPaused}
         audioContext={audioContext}
       />
@@ -230,15 +227,13 @@ export default function Main(props: MainProps) {
                   setCurrentSpeakerId={setCurrentSpeakerId}
                   isPaused={isPaused}
                   setPaused={setPaused}
-                  metaAgentActive={metaAgentActive}
-                  setMetaAgentActive={setMetaAgentActive}
                   audioContext={audioContext}
                 />
               }
             />
             <Route path="*" element={<Navigate to={rootPath} replace />} />
           </Routes>
-          {!isIphone && !isMuseumMode && !(pushToTalkMode && ledDebugOverlay) && <FullscreenButton />}
+          {!isIphone && !isMuseumMode && !(agentMode === "ptt" && ledDebugOverlay) && <FullscreenButton />}
           <MainOverlays
             topic={topicSelection}
             onReset={onReset}

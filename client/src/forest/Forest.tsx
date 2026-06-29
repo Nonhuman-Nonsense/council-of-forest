@@ -22,7 +22,6 @@ type ForestProps = {
     currentSpeakerId: string;
     isPaused: boolean;
     audioContext: RefObject<AudioContext | null>;
-    metaAgentActive?: boolean;
 };
 
 /** Build-time sync guarantees a ratio per manifest id; fail fast if manifest and generated file drift. */
@@ -34,7 +33,7 @@ function ratioFor(id: string): number {
     return r;
 }
 
-function Forest({ currentSpeakerId, isPaused, audioContext, metaAgentActive = false }: ForestProps) {
+function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
     const isMobile = useMobile();
 
@@ -91,8 +90,9 @@ function Forest({ currentSpeakerId, isPaused, audioContext, metaAgentActive = fa
     };
 
 
-    // Chair (river) is the always-on backdrop — not in forest_characters. Meta-agent stays zoomed out.
-    const zoomSpeakerId = metaAgentActive ? "" : currentSpeakerId;
+    // Only beings in forest_characters zoom in. Chair (river) and "" keep the wide forest shot
+    // (including during meta-agent — Council publishes CHAIR_ID or "" for currentSpeakerId).
+    const zoomSpeakerId = currentSpeakerId;
 
     useEffect(() => {
         //find the current speaker in the list of characters

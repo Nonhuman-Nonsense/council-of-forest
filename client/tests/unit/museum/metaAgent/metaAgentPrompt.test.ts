@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildExtensionActivationTurn,
+  buildExtensionAgentPrompt,
+  buildExtensionStateSnapshot,
   buildMetaAgentActivationTurn,
   buildMetaAgentPrompt,
   buildMetaAgentStateSnapshot,
@@ -19,16 +22,26 @@ const testBundle: MetaAgentPromptBundle = {
   },
   jobInstructions: [
     "Handle interruptions during a live council meeting.",
-    "When the exchange feels complete, call continue_meeting.",
+    "When the exchange feels complete, call resume_meeting.",
   ],
   toolDescriptions: {
-    continue_meeting:
+    resume_meeting:
       "Return to the live council meeting when the visitor seems done with this interruption.",
     restart_meeting:
       "Restart the entire meeting from the beginning, returning to the setup screen.",
   },
   activationGreetingExample:
     "Excuse me — you've interrupted the council. You'll be invited to speak when it's your turn. Unless you'd like to start from the beginning?",
+  extensionJobInstructions: [
+    "Explain the meeting is getting long and ask extend or conclude.",
+    "Call extend_meeting or conclude_meeting when the choice is clear.",
+  ],
+  extensionToolDescriptions: {
+    extend_meeting: "Continue the council meeting for longer.",
+    conclude_meeting: "End the meeting and move to the summary.",
+  },
+  extensionActivationGreetingExample:
+    "We've been at this a while — extend a bit, or bring it to a conclusion?",
 };
 
 function makeSnapshot(overrides: Partial<MetaAgentStateSnapshot> = {}): MetaAgentStateSnapshot {
@@ -64,38 +77,39 @@ describe("getMetaAgentBundle", () => {
     expect(bundle.chairIdentity).toContain("Älven");
     expect(bundle.councilVocabulary.councilName).toBe("Skogsrådet");
     expect(bundle.jobInstructions.length).toBeGreaterThan(0);
+    expect(bundle.extensionJobInstructions.length).toBeGreaterThan(0);
   });
 });
 
 describe("buildMetaAgentPrompt", () => {
   it("includes chair identity, project, and council vocabulary", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, pushToTalkMode: true });
+    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "ptt" });
     expect(prompt).toContain("You are Water");
     expect(prompt).toContain("Council of Foods");
     expect(prompt).toContain("foods debate");
   });
 
   it("includes ptt note when push-to-talk mode is on", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, pushToTalkMode: true });
+    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "ptt" });
     expect(prompt).toContain("hold to talk");
   });
 
   it("omits ptt note when push-to-talk mode is off", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, pushToTalkMode: false });
+    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "always-on" });
     expect(prompt).not.toContain("hold to talk");
   });
 
-  it("mentions continue_meeting and restart_meeting tools", () => {
+  it("mentions resume_meeting and restart_meeting tools", () => {
     const prompt = buildMetaAgentPrompt({ bundle: testBundle });
-    expect(prompt).toContain("continue_meeting");
+    expect(prompt).toContain("resume_meeting");
     expect(prompt).toContain("restart_meeting");
-    expect(prompt).toContain(testBundle.toolDescriptions.continue_meeting);
+    expect(prompt).toContain(testBundle.toolDescriptions.resume_meeting);
   });
 
-  it("instructs the agent to judge when to resume and call continue_meeting", () => {
+  it("instructs the agent to judge when to resume and call resume_meeting", () => {
     const prompt = buildMetaAgentPrompt({ bundle: testBundle });
     expect(prompt).toContain("You decide when the interruption is over");
-    expect(prompt).toContain("call continue_meeting in that same turn");
+    expect(prompt).toContain("call resume_meeting in that same turn");
     expect(prompt).toContain("Do not end a turn with only a spoken goodbye");
   });
 
@@ -103,7 +117,7 @@ describe("buildMetaAgentPrompt", () => {
     const bundle = getMetaAgentBundle("en");
     const prompt = buildMetaAgentPrompt({ bundle });
     expect(bundle.jobInstructions.join(" ")).toContain("Err on resuming");
-    expect(prompt).toContain(bundle.toolDescriptions.continue_meeting);
+    expect(prompt).toContain(bundle.toolDescriptions.resume_meeting);
   });
 
   it("instructs staying quiet until STATE SYNC and acknowledging the interruption", () => {
@@ -136,7 +150,7 @@ describe("buildMetaAgentPrompt", () => {
   it("uses the shipped beings bundle without errors", () => {
     const prompt = buildMetaAgentPrompt({
       bundle: getMetaAgentBundle("en"),
-      pushToTalkMode: true,
+      agentMode: "ptt",
     });
     expect(prompt.length).toBeGreaterThan(100);
     expect(prompt.length).toBeLessThan(4000);
@@ -210,5 +224,49 @@ describe("buildMetaAgentStateSnapshot", () => {
     const payload = JSON.parse(snap.replace(/^\(STATE SYNC: /, "").replace(/\)$/, ""));
     expect(payload.currentSpeaker).toBeNull();
     expect(payload.visitorName).toBeNull();
+  });
+});
+
+describe("buildExtensionAgentPrompt", () => {
+  it("includes extend_meeting and conclude_meeting tools", () => {
+    const prompt = buildExtensionAgentPrompt({ bundle: testBundle });
+    expect(prompt).toContain("extend_meeting");
+    expect(prompt).toContain("conclude_meeting");
+    expect(prompt).toContain(testBundle.extensionToolDescriptions.extend_meeting);
+  });
+
+  it("requires calling exactly one terminal tool", () => {
+    const prompt = buildExtensionAgentPrompt({ bundle: testBundle });
+    expect(prompt).toContain("exactly one tool");
+    expect(prompt).toContain("extend_meeting or conclude_meeting");
+  });
+
+  it("includes extension greeting example", () => {
+    const prompt = buildExtensionAgentPrompt({ bundle: testBundle });
+    expect(prompt).toContain(testBundle.extensionActivationGreetingExample);
+  });
+
+  it("loads extension copy from the shipped beings bundle", () => {
+    const bundle = getMetaAgentBundle("en");
+    const prompt = buildExtensionAgentPrompt({ bundle });
+    expect(bundle.extensionJobInstructions.length).toBeGreaterThan(0);
+    expect(prompt).toContain(bundle.extensionToolDescriptions.conclude_meeting);
+  });
+});
+
+describe("buildExtensionActivationTurn", () => {
+  it("asks the chair to speak first about extend vs conclude", () => {
+    const turn = buildExtensionActivationTurn();
+    expect(turn).toContain("extend or conclude");
+    expect(turn).toContain("STATE SYNC");
+  });
+});
+
+describe("buildExtensionStateSnapshot", () => {
+  it("marks type meta_agent_extension and councilState query_extension", () => {
+    const snap = buildExtensionStateSnapshot(makeSnapshot());
+    const payload = JSON.parse(snap.replace(/^\(STATE SYNC: /, "").replace(/\)$/, ""));
+    expect(payload.type).toBe("meta_agent_extension");
+    expect(payload.councilState).toBe("query_extension");
   });
 });

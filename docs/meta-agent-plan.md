@@ -3,6 +3,9 @@
 > **UI, captions, pause/freeze, and shared voice-session work** are planned in
 > [meta-agent-realtime-ux-plan.md](./meta-agent-realtime-ux-plan.md) (phased
 > implementation). This file keeps bootstrap, server, and early integration context.
+>
+> **Superseded (2026-06):** `metaAgentActive` → `metaAgentPhase` (`'inactive' | 'interruption' | 'extension'`).
+> Soft-cap museum extension: [meeting-conclude-plan.md](./meeting-conclude-plan.md) PR 3. Treat `metaAgentActive` references below as historical.
 
 A museum-only voice agent that runs **during a live council meeting**. The visitor
 presses the hardware button at any time to pause the meeting and talk to the
@@ -234,7 +237,7 @@ Same `RealtimeTool` / `ToolHandler` / `ToolResult` shapes as `guideTools.ts`.
 | `resume_meeting` | implement | `setMicEnabled(false)`; `setPaused(false)`; `setMetaAgentActive(false)` → `{ ok: true }` |
 | `restart_meeting` | implement | navigate to `rootPath` (`/`) → `{ ok: true }` |
 | `continue_meeting` | placeholder | `{ ok: false, error: "Not available yet" }` |
-| `wrap_up_meeting` | placeholder | `{ ok: false, error: "Not available yet" }` |
+| `conclude_meeting` | placeholder | `{ ok: false, error: "Not available yet" }` |
 
 `explain_whats_happening` is prompt-only (the agent uses the activate snapshot).
 No `pause_meeting` (pause is implicit on press), `dismiss_overlay`,

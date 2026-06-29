@@ -6,14 +6,21 @@ const mockCreateEventLoop = vi.hoisted(() => vi.fn());
 const mockCreateCaptionScheduler = vi.hoisted(() => vi.fn());
 const mockFetchRealtimeBootstrap = vi.hoisted(() => vi.fn());
 const mockCreateRealtimeConnection = vi.hoisted(() => vi.fn());
+const mockCreateRemoteAudioAnchor = vi.hoisted(() => vi.fn());
 
 let eventLoopCallbacks: {
   onCaption?: (text: string | null) => void;
   onUserTranscript?: (text: string) => void;
+  onWordAlignment?: (contentIndex: number, words: ReadonlyArray<{ w: string; s: number; e: number }>) => void;
   onAudioPartReady?: () => void;
   onResponseStarted?: () => void;
-  onResponseDone?: () => void;
+  onResponseDone?: (info?: { status?: string }) => void;
+  onSessionReady?: () => void;
 } = {};
+
+let mockCtxTime = 10;
+let mockOnAudioStart: ((nowMs: number, ctxTime: number) => void) | undefined;
+let rafCallback: FrameRequestCallback | null = null;
 
 const schedulerMocks = vi.hoisted(() => ({
   setAudioAnchor: vi.fn(),
@@ -60,6 +67,13 @@ vi.mock("@realtime/realtimeConnection", () => ({
   createRealtimeConnection: (...args: unknown[]) => mockCreateRealtimeConnection(...args),
 }));
 
+vi.mock("@voice/remoteAudioAnchor", () => ({
+  createRemoteAudioAnchor: (options: { onAudioStart: (nowMs: number, ctxTime: number) => void }) => {
+    mockOnAudioStart = options.onAudioStart;
+    return mockCreateRemoteAudioAnchor(options);
+  },
+}));
+
 const defaultParams = {
   feature: "meta-agent" as const,
   language: "en",
@@ -77,6 +91,31 @@ beforeEach(() => {
   vi.useRealTimers();
   eventLoopCallbacks = {};
   schedulerMocks.setAudioAnchor.mockClear();
+  mockCtxTime = 10;
+  mockOnAudioStart = undefined;
+  rafCallback = null;
+
+  mockCreateRemoteAudioAnchor.mockImplementation(() => ({
+    arm: vi.fn(),
+    getCtxTime: () => mockCtxTime,
+    dispose: vi.fn(),
+  }));
+
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+    rafCallback = cb;
+    return 1;
+  });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+  vi.stubGlobal("MediaStream", class {
+    constructor(_tracks?: unknown[]) {}
+  });
+
+  Object.defineProperty(HTMLMediaElement.prototype, "play", {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockResolvedValue(undefined),
+  });
 
   mockFetchRealtimeBootstrap.mockResolvedValue({
     provider: "inworld",
@@ -121,15 +160,20 @@ describe("useRealtimeVoiceSession", () => {
     });
   });
 
-  it("wires caption scheduler and user transcript callbacks", async () => {
+  it("wires inworld subtitle track and user transcript callbacks", async () => {
     const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
 
     await waitFor(() => {
-      expect(mockCreateCaptionScheduler).toHaveBeenCalled();
       expect(mockCreateEventLoop).toHaveBeenCalledWith(
-        expect.objectContaining({ captionScheduler: expect.any(Object) }),
+        expect.objectContaining({
+          captionScheduler: undefined,
+          callbacks: expect.objectContaining({
+            onWordAlignment: expect.any(Function),
+          }),
+        }),
       );
     });
+    expect(mockCreateCaptionScheduler).not.toHaveBeenCalled();
 
     act(() => {
       eventLoopCallbacks.onUserTranscript?.("What is happening?");
@@ -142,7 +186,90 @@ describe("useRealtimeVoiceSession", () => {
     expect(result.current.lastCaption).toBe("The council is discussing forests.");
   });
 
-  it("toggles agentSpeaking when trackAgentSpeaking is enabled", async () => {
+  it("uses caption scheduler for non-inworld providers", async () => {
+    mockFetchRealtimeBootstrap.mockResolvedValue({
+      provider: "openai",
+      session: { audio: { output: { speed: 1 } } },
+      iceServers: [],
+    });
+
+    renderHook(() => useRealtimeVoiceSession(defaultParams));
+
+    await waitFor(() => {
+      expect(mockCreateCaptionScheduler).toHaveBeenCalled();
+      expect(mockCreateEventLoop).toHaveBeenCalledWith(
+        expect.objectContaining({ captionScheduler: expect.any(Object) }),
+      );
+    });
+  });
+
+  it("tracks inworld agentSpeaking from audio anchor through subtitle end", async () => {
+    mockCreateRealtimeConnection.mockImplementation(async ({ onOpen, onRemoteTrack }: {
+      onOpen: () => void;
+      onRemoteTrack: (track: MediaStreamTrack) => void;
+    }) => {
+      onOpen();
+      onRemoteTrack({ stop: vi.fn() } as unknown as MediaStreamTrack);
+      return {
+        close: vi.fn(),
+        micStream: {
+          getTracks: () => [{ stop: vi.fn() }],
+          getAudioTracks: () => [{ enabled: false }],
+        },
+        dc: { readyState: "open", send: vi.fn() },
+      };
+    });
+
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+
+    await waitFor(() => {
+      expect(mockCreateRemoteAudioAnchor).toHaveBeenCalled();
+      expect(mockOnAudioStart).toBeTypeOf("function");
+    });
+
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+    });
+    expect(result.current.agentSpeaking).toBe(false);
+
+    act(() => {
+      mockOnAudioStart?.(performance.now(), 10);
+      eventLoopCallbacks.onWordAlignment?.(1, [{ w: "Hello", s: 0.1, e: 0.5 }]);
+      eventLoopCallbacks.onWordAlignment?.(1, []);
+      rafCallback?.(0);
+    });
+
+    await waitFor(() => {
+      expect(result.current.agentSpeaking).toBe(true);
+    });
+
+    act(() => {
+      mockCtxTime = 10.6;
+      rafCallback?.(0);
+    });
+    expect(result.current.agentSpeaking).toBe(false);
+  });
+
+  it("does not set inworld agentSpeaking on response.created alone", async () => {
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+
+    await waitFor(() => {
+      expect(mockCreateEventLoop).toHaveBeenCalled();
+    });
+
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+    });
+    expect(result.current.agentSpeaking).toBe(false);
+  });
+
+  it("toggles agentSpeaking on response lifecycle for non-inworld providers", async () => {
+    mockFetchRealtimeBootstrap.mockResolvedValue({
+      provider: "openai",
+      session: { audio: { output: { speed: 1 } } },
+      iceServers: [],
+    });
+
     const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
 
     await waitFor(() => {
@@ -248,5 +375,39 @@ describe("useRealtimeVoiceSession", () => {
       result.current.setMicEnabled(false);
     });
     expect(result.current.micStream).toBeNull();
+  });
+
+  it("forwards onSessionReady from the event loop", async () => {
+    const onSessionReady = vi.fn();
+    renderHook(() => useRealtimeVoiceSession({ ...defaultParams, onSessionReady }));
+
+    await waitFor(() => {
+      expect(mockCreateEventLoop).toHaveBeenCalled();
+    });
+
+    act(() => {
+      eventLoopCallbacks.onSessionReady?.();
+    });
+
+    expect(onSessionReady).toHaveBeenCalledOnce();
+  });
+
+  it("reconfigureSession delegates to the event loop with current config", async () => {
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+
+    await waitFor(() => {
+      expect(result.current.connectionState).toBe("ready");
+    });
+
+    eventLoopMocks.configureSession.mockClear();
+
+    act(() => {
+      result.current.reconfigureSession({ triggerGreetingOnReady: false });
+    });
+
+    expect(eventLoopMocks.configureSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      { triggerGreetingOnReady: false },
+    );
   });
 });

@@ -4,6 +4,7 @@ import {
   fetchRealtimeBootstrap,
   type RealtimeConnection,
 } from "@realtime/realtimeConnection";
+import type { ConfigureSessionOptions } from "@voice/realtimeEventLoop";
 import { createEventLoop } from "@voice/realtimeEventLoop";
 import {
   mergeRealtimeSessionWithClientConfig,
@@ -13,6 +14,12 @@ import {
 import type { RealtimeTool, ToolHandler } from "@voice/guideTools";
 import { createCaptionScheduler } from "@voice/captionScheduler";
 import { createRemoteAudioAnchor, type RemoteAudioAnchor } from "@voice/remoteAudioAnchor";
+import {
+  computeInworldAgentSpeaking,
+  createInworldSubtitleTrack,
+  findActiveSentenceAtTime,
+  type InworldSubtitleTrack,
+} from "@voice/inworldSubtitleTrack";
 import { log, summarizeLogPayload } from "@/logger";
 
 const AUDIO_ANCHOR_FALLBACK_DELAY_MS = 600;
@@ -45,7 +52,7 @@ export type UseRealtimeVoiceSessionParams = {
   authHeaders?: Record<string, string>;
   /** Push-to-talk: mic track starts disabled; open via `setMicEnabled`. */
   pttMic?: boolean;
-  /** Expose `agentSpeaking` between response.created and response.done. */
+  /** Expose `agentSpeaking` while agent audio is playing (Inworld: subtitle clock; else: response lifecycle). */
   trackAgentSpeaking?: boolean;
   /** Voice-guide: optional remote audio sink (created on body if absent). */
   audioElement?: HTMLAudioElement | null;
@@ -53,6 +60,8 @@ export type UseRealtimeVoiceSessionParams = {
   sessionActive?: boolean;
   /** Connect when `sessionActive` (voice-guide `autoStart`). Default true. */
   autoConnect?: boolean;
+  /** Fired after the provider acks `session.updated` (safe point for activation). */
+  onSessionReady?: () => void;
   defaultsNotLoadedError?: string;
   connectionLostMessage?: string;
   startFailedMessage?: string;
@@ -71,6 +80,8 @@ export type UseRealtimeVoiceSessionResult = {
   /** Ask the model to respond when no response is in flight. */
   requestAgentResponse: () => void;
   setAgentOutputMuted: (muted: boolean) => void;
+  /** Push updated instructions/tools on the live data channel. */
+  reconfigureSession: (options?: ConfigureSessionOptions) => void;
 };
 
 function attachRemoteAudio(
@@ -114,6 +125,7 @@ export function useRealtimeVoiceSession(
     audioElement,
     sessionActive = true,
     autoConnect = true,
+    onSessionReady,
     defaultsNotLoadedError = "Realtime defaults not loaded",
     connectionLostMessage = "Realtime connection lost",
     startFailedMessage = "Realtime session failed to start",
@@ -135,6 +147,10 @@ export function useRealtimeVoiceSession(
   const serverDefaultsRef = useRef<RealtimeSessionServerDefaults | null>(null);
   const eventLoopRef = useRef<ReturnType<typeof createEventLoop> | null>(null);
   const captionSchedulerRef = useRef<ReturnType<typeof createCaptionScheduler> | null>(null);
+  const subtitleTrackRef = useRef<InworldSubtitleTrack | null>(null);
+  /** AudioContext.currentTime recorded when the first audible onset of a response is detected. */
+  const responseAudioAnchorCtxSecRef = useRef<number | null>(null);
+  const alignmentRafRef = useRef<number | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const remoteAudioAnchorRef = useRef<RemoteAudioAnchor | null>(null);
   const audioAnchorFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,10 +159,12 @@ export function useRealtimeVoiceSession(
   const handlersRef = useRef(toolHandlers);
   const instructionsRef = useRef(instructions);
   const toolsRef = useRef(tools);
+  const onSessionReadyRef = useRef(onSessionReady);
   useEffect(() => {
     handlersRef.current = toolHandlers;
     instructionsRef.current = instructions;
     toolsRef.current = tools;
+    onSessionReadyRef.current = onSessionReady;
   });
 
   useEffect(() => {
@@ -192,8 +210,14 @@ export function useRealtimeVoiceSession(
       clearTimeout(userTranscriptTimerRef.current);
       userTranscriptTimerRef.current = null;
     }
+    if (alignmentRafRef.current != null) {
+      cancelAnimationFrame(alignmentRafRef.current);
+      alignmentRafRef.current = null;
+    }
     captionSchedulerRef.current?.cancel();
     captionSchedulerRef.current = null;
+    subtitleTrackRef.current = null;
+    responseAudioAnchorCtxSecRef.current = null;
     eventLoopRef.current = null;
     remoteAudioAnchorRef.current?.dispose();
     remoteAudioAnchorRef.current = null;
@@ -253,13 +277,87 @@ export function useRealtimeVoiceSession(
 
       serverDefaultsRef.current = defaults;
 
-      const captionScheduler = createCaptionScheduler({
-        onCaption: (text) => {
-          if (!isStale()) setLastCaption(text);
+      // Caption scheduler: heuristic fallback for non-Inworld providers (OpenAI).
+      // For Inworld we use word-alignment timing exclusively; the scheduler is not created.
+      const captionScheduler = provider !== "inworld"
+        ? createCaptionScheduler({
+            onCaption: (text) => {
+              if (!isStale()) setLastCaption(text);
+            },
+          })
+        : null;
+      captionScheduler?.setSpeed(defaults.audio.output?.speed);
+      captionSchedulerRef.current = captionScheduler;
+
+      const subtitleTrack = createInworldSubtitleTrack({
+        onSentenceFlushed: (s, total) => {
+          realtimeDebugLog(`[SUBS] SENTENCE ${total - 1} start=${s.start.toFixed(3)} end=${s.end.toFixed(3)} text="${s.text.slice(0, 60)}"`);
         },
       });
-      captionScheduler.setSpeed(defaults.audio.output?.speed);
-      captionSchedulerRef.current = captionScheduler;
+      subtitleTrackRef.current = subtitleTrack;
+      responseAudioAnchorCtxSecRef.current = null;
+
+      const usePlaybackSpeaking = provider === "inworld" && trackAgentSpeaking;
+      let lastAgentSpeaking = false;
+      let responseCancelled = false;
+
+      // RAF loop: drive caption from alignment + AudioContext clock.
+      // AudioContext.currentTime advances at the hardware sample rate and never
+      // freezes during WebRTC DTX silence, unlike HTMLAudioElement.currentTime.
+      let lastDisplayedText: string | null | undefined = undefined; // undefined = never set
+      let lastTickLogMs = 0;
+      const tickAlignment = () => {
+        if (!isStale()) {
+          const anchor = remoteAudioAnchorRef.current;
+          const anchorCtxSec = responseAudioAnchorCtxSecRef.current;
+          const nowMs = performance.now();
+          // Heartbeat: log internal RAF state once per second to catch silent failures.
+          if (nowMs - lastTickLogMs >= 1000) {
+            lastTickLogMs = nowMs;
+            const sentences = subtitleTrack.getSentences();
+            const playbackSec = anchor != null && anchorCtxSec != null
+              ? anchor.getCtxTime() - anchorCtxSec
+              : null;
+            realtimeDebugLog(`[SUBS] TICK anchor=${anchor != null ? "ok" : "null"} anchorCtxSec=${anchorCtxSec != null ? anchorCtxSec.toFixed(3) : "null"} sentences=${sentences.length} playbackSec=${playbackSec != null ? playbackSec.toFixed(3) : "null"} ctxTime=${anchor?.getCtxTime().toFixed(3) ?? "n/a"}`);
+          }
+          if (anchor != null && anchorCtxSec != null) {
+            const sentences = subtitleTrack.getSentences();
+            const playbackSec = anchor.getCtxTime() - anchorCtxSec;
+            const active = findActiveSentenceAtTime(sentences, playbackSec);
+            // Fall back to the in-progress buffer text only when the pending sentence
+            // is already complete (ends with sentence-ending punctuation). This avoids
+            // the word-by-word buildup that occurs while the sentence is still streaming
+            // in, while still showing the full text immediately when all data arrived
+            // before the audio started (e.g. long pre-loaded responses).
+            const pendingText = subtitleTrack.isPendingComplete()
+              ? subtitleTrack.getPendingText()
+              : null;
+            const text = active?.text ?? pendingText ?? null;
+            if (text !== lastDisplayedText) {
+              lastDisplayedText = text;
+              setLastCaption(text);
+              realtimeDebugLog(`[SUBS] DISPLAY ${text ? `"${text.slice(0, 60)}"` : "null"} playbackSec=${playbackSec.toFixed(3)} ctxTime=${anchor.getCtxTime().toFixed(3)}`);
+            }
+
+            if (usePlaybackSpeaking) {
+              const endSec = subtitleTrack.getPlaybackEndSec();
+              const shouldSpeak = computeInworldAgentSpeaking({
+                anchorSet: true,
+                playbackSec,
+                endSec,
+                responseCancelled,
+              });
+              if (shouldSpeak !== lastAgentSpeaking) {
+                lastAgentSpeaking = shouldSpeak;
+                setAgentSpeaking(shouldSpeak);
+                realtimeDebugLog(`[SUBS] SPEAKING ${shouldSpeak} playbackSec=${playbackSec.toFixed(3)} endSec=${endSec?.toFixed(3) ?? "null"}`);
+              }
+            }
+          }
+        }
+        alignmentRafRef.current = requestAnimationFrame(tickAlignment);
+      };
+      alignmentRafRef.current = requestAnimationFrame(tickAlignment);
 
       let activeConn: RealtimeConnection | null = null;
       const sendOnDc = (payload: unknown) => {
@@ -271,7 +369,7 @@ export function useRealtimeVoiceSession(
       const loop = createEventLoop({
         send: sendOnDc,
         getCtx: () => ({ toolHandlers: handlersRef.current }),
-        captionScheduler,
+        captionScheduler: captionScheduler ?? undefined,
         callbacks: {
           onCaption: (text) => {
             if (!isStale()) setLastCaption(text);
@@ -292,20 +390,54 @@ export function useRealtimeVoiceSession(
             setError(message);
             setConnectionState("error");
           },
-          onResponseStarted: () => {
-            if (trackAgentSpeaking && !isStale()) setAgentSpeaking(true);
-            clearAudioAnchorFallback();
-            remoteAudioAnchorRef.current?.arm();
+          onSessionReady: () => {
+            if (!isStale()) onSessionReadyRef.current?.();
           },
-          onResponseDone: () => {
-            if (trackAgentSpeaking && !isStale()) setAgentSpeaking(false);
+          onWordAlignment: (contentIndex, words) => {
+            if (!isStale()) subtitleTrack.applyChunk(contentIndex, words);
+          },
+          onResponseStarted: () => {
+            if (trackAgentSpeaking && provider !== "inworld" && !isStale()) {
+              setAgentSpeaking(true);
+            }
+            if (usePlaybackSpeaking && !isStale()) {
+              lastAgentSpeaking = false;
+              responseCancelled = false;
+              setAgentSpeaking(false);
+            }
+            clearAudioAnchorFallback();
+            remoteAudioAnchorRef.current?.arm(true);
+            subtitleTrack.reset();
+            responseAudioAnchorCtxSecRef.current = null;
+            if (!isStale()) setLastCaption(null);
+            realtimeDebugLog(`[SUBS] RESET (response.created) ctxTime=${remoteAudioAnchorRef.current?.getCtxTime().toFixed(3) ?? "n/a"}`);
+          },
+          onResponseDone: (info) => {
+            if (trackAgentSpeaking && provider !== "inworld" && !isStale()) {
+              setAgentSpeaking(false);
+            }
+            if (usePlaybackSpeaking && !isStale()) {
+              const cancelled = info?.status === "cancelled" || info?.status === "failed";
+              if (cancelled) {
+                responseCancelled = true;
+                lastAgentSpeaking = false;
+                setAgentSpeaking(false);
+              } else if (subtitleTrack.getPlaybackEndSec() == null) {
+                // Safety: response finished but no alignment ever arrived.
+                lastAgentSpeaking = false;
+                setAgentSpeaking(false);
+              }
+            }
+            if (responseAudioAnchorCtxSecRef.current == null) {
+              realtimeDebugLog("[SUBS] WARN: response.done but anchor was never set — no captions shown");
+            }
           },
           onAudioPartReady: () => {
             if (!isStale()) setHasReceivedAudioPart(true);
             clearAudioAnchorFallback();
             audioAnchorFallbackTimerRef.current = setTimeout(() => {
               audioAnchorFallbackTimerRef.current = null;
-              captionScheduler.setAudioAnchor(performance.now());
+              captionScheduler?.setAudioAnchor(performance.now());
             }, AUDIO_ANCHOR_FALLBACK_DELAY_MS);
           },
           log: realtimeDebugLog,
@@ -332,10 +464,17 @@ export function useRealtimeVoiceSession(
             remoteAudioAnchorRef.current?.dispose();
             remoteAudioAnchorRef.current = createRemoteAudioAnchor({
               track,
-              onAudioStart: (nowMs) => {
+              onAudioStart: (nowMs, ctxTime) => {
                 if (isStale()) return;
                 clearAudioAnchorFallback();
-                captionScheduler.setAudioAnchor(nowMs);
+                captionScheduler?.setAudioAnchor(nowMs);
+                // Record AudioContext.currentTime as the subtitle clock origin.
+                // ctx.currentTime advances at the hardware sample rate and never
+                // freezes during DTX silence, unlike HTMLAudioElement.currentTime.
+                if (responseAudioAnchorCtxSecRef.current == null) {
+                  responseAudioAnchorCtxSecRef.current = ctxTime;
+                  realtimeDebugLog(`[SUBS] ANCHOR set: anchorCtxSec=${ctxTime.toFixed(3)}`);
+                }
               },
               log: realtimeDebugLog,
             });
@@ -456,6 +595,12 @@ export function useRealtimeVoiceSession(
     eventLoopRef.current?.requestResponseIfIdle();
   }, []);
 
+  const reconfigureSession = useCallback((options?: ConfigureSessionOptions) => {
+    const loop = eventLoopRef.current;
+    if (!loop) return;
+    loop.configureSession(buildSessionConfig(), options);
+  }, [buildSessionConfig]);
+
   return {
     connectionState,
     error,
@@ -468,5 +613,6 @@ export function useRealtimeVoiceSession(
     sendUserMessage,
     requestAgentResponse,
     setAgentOutputMuted,
+    reconfigureSession,
   };
 }

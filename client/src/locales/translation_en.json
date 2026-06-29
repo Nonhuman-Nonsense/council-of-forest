@@ -14,6 +14,7 @@
     "panels": {
       "installation": "Installation",
       "voiceGuide": "Voice guide",
+      "agentMode": "Agent mode",
       "details": "Details & hints",
       "logging": "Logging"
     },
@@ -134,11 +135,11 @@
   "metaAgent": {
     "holdToSpeak": "Push the button to speak"
   },
-  "completed": {
+  "queryExtension": {
     "title": "Is that it?",
     "1": "This meeting is starting to get long-winded,",
     "2": "is it time to come to a conclusion?",
-    "3": "Yes, let's wrap it up!",
+    "3": "Yes, let's conclude!",
     "4": "No, continue a bit more."
   },
   "incomplete": {

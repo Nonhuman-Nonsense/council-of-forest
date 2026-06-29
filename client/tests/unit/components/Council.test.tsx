@@ -67,10 +67,10 @@ let mockMetaAgentActivate = false;
 vi.mock('@museum/metaAgent/MeetingMetaAgent', async () => {
     const React = await import('react');
     return {
-        default: (props: { setMetaAgentActive: (active: boolean) => void }) => {
+        default: (props: { setMetaAgentPhase: (phase: "interruption") => void }) => {
             React.useEffect(() => {
                 if (!mockMetaAgentActivate) return;
-                props.setMetaAgentActive(true);
+                props.setMetaAgentPhase("interruption");
             }, []);
             return null;
         },
@@ -89,7 +89,8 @@ const mockCouncilStateMachine = {
         audioMessages: [],
         playingNowIndex: 0,
         playNextIndex: 1,
-        activeOverlay: null,
+        visibleOverlay: null,
+        nameOverlayOpen: false,
         summary: null,
         isRaisedHand: false,
         currentMeetingId: 123,
@@ -98,7 +99,6 @@ const mockCouncilStateMachine = {
         canRaiseHand: true,
         currentSnippetIndex: 0,
         isMuted: false, // Default
-        canExtendMeeting: true,
     },
     actions: {
         tryToFindTextAndAudio: vi.fn().mockReturnValue(true),
@@ -106,11 +106,11 @@ const mockCouncilStateMachine = {
         handleOnSkipBackward: vi.fn(),
         handleOnSkipForward: vi.fn(),
         handleOnSubmitHumanMessage: vi.fn(),
-        handleOnContinueMeetingLonger: vi.fn(),
-        handleOnGenerateSummary: vi.fn(),
+        handleOnExtendMeeting: vi.fn(),
+        handleOnConcludeMeeting: vi.fn(),
         handleHumanNameEntered: vi.fn(),
         handleOnRaiseHand: vi.fn(),
-        cancelOverlay: vi.fn(),
+        declineOverlay: vi.fn(),
         setIsRaisedHand: vi.fn(),
         setCurrentSnippetIndex: vi.fn(),
         toggleMute: mockToggleMute
@@ -126,12 +126,14 @@ const mockUseCouncilSettings = vi.fn(() => ({
   isMuseumMode: false,
   mode: 'web' as const,
   setAppMode: vi.fn(),
-  pushToTalkMode: false,
-  setPushToTalkMode: vi.fn(),
+  agentMode: "off",
+  setAgentMode: vi.fn(),
 }));
 
 vi.mock('@/settings/councilSettings', () => ({
     useCouncilSettings: () => mockUseCouncilSettings(),
+    getDevLogEnabled: () => false,
+    isDevLogCategoryEnabled: () => false,
 }));
 
 
@@ -149,8 +151,6 @@ describe('Council Component', () => {
         setCurrentSpeakerId: vi.fn(),
         isPaused: false,
         setPaused: vi.fn(),
-        metaAgentActive: false,
-        setMetaAgentActive: vi.fn(),
     };
 
     beforeEach(() => {
@@ -219,8 +219,8 @@ describe('Council Component', () => {
           isMuseumMode: true,
           mode: 'museum',
           setAppMode: vi.fn(),
-          pushToTalkMode: false,
-          setPushToTalkMode: vi.fn(),
+          agentMode: "off",
+          setAgentMode: vi.fn(),
         });
 
         render(<Council {...defaultProps} />);
@@ -284,11 +284,11 @@ describe('Council Component', () => {
           isMuseumMode: true,
           mode: 'museum',
           setAppMode: vi.fn(),
-          pushToTalkMode: true,
-          setPushToTalkMode: vi.fn(),
+          agentMode: "ptt",
+          setAgentMode: vi.fn(),
         });
 
-        render(<Council {...defaultProps} metaAgentActive={true} />);
+        render(<Council {...defaultProps} />);
 
         await waitFor(() => {
             expect(screen.queryByTestId('output')).not.toBeInTheDocument();

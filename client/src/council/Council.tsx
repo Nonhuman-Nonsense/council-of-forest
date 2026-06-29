@@ -9,13 +9,13 @@ import Output from "./output/Output";
 import ConversationControls from "./ConversationControls";
 import HumanInput from "./humanInput/HumanInput";
 import { getParticipationPhase } from "./humanInput/participationPhase";
-import { useDocumentVisibility } from "@/utils";
 import { useTranslation } from "react-i18next";
 import { useCouncilMachine } from "./hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
 import ReplayModeBanner from "./ReplayModeBanner";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import MeetingMetaAgent from "@museum/metaAgent/MeetingMetaAgent";
+import type { MetaAgentPhase } from "@museum/metaAgent/useMetaAgent";
 import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 import type { SetUnrecoverableError } from "@main/overlay/CouncilError";
 import { notifyAutoplay } from "@/autoplay/autoplayStore";
@@ -33,8 +33,6 @@ interface CouncilProps {
   setCurrentSpeakerId: (id: string) => void;
   isPaused: boolean;
   setPaused: (paused: boolean) => void;
-  metaAgentActive: boolean;
-  setMetaAgentActive: (active: boolean) => void;
 }
 
 function Council({
@@ -50,12 +48,10 @@ function Council({
   setCurrentSpeakerId,
   isPaused,
   setPaused,
-  metaAgentActive,
-  setMetaAgentActive,
 }: CouncilProps) {
   const { meetingId } = useParams<{ meetingId: string }>();
   const { t, i18n } = useTranslation();
-  const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode } = useCouncilSettings();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,6 +62,9 @@ function Council({
   const [replayManifest, setReplayManifest] = useState<Meeting | null>(null);
   const [humanName, setHumanName] = useState("");
   const [agentSpeaking, setAgentSpeaking] = useState(false);
+  // Meta-agent lifecycle (inactive | interruption | extension). Stays in Council so it
+  // resets on unmount; MeetingMetaAgent is the consumer on Forest (scene zoom uses currentSpeakerId).
+  const [metaAgentPhase, setMetaAgentPhase] = useState<MetaAgentPhase>("inactive");
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
@@ -124,6 +123,10 @@ function Council({
     connectionError,
     isPaused,
     setPaused,
+    isMuseumMode,
+    agentMode,
+    setMetaAgentPhase,
+    metaAgentPhase,
   });
 
   const {
@@ -132,7 +135,7 @@ function Council({
     audioMessages,
     playingNowIndex,
     playNextIndex,
-    activeOverlay,
+    visibleOverlay,
     summary,
     isRaisedHand,
     canGoBack,
@@ -140,7 +143,6 @@ function Council({
     canRaiseHand,
     currentSnippetIndex,
     isMuted,
-    canExtendMeeting,
   } = state;
 
   const {
@@ -150,21 +152,22 @@ function Council({
     handleOnSkipForward,
     handleOnSubmitHumanMessage,
     handleOnAbandonHumanTurn,
-    handleOnContinueMeetingLonger,
+    handleOnExtendMeeting,
     handleOnAttemptResume,
-    handleOnGenerateSummary,
+    handleOnConcludeMeeting,
     handleHumanNameEntered,
     handleOnRaiseHand,
-    cancelOverlay,
+    declineOverlay,
     setCurrentSnippetIndex,
     toggleMute,
   } = actions;
 
-  // Derive the active speaker locally from playback state, but publish it to Main.
-  // The extra hop is intentional: it keeps the cross-app contract aligned with Forest, where
-  // an always-mounted sibling scene needs this value outside the routed Council subtree.
+  // Derive who is performing from playback, then publish `currentSpeakerId` to Main.
+  // Forest's always-mounted scene (sibling of Council) uses it for being animation/audio
+  // and camera zoom. During meta-agent, chair speaks as `CHAIR_ID` or `""` when idle.
+  // Meta-agent session/zoom framing uses `metaAgentPhase` locally — not lifted to Main.
   const derivedCurrentSpeakerId = useMemo(() => {
-    if (metaAgentActive) {
+    if (metaAgentPhase !== "inactive") {
       return agentSpeaking ? CHAIR_ID : "";
     }
     if (councilState === 'loading') return "";
@@ -176,7 +179,7 @@ function Council({
     const activeMessage = textMessages[playingNowIndex];
     if (activeMessage && isSpeakerMessage(activeMessage)) return activeMessage.speaker;
     return "";
-  }, [metaAgentActive, agentSpeaking, councilState, playingNowIndex, textMessages, playNextIndex, humanName]);
+  }, [metaAgentPhase, agentSpeaking, councilState, playingNowIndex, textMessages, playNextIndex, humanName]);
 
   useEffect(() => {
     if (councilState !== "human_panelist") return;
@@ -203,8 +206,8 @@ function Council({
   // Derived UI State
   const participationPhase = getParticipationPhase(councilState, textMessages, playingNowIndex);
   const isButtonMuseumMode = useMemo(
-    () => isMuseumMode && pushToTalkMode,
-    [isMuseumMode, pushToTalkMode]
+    () => isMuseumMode && agentMode === "ptt",
+    [isMuseumMode, agentMode]
   );
   const isWaitingToInterject = isRaisedHand && councilState !== 'human_input';
   const controlsVisible = (
@@ -213,26 +216,20 @@ function Council({
     (councilState === "summary" && tryToFindTextAndAudio())
   );
 
-  const isDocumentVisible = useDocumentVisibility();
-
-  useEffect(() => {
-    if (!isDocumentVisible && !isPaused && !metaAgentActive) {
-      setPaused(true);
-    }
-  }, [isDocumentVisible, isPaused, metaAgentActive, setPaused]);
-
   return (
     <>
       {councilState === 'loading' && <Loading />}
-      {pushToTalkMode && liveKey && (
+      {isMuseumMode && liveKey && agentMode === "ptt" && (
         <MeetingMetaAgent
           liveKey={liveKey}
           language={i18n.language}
           participationPhase={participationPhase}
-          metaAgentActive={metaAgentActive}
-          setMetaAgentActive={setMetaAgentActive}
+          metaAgentPhase={metaAgentPhase}
+          setMetaAgentPhase={setMetaAgentPhase}
           setAgentSpeaking={setAgentSpeaking}
           onRestartMeeting={() => navigate("/")}
+          onExtendMeeting={handleOnExtendMeeting}
+          onConcludeMeeting={handleOnConcludeMeeting}
           councilState={councilState}
           topic={topic}
           participants={participants}
@@ -252,7 +249,7 @@ function Council({
         />
       )}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "visible" }}>
-        {!metaAgentActive && (
+        {metaAgentPhase === "inactive" && (
           <Output
             textMessages={textMessages}
             audioMessages={audioMessages}
@@ -266,7 +263,7 @@ function Council({
             handleOnFinishedPlaying={handleOnFinishedPlaying}
           />
         )}
-        {controlsVisible && !metaAgentActive && (
+        {controlsVisible && metaAgentPhase === "inactive" && (
           <ConversationControls
             hidden={isMuseumMode}
             onSkipBackward={handleOnSkipBackward}
@@ -281,7 +278,7 @@ function Council({
             canGoBack={canGoBack}
             canGoForward={canGoForward}
             canRaiseHand={canRaiseHand}
-            onTopOfOverlay={activeOverlay === "summary" && location.hash === ""}
+            onTopOfOverlay={visibleOverlay === "summary" && location.hash === ""}
             humanName={humanName}
           />
         )}
@@ -293,16 +290,15 @@ function Council({
           />
         )}
       </div>
-      <Overlay isActive={activeOverlay !== null}>
-        {activeOverlay !== null && (
+      <Overlay isActive={visibleOverlay !== null}>
+        {visibleOverlay !== null && (
           <CouncilOverlays
-            activeOverlay={activeOverlay}
-            onContinue={handleOnContinueMeetingLonger}
+            overlay={visibleOverlay}
+            onExtendMeeting={handleOnExtendMeeting}
             onAttemptResume={handleOnAttemptResume}
-            onWrapItUp={handleOnGenerateSummary}
+            onConcludeMeeting={handleOnConcludeMeeting}
             proceedWithHumanName={handleHumanNameEntered}
-            canExtendMeeting={canExtendMeeting}
-            cancelOverlay={cancelOverlay}
+            onDismiss={declineOverlay}
             summary={{ text: summary?.text || "" }}
             meetingId={currentMeetingId}
             participants={participants}
