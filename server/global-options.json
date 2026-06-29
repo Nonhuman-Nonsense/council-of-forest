@@ -20,8 +20,8 @@
   "extraMessageCount": 5,
   "meetingVeryMaxLength": 30,
   "raiseHandPrompt": {
-    "en": "We have a question or comment from the audience, please invite a human speaker called [NAME] to the debate. After listening to the human, answer and engage deeper with their thoughts.",
-    "sv": "Vi har en fråga eller kommentar från publiken, bjud in en mänsklig talare vid namn [NAME] till samtalet. Efter att du lyssnat till personen, svara och engagera djupare med deras tankar."
+    "en": "We have a question or comment from the audience, please invite a human speaker called [NAME] to the debate. Use at most 2 sentences.",
+    "sv": "Vi har en fråga eller kommentar från publiken, bjud in en mänsklig talare vid namn [NAME] till samtalet. Använd som mest 2 meningar."
   },
   "raiseHandInvitationLength": 150,
   "panelistInvitationPrompt": {
