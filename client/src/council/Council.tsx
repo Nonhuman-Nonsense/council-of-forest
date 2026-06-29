@@ -9,7 +9,6 @@ import Output from "./output/Output";
 import ConversationControls from "./ConversationControls";
 import HumanInput from "./humanInput/HumanInput";
 import { getParticipationPhase } from "./humanInput/participationPhase";
-import { useDocumentVisibility } from "@/utils";
 import { useTranslation } from "react-i18next";
 import { useCouncilMachine } from "./hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
@@ -127,6 +126,7 @@ function Council({
     isMuseumMode,
     agentMode,
     setMetaAgentPhase,
+    metaAgentPhase,
   });
 
   const {
@@ -215,14 +215,6 @@ function Council({
     councilState === "waiting" ||
     (councilState === "summary" && tryToFindTextAndAudio())
   );
-
-  const isDocumentVisible = useDocumentVisibility();
-
-  useEffect(() => {
-    if (!isDocumentVisible && !isPaused && metaAgentPhase === "inactive") {
-      setPaused(true);
-    }
-  }, [isDocumentVisible, isPaused, metaAgentPhase, setPaused]);
 
   return (
     <>
