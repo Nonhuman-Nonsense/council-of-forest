@@ -135,7 +135,7 @@ function Council({
     audioMessages,
     playingNowIndex,
     playNextIndex,
-    activeOverlay,
+    visibleOverlay,
     summary,
     isRaisedHand,
     canGoBack,
@@ -157,7 +157,7 @@ function Council({
     handleOnConcludeMeeting,
     handleHumanNameEntered,
     handleOnRaiseHand,
-    cancelOverlay,
+    declineOverlay,
     setCurrentSnippetIndex,
     toggleMute,
   } = actions;
@@ -278,7 +278,7 @@ function Council({
             canGoBack={canGoBack}
             canGoForward={canGoForward}
             canRaiseHand={canRaiseHand}
-            onTopOfOverlay={activeOverlay === "summary" && location.hash === ""}
+            onTopOfOverlay={visibleOverlay === "summary" && location.hash === ""}
             humanName={humanName}
           />
         )}
@@ -290,15 +290,15 @@ function Council({
           />
         )}
       </div>
-      <Overlay isActive={activeOverlay !== null}>
-        {activeOverlay !== null && (
+      <Overlay isActive={visibleOverlay !== null}>
+        {visibleOverlay !== null && (
           <CouncilOverlays
-            activeOverlay={activeOverlay}
+            overlay={visibleOverlay}
             onExtendMeeting={handleOnExtendMeeting}
             onAttemptResume={handleOnAttemptResume}
             onConcludeMeeting={handleOnConcludeMeeting}
             proceedWithHumanName={handleHumanNameEntered}
-            cancelOverlay={cancelOverlay}
+            onDismiss={declineOverlay}
             summary={{ text: summary?.text || "" }}
             meetingId={currentMeetingId}
             participants={participants}
