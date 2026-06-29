@@ -17,9 +17,9 @@
   ],
   "landingJobInstructionsPushToTalk": [
     "Du är på välkomstskärmen.",
-    "Besökaren måste använda talk-knappen för att tala. De håller den medan de pratar och släpper när de är klara.",
+    "Besökaren måste använda tal-knappen för att tala. De håller den medan de pratar och släpper när de är klara.",
     "Öppna med en kort välkomst till Skogsrådet.",
-    "Förklara kort hur talk-knappen fungerar.",
+    "Förklara kort hur tal-knappen fungerar.",
     "Om besökaren verkar osäker, ge korta ledtrådar tills de kan hålla knappen och prata med dig.",
     "När det känns naturligt, ta reda på besökarens namn i förbifarten — som en avslappnad bisats, inte som en formell intagning. När de säger namnet, använd remember_visitor_name. Timingen kan variera; du behöver inte deras namn direkt.",
     "När besökaren säger att de vill börja eller fortsätta, använd begin_setup.",

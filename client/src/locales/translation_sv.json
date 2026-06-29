@@ -9,6 +9,80 @@
   "start": "Starta",
   "about": "Info",
   "contact": "Kontakt",
+  "setup": {
+    "title": "INSTÄLLNINGAR",
+    "panels": {
+      "installation": "Installation",
+      "voiceGuide": "Röstguide",
+      "agentMode": "Agentläge",
+      "details": "Detaljer & tips",
+      "logging": "Loggning"
+    },
+    "logging": {
+      "on": "På",
+      "off": "Av",
+      "all": "Alla",
+      "none": "Inga",
+      "categoriesLabel": "Loggkategorier",
+      "categories": {
+        "API": "API",
+        "SOCKET": "Socket",
+        "AGENT": "Agentverktyg",
+        "REALTIME": "Realtime",
+        "BUTTON": "Knapp",
+        "META": "Metaagent",
+        "AUTOPLAY": "Autouppspelning",
+        "SYSTEM": "System",
+        "ERROR": "Feldetalj"
+      }
+    },
+    "mode": "Läge",
+    "web": "Webb",
+    "museum": "Museum",
+    "voiceGuide": "Röstguide",
+    "alwaysOn": "Alltid på",
+    "pushToTalk": "Tryck för att tala",
+    "holdToSpeak": "Tryck och håll in knappen för att tala",
+    "button": {
+      "title": "Knapp",
+      "bridgeLabel": "Brygga",
+      "appLabel": "App",
+      "usbLabel": "USB-knapp",
+      "bridge": {
+        "checking": "Kontrollerar…",
+        "running": "Körs",
+        "notRunning": "Körs inte",
+        "error": "Fel"
+      },
+      "app": {
+        "disconnected": "Frånkopplad",
+        "connecting": "Ansluter…",
+        "connected": "Ansluten",
+        "error": "Fel",
+        "unavailable": "—"
+      },
+      "usb": {
+        "connected": "Ansluten",
+        "checking": "Kontrollerar…",
+        "notDetected": "Hittades inte",
+        "wrongDevice": "Fel enhet",
+        "unavailable": "—"
+      },
+      "bridgeNotRunningHint": "Starta knappbryggan på den här Mac-datorn, eller kontrollera {{logPath}} för fel.",
+      "usbNotDetectedHint": "Anslut Skogsrådets knapp via USB. Bryggan söker automatiskt efter Arduino USB-enheter.",
+      "usbWrongDeviceHint": "En USB-serienhet hittades, men den kör inte Skogsrådets knappfirmware. Flasha om Arduino-skissen eller kontrollera USB-kabeln/porten.",
+      "debugTitle": "Knappfelsökning",
+      "ledDebugOverlay": "LED-förhandsvisning",
+      "owners": {
+        "none": "—",
+        "setup": "Inställningar",
+        "autoplay": "Autouppspelning",
+        "voice-guide": "Röstguide",
+        "human-input": "Mänsklig inmatning",
+        "meta-agent": "Metaagent"
+      }
+    }
+  },
   "settings": "Inställningar",
   "en": "EN",
   "sv": "SV",
