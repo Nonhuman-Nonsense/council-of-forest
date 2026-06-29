@@ -82,7 +82,7 @@ export default function Main(props: MainProps) {
   const navigate = useNavigate();
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, pushToTalkMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode } = useCouncilSettings();
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
 
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function Main(props: MainProps) {
           />
         </Suspense>
       )}
-      {pushToTalkMode && (
+      {agentMode === "ptt" && (
         <Suspense fallback={null}>
           <MuseumButton />
         </Suspense>
@@ -233,7 +233,7 @@ export default function Main(props: MainProps) {
             />
             <Route path="*" element={<Navigate to={rootPath} replace />} />
           </Routes>
-          {!isIphone && !isMuseumMode && !(pushToTalkMode && ledDebugOverlay) && <FullscreenButton />}
+          {!isIphone && !isMuseumMode && !(agentMode === "ptt" && ledDebugOverlay) && <FullscreenButton />}
           <MainOverlays
             topic={topicSelection}
             onReset={onReset}
