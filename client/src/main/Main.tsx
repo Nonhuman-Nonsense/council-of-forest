@@ -31,8 +31,9 @@ import { usePortrait } from "@/utils";
 import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
 
-const MuseumButton = lazy(() => import("@/museum/button/MuseumButton"));
-const ButtonBanner = lazy(() => import("@/museum/button/ButtonBanner"));
+import MuseumButton from "@/museum/button/MuseumButton";
+import ButtonBanner from "@/museum/button/ButtonBanner";
+
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
 
 import { z } from "@/zIndexLayers";
@@ -173,25 +174,21 @@ export default function Main(props: MainProps) {
           />
         </Suspense>
       )}
-      {agentMode === "ptt" && (
-        <Suspense fallback={null}>
-          <MuseumButton />
-          <ButtonBanner />
-        </Suspense>
-      )}
+      {agentMode === "ptt" && <MuseumButton />}
+      {!isMeetingPath(location.pathname) && <ButtonBanner />}
       <Forest
         currentSpeakerId={currentSpeakerId}
         isPaused={isPaused}
         audioContext={audioContext}
       />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: z.gradientFooter }} />
-      {!(unrecoverableError != null || connectionError) && ( !isMuseumMode &&
+      {!(unrecoverableError != null || connectionError) && !isMuseumMode &&
         <Navbar
           topicTitle={topicSelection?.title || ""}
           hamburgerOpen={hamburgerOpen}
           setHamburgerOpen={setHamburgerOpen}
         />
-      )}
+      }
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
       {isMuseumMode && <MuseumModeEscapeHatch />}
       {unrecoverableError == null &&
