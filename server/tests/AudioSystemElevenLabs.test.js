@@ -203,6 +203,67 @@ describe('AudioSystem ElevenLabs Integration', () => {
         expect(body.text).toBe('Vi släpper ut cee oh två.');
     });
 
+    it('should spell out meeting numbers for English ElevenLabs', async () => {
+        const message = {
+            id: 'msgMeetingEn',
+            text: 'This concludes Council of Forest meeting #1020.',
+            sentences: ['This concludes Council of Forest meeting #1020.'],
+        };
+        const speaker = {
+            id: 'char1',
+            voice: 'JBFqnCBsd6RMkjVDRZzb',
+            voiceProvider: 'elevenlabs',
+        };
+
+        mockFetch.mockResolvedValue(
+            mockElevenLabsResponse('This concludes Council of Forest meeting number 1020.'),
+        );
+
+        await audioSystem.generateAudio(
+            message,
+            speaker,
+            'en',
+            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            meeting(),
+            'prototype',
+        );
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.text).toBe('This concludes Council of Forest meeting number 1020.');
+        expect(body.text).not.toContain('#1020');
+    });
+
+    it('should spell out meeting numbers for Swedish ElevenLabs', async () => {
+        const message = {
+            id: 'msgMeetingSv',
+            text: 'Detta avslutar Skogsrådets möte #1020.',
+            sentences: ['Detta avslutar Skogsrådets möte #1020.'],
+        };
+        const speaker = {
+            id: 'char1',
+            voice: 'JBFqnCBsd6RMkjVDRZzb',
+            voiceProvider: 'elevenlabs',
+            voiceLocale: 'sv-SE',
+        };
+
+        mockFetch.mockResolvedValue(
+            mockElevenLabsResponse('Detta avslutar Skogsrådets möte nummer 1020.'),
+        );
+
+        await audioSystem.generateAudio(
+            message,
+            speaker,
+            'sv',
+            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            meeting(),
+            'prototype',
+        );
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.text).toBe('Detta avslutar Skogsrådets möte nummer 1020.');
+        expect(body.text).not.toContain('#1020');
+    });
+
     it('should use native ElevenLabs timings in production', async () => {
         const message = { id: 'msg4', text: 'Hello world', sentences: ['Hello world'] };
         const speaker = { id: 'char1', voice: 'voice-id', voiceProvider: 'elevenlabs' };

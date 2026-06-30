@@ -28,10 +28,13 @@ import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
-import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
+import CouncilError from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
+import { useErrorStore } from "./overlay/errorStore";
 
-const MuseumButton = lazy(() => import("@/museum/button/MuseumButton"));
+import MuseumButton from "@/museum/button/MuseumButton";
+import ButtonBanner from "@/museum/button/ButtonBanner";
+
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
 
 import { z } from "@/zIndexLayers";
@@ -57,8 +60,8 @@ interface MainProps {
 export default function Main(props: MainProps) {
   const [topicSelection, setTopicSelection] = useState<Topic | null>(null);
   
-  const { unrecoverableError, setUnrecoverableError } = useUnrecoverableError();
-  const [connectionError, setConnectionError] = useState(false);
+  const connectionError = useErrorStore((s) => s.connectionError);
+  const unrecoverableError = useErrorStore((s) => s.unrecoverableError);
   const [meetingliveKey, setMeetingliveKey] = useState<string | null>(null);
 
   //Had to lift up navbar state to this level to be able to close it from main overlay
@@ -172,24 +175,21 @@ export default function Main(props: MainProps) {
           />
         </Suspense>
       )}
-      {agentMode === "ptt" && (
-        <Suspense fallback={null}>
-          <MuseumButton />
-        </Suspense>
-      )}
+      {agentMode === "ptt" && <MuseumButton />}
+      {!isMeetingPath(location.pathname) && <ButtonBanner />}
       <Forest
         currentSpeakerId={currentSpeakerId}
         isPaused={isPaused}
         audioContext={audioContext}
       />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: z.gradientFooter }} />
-      {!(unrecoverableError != null || connectionError) && ( !isMuseumMode &&
+      {!(unrecoverableError != null || connectionError) && !isMuseumMode &&
         <Navbar
           topicTitle={topicSelection?.title || ""}
           hamburgerOpen={hamburgerOpen}
           setHamburgerOpen={setHamburgerOpen}
         />
-      )}
+      }
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
       {isMuseumMode && <MuseumModeEscapeHatch />}
       {unrecoverableError == null &&
@@ -201,7 +201,6 @@ export default function Main(props: MainProps) {
             <Route
               element={
                 <MeetingSetupShell
-                  setUnrecoverableError={setUnrecoverableError}
                   topicSelection={topicSelection}
                   setTopicSelection={setTopicSelection}
                   setMeetingliveKey={setMeetingliveKey}
@@ -220,9 +219,6 @@ export default function Main(props: MainProps) {
                   setTopic={setTopicSelection}
                   liveKey={meetingliveKey}
                   setliveKey={setMeetingliveKey}
-                  setUnrecoverableError={setUnrecoverableError}
-                  connectionError={connectionError}
-                  setConnectionError={setConnectionError}
                   currentSpeakerId={currentSpeakerId}
                   setCurrentSpeakerId={setCurrentSpeakerId}
                   isPaused={isPaused}

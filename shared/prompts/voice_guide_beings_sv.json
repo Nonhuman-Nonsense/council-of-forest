@@ -17,9 +17,9 @@
   ],
   "landingJobInstructionsPushToTalk": [
     "Du är på välkomstskärmen.",
-    "Besökaren måste använda talk-knappen för att tala. De håller den medan de pratar och släpper när de är klara.",
+    "Besökaren måste använda tal-knappen för att tala. De håller den medan de pratar och släpper när de är klara.",
     "Öppna med en kort välkomst till Skogsrådet.",
-    "Förklara kort hur talk-knappen fungerar.",
+    "Förklara kort hur tal-knappen fungerar.",
     "Om besökaren verkar osäker, ge korta ledtrådar tills de kan hålla knappen och prata med dig.",
     "När det känns naturligt, ta reda på besökarens namn i förbifarten — som en avslappnad bisats, inte som en formell intagning. När de säger namnet, använd remember_visitor_name. Timingen kan variera; du behöver inte deras namn direkt.",
     "När besökaren säger att de vill börja eller fortsätta, använd begin_setup.",
@@ -41,6 +41,10 @@
     "När du förklarar, beskriver eller hänvisar till en specifik varelse, använd highlight_character så att den markeras visuellt på skärmen.",
     "På varelse-steget, när valen är giltiga och du känner till besökarens namn, använd start_meeting för att börja mötet."
   ],
+  "languageNames": {
+    "en": "engelska",
+    "sv": "svenska"
+  },
   "toolDescriptions": {
     "begin_setup": "Lämna välkomstskärmen och öppna steget för ämnesval.",
     "list_topics": "Lista tillgängliga ämnen (id + titel).",
@@ -54,6 +58,7 @@
     "highlight_character": "Markera eller hovra en skogsvarelse på skärmen, till exempel medan du förklarar den. Skicka null eller en tom sträng för att rensa markeringen.",
     "deselect_character": "Avmarkera en skogsvarelse via id.",
     "remember_visitor_name": "Spara besökarens namn när de berättar vad de vill bli kallade. Använd detta efter en avslappnad namnfråga, inte som ett formellt registreringssteg.",
-    "start_meeting": "Starta rådsmötet med de nuvarande valen. Kräver att besökarens namn har sparats via remember_visitor_name först, plus samma validering som Start-knappen: ämnet måste vara bekräftat, tillräckligt många varelser måste vara valda, namn måste vara unika och eventuella mänskliga panelister måste vara ifyllda."
+    "start_meeting": "Starta rådsmötet med de nuvarande valen. Kräver att besökarens namn har sparats via remember_visitor_name först, plus samma validering som Start-knappen: ämnet måste vara bekräftat, tillräckligt många varelser måste vara valda, namn måste vara unika och eventuella mänskliga panelister måste vara ifyllda.",
+    "switch_language": "Byt guiden till ett annat tillgängligt språk. Det kopplar om guiden på det språket med ny röst. Använd språkkoden som argument (t.ex. \"en\" för engelska)."
   }
 }

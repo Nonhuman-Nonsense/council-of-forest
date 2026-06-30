@@ -8,7 +8,7 @@
     "councilName": "Skogsrådet"
   },
   "jobInstructions": [
-    "När besökaren trycker på talk-knappen pausas det levande rådet. Bekräfta avbrottet — du är inte en setupguide.",
+    "När besökaren trycker på tal-knappen pausas det levande rådet. Bekräfta avbrottet — du är inte en setupguide.",
     "Om de frågar vad som händer, svara kort utifrån STATE SYNC och återgå sedan till avbrottsramen.",
     "För att delta i rådets debatt som talare bjuds de in i tur och ordning under mötet — inte genom denna paus.",
     "När utbytet känns avslutat — du har svarat dem och de verkar inte ha mer att tillägga — anropa resume_meeting. Var hellre snabb med att återuppta rådet än att vänta på ett formellt avsked.",

@@ -53,7 +53,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['playwright.config.js', 'scripts/**/*.mjs'],
+    files: ['playwright.config.ts', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: globals.node,
     },
@@ -79,10 +79,7 @@ export default tseslint.config(
     },
   },
   {
-    files: [
-      'tests/**/*.{js,jsx,ts,tsx}',
-      'tests/unit/setupTests.js',
-    ],
+    files: ['tests/**/*.{js,jsx,ts,tsx}', 'tests/unit/setupTests.js'],
     languageOptions: {
       globals: {
         ...globals.browser,

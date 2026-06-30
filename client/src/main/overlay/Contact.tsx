@@ -1,17 +1,17 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useMobile, dvh } from "@/utils";
+import { externalLinks } from "@/i18n/externalLinks";
 import nonhumanLogo from "@assets/logos/nonhuman_nonsense_logo.png";
 import biosphereLogo from "@assets/logos/logo_biosphere.svg?url";
 import vinnovaLogo from "@assets/logos/logo_vinnova.webp";
 
 /**
  * Contact Overlay
- * 
+ *
  * Displays credits, logos, and contact information.
- * Lists the team, partners, and funding sources (EU S+T+ARTS).
+ * Lists the team, partners, and funding sources.
  */
 function Contact(): React.ReactElement {
-
   const isMobile = useMobile();
   const { t } = useTranslation();
 
@@ -20,20 +20,57 @@ function Contact(): React.ReactElement {
     maxWidth: isMobile ? "550px" : "450px",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center"
+    alignItems: "center",
   };
 
   return (
     <div style={wrapper}>
       <div style={{ display: "flex", alignItems: "center" }}>
-        <a href="https://nonhuman-nonsense.com"><img alt="Nonhuman Nonsense" src={nonhumanLogo} style={{ maxWidth: isMobile ? "80px" : "120px", height: isMobile ? "10" + dvh : "61px", minHeight: "30px", marginRight: "20px" }} /></a>
-        <a href="https://vindelalvenbiosfar.se/"><img alt={t('biosphere')} src={biosphereLogo} style={{ maxWidth: isMobile ? "80px" : "150px", height: isMobile ? "10" + dvh : "100px", minHeight: "30px" }} /></a>
+        <a href="https://nonhuman-nonsense.com">
+          <img
+            alt="Nonhuman Nonsense"
+            src={nonhumanLogo}
+            style={{
+              maxWidth: isMobile ? "80px" : "120px",
+              height: isMobile ? "10" + dvh : "61px",
+              minHeight: "30px",
+              marginRight: "20px",
+            }}
+          />
+        </a>
+        <a href="https://vindelalvenbiosfar.se/">
+          <img
+            alt="Biosphere Area Vindelälven-Juhttátahkka"
+            src={biosphereLogo}
+            style={{
+              maxWidth: isMobile ? "80px" : "150px",
+              height: isMobile ? "10" + dvh : "100px",
+              minHeight: "30px",
+            }}
+          />
+        </a>
       </div>
-      <p>{t('contactText.1')}<a href="https://nonhuman-nonsense.com">Nonhuman&nbsp;Nonsense</a>{t('contactText.2')}<a href="https://vindelalvenbiosfar.se/">{t('biosphere')}</a>, Daniela&nbsp;Nedelcheva, <a href="https://www.gundegastrauberga.com/">Gundega&nbsp;Strauberga</a>, Jonas&nbsp;Thunberg, Johannes&nbsp;Rydinger, <a href="https://www.polymorf.se/">Albin&nbsp;Karlsson</a>{t('contactText.3')}</p>
-      <p>{t('contactText.9')} Marja&nbsp;Skum, Göran&nbsp;Jonsson, Maidi&nbsp;Eira-Andersson, Anders&nbsp;Granér, Daniel&nbsp;Holmqvist, Erik&nbsp;Alnersson, Isak&nbsp;Landström, Tommy&nbsp;Sandström, Lisa&nbsp;Jonsson, Cecilia&nbsp;Wallinder, Angelika&nbsp;Schindler-Egl, Bertil&nbsp;Nygren.</p>
-      <p>{t('contactText.4')}Vinnova (<a href="https://www.vinnova.se/en/p/council-of-the-forest">ref. nr. 2025-00344</a>){t('contactText.5')}<a href="https://council-of-foods.com/">Council of Foods</a>{t('contactText.6')}<a href="https://cordis.europa.eu/project/id/101069990">Horizon&nbsp;Europe{t('contactText.7')} 101069990</a>.</p>
-      <a href="https://www.vinnova.se/en/p/council-of-the-forest"><img alt={t('contactText.8')} src={vinnovaLogo} style={{ width: "95vw", marginTop: "10px", maxWidth: "200px", height: isMobile ? "15vh" : "50px", minHeight: "45px" }} /></a>
-    </div >
+      <p>
+        <Trans i18nKey="contact.credits" components={externalLinks} />
+      </p>
+      <p>{t("contact.interviews")}</p>
+      <p>
+        <Trans i18nKey="contact.funding" components={externalLinks} />
+      </p>
+      <a href="https://www.vinnova.se/en/p/council-of-the-forest">
+        <img
+          alt={t("contact.fundingImageAlt")}
+          src={vinnovaLogo}
+          style={{
+            width: "95vw",
+            marginTop: "10px",
+            maxWidth: "200px",
+            height: isMobile ? "15vh" : "50px",
+            minHeight: "45px",
+          }}
+        />
+      </a>
+    </div>
   );
 }
 
