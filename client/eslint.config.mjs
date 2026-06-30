@@ -79,10 +79,7 @@ export default tseslint.config(
     },
   },
   {
-    files: [
-      'tests/**/*.{js,jsx,ts,tsx}',
-      'tests/unit/setupTests.js',
-    ],
+    files: ['tests/**/*.{js,jsx,ts,tsx}', 'tests/unit/setupTests.js'],
     languageOptions: {
       globals: {
         ...globals.browser,
