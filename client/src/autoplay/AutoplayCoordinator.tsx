@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import Overlay from "@main/overlay/Overlay";
@@ -8,14 +8,16 @@ import { useButton } from "@/museum/button/useButton";
 import { useButtonStore } from "@/museum/button/buttonStore";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
-import { isMeetingPath, isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
+import { isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
 import routes from "@/routes.json";
-import { bumpAutoplayActivity, useAutoplayStore } from "./autoplayStore";
+import {
+  AUTOPLAY_NEXT_MEETING_MS,
+  bumpAutoplayActivity,
+  useAutoplayStore,
+} from "./autoplayStore";
 import { log } from "@/logger";
 
 const LANDING_SETUP_IDLE_MS = 90_000;
-const SUMMARY_IDLE_MS = 60_000;
-const LOOP_IDLE_MS = 35_000;
 const IDLE_POLL_MS = 1_000;
 const FETCH_RETRY_MS = 5_000;
 
@@ -45,13 +47,10 @@ export default function AutoplayCoordinator({
 
   const phase = useAutoplayStore((state) => state.phase);
   const councilOnSummary = useAutoplayStore((state) => state.councilOnSummary);
-  const summaryFinishedTick = useAutoplayStore((state) => state.summaryFinishedTick);
+  const summaryProtocolFinished = useAutoplayStore((state) => state.summaryProtocolFinished);
   const setPhase = useAutoplayStore((state) => state.setPhase);
 
-  const awaitingLoopRef = useRef(false);
-  const [awaitingLoop, setAwaitingLoop] = useState(false);
   const enterInFlightRef = useRef(false);
-  const meetingEndHandledRef = useRef(false);
   const prevPressedRef = useRef(false);
   const lastIdleInactiveReasonRef = useRef<IdleInactiveReason | "watching" | null>(null);
   const setupClaimed = useButtonStore((state) => state.claims.setup === true);
@@ -84,8 +83,6 @@ export default function AutoplayCoordinator({
     enterInFlightRef.current = true;
     log.event("AUTOPLAY", "enter started");
     setPhase("active");
-    awaitingLoopRef.current = false;
-    setAwaitingLoop(false);
     setMeetingliveKey(null);
     bumpAutoplayActivity("enter-autoplay");
 
@@ -116,8 +113,6 @@ export default function AutoplayCoordinator({
   const exitAutoplay = useCallback(() => {
     log.event("AUTOPLAY", "exit to landing", { via: "hardware_button" });
     setPhase("off");
-    awaitingLoopRef.current = false;
-    setAwaitingLoop(false);
     useMeetingSetupStore.getState().resetStore();
     window.location.href = rootPath;
   }, [rootPath, setPhase]);
@@ -130,28 +125,6 @@ export default function AutoplayCoordinator({
     bumpAutoplayActivity("warning-shown");
     setPhase("warning");
   }, [setPhase]);
-
-  useEffect(() => {
-    meetingEndHandledRef.current = false;
-  }, [location.pathname]);
-
-  const handleMeetingEnd = useCallback(() => {
-    if (phase !== "active" || meetingEndHandledRef.current) {
-      return;
-    }
-    meetingEndHandledRef.current = true;
-    awaitingLoopRef.current = true;
-    setAwaitingLoop(true);
-    bumpAutoplayActivity("meeting-end");
-    log.event("AUTOPLAY", "meeting end — loop idle started", { loopIdleMs: LOOP_IDLE_MS });
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "active" || summaryFinishedTick === 0) {
-      return;
-    }
-    handleMeetingEnd();
-  }, [handleMeetingEnd, summaryFinishedTick, phase]);
 
   useEffect(() => {
     if (!isMuseumMode) {
@@ -208,6 +181,47 @@ export default function AutoplayCoordinator({
   }, [phase, button.pressed, dismissWarning, exitAutoplay, isMuseumMode]);
 
   useEffect(() => {
+    if (!isMuseumMode || phase !== "active") {
+      return;
+    }
+    if (!councilOnSummary) {
+      return;
+    }
+    if (!summaryProtocolFinished) {
+      return;
+    }
+
+    log.event("AUTOPLAY", "summary reading done — next meeting scheduled", {
+      delayMs: AUTOPLAY_NEXT_MEETING_MS,
+    });
+
+    const timerId = window.setTimeout(() => {
+      void (async () => {
+        const language = i18n.language.toLowerCase().startsWith("sv") ? "sv" : "en";
+        try {
+          const meetingId = await fetchAutoplayMeetingId(language);
+          bumpAutoplayActivity("loop-next-meeting");
+          navigate(meetingPath(meetingId), { replace: true });
+          log.event("AUTOPLAY", "loop navigated", { meetingId, language });
+        } catch (error) {
+          log.event("ERROR", "autoplay loop failed", error);
+          bumpAutoplayActivity("loop-retry");
+        }
+      })();
+    }, AUTOPLAY_NEXT_MEETING_MS);
+
+    return () => window.clearTimeout(timerId);
+  }, [
+    councilOnSummary,
+    i18n.language,
+    isMuseumMode,
+    meetingPath,
+    navigate,
+    phase,
+    summaryProtocolFinished,
+  ]);
+
+  useEffect(() => {
     if (!isMuseumMode) {
       logIdleInactive("not_museum");
       return;
@@ -220,10 +234,6 @@ export default function AutoplayCoordinator({
     const withoutLang = stripLanguagePrefix(location.pathname);
     const onSetupRoute = withoutLang === `/${routes.newMeeting}`;
     const onLanding = isRootPath(location.pathname);
-    const onSummary =
-      isMeetingPath(location.pathname) &&
-      councilOnSummary &&
-      (!meetingliveKey || councilOnSummary);
     const liveMeetingPlaying = Boolean(meetingliveKey) && !councilOnSummary;
 
     if (location.hash === "#setup") {
@@ -239,8 +249,7 @@ export default function AutoplayCoordinator({
       return;
     }
 
-    const thresholdMs = onSummary ? SUMMARY_IDLE_MS : LANDING_SETUP_IDLE_MS;
-    const idleContext = onSummary ? "summary" : onLanding || onSetupRoute ? "setup" : null;
+    const idleContext = onLanding || onSetupRoute ? "setup" : null;
 
     if (!idleContext) {
       logIdleInactive("no_idle_context", { pathname: location.pathname });
@@ -251,7 +260,7 @@ export default function AutoplayCoordinator({
       lastIdleInactiveReasonRef.current = "watching";
       log.event("AUTOPLAY", "idle watch started", {
         idleContext,
-        thresholdMs,
+        thresholdMs: LANDING_SETUP_IDLE_MS,
         pathname: location.pathname,
         pollMs: IDLE_POLL_MS,
       });
@@ -259,11 +268,11 @@ export default function AutoplayCoordinator({
 
     const timerId = window.setInterval(() => {
       const elapsedMs = Date.now() - useAutoplayStore.getState().lastActivityMs;
-      const remainingMs = thresholdMs - elapsedMs;
+      const remainingMs = LANDING_SETUP_IDLE_MS - elapsedMs;
       if (remainingMs <= 0) {
         log.event("AUTOPLAY", "idle threshold reached", {
           idleContext,
-          thresholdMs,
+          thresholdMs: LANDING_SETUP_IDLE_MS,
           elapsedMs,
         });
         showWarning();
@@ -290,44 +299,6 @@ export default function AutoplayCoordinator({
     setupClaimed,
     showWarning,
   ]);
-
-  useEffect(() => {
-    if (!isMuseumMode || phase !== "active" || !awaitingLoop) {
-      return;
-    }
-
-    log.event("AUTOPLAY", "loop watch started", { loopIdleMs: LOOP_IDLE_MS });
-
-    const timerId = window.setInterval(() => {
-      if (!awaitingLoopRef.current) {
-        return;
-      }
-      const elapsedMs = Date.now() - useAutoplayStore.getState().lastActivityMs;
-      if (elapsedMs < LOOP_IDLE_MS) {
-        return;
-      }
-
-      log.event("AUTOPLAY", "loop idle threshold reached", { elapsedMs, loopIdleMs: LOOP_IDLE_MS });
-      awaitingLoopRef.current = false;
-      setAwaitingLoop(false);
-      void (async () => {
-        const language = i18n.language.toLowerCase().startsWith("sv") ? "sv" : "en";
-        try {
-          const meetingId = await fetchAutoplayMeetingId(language);
-          bumpAutoplayActivity("loop-next-meeting");
-          navigate(meetingPath(meetingId), { replace: true });
-          log.event("AUTOPLAY", "loop navigated", { meetingId, language });
-        } catch (error) {
-          log.event("ERROR", "autoplay loop failed", error);
-          awaitingLoopRef.current = true;
-          setAwaitingLoop(true);
-          bumpAutoplayActivity("loop-retry");
-        }
-      })();
-    }, IDLE_POLL_MS);
-
-    return () => window.clearInterval(timerId);
-  }, [awaitingLoop, i18n.language, isMuseumMode, meetingPath, navigate, phase]);
 
   if (!isMuseumMode) {
     return null;

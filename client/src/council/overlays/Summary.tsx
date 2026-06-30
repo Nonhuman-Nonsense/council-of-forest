@@ -1,9 +1,24 @@
-import React, { useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useMobile, dvh } from "@/utils";
 import parse from 'html-react-parser';
 import { marked } from "marked";
 import { jsPDF } from "jspdf";
 import { useTranslation, Trans } from "react-i18next";
+import { useCouncilSettings } from "@/settings/councilSettings";
+import { useRouting } from "@/routing";
+import { useButton } from "@/museum/button/useButton";
+import { useButtonBanner } from "@/museum/button/useButtonBanner";
+import {
+  SUMMARY_RETURN_TO_ROOT_MS,
+  useAutoplayStore,
+} from "@/autoplay/autoplayStore";
+import {
+  computeTeleprompterBottomPadding,
+  computeTeleprompterTopPadding,
+  useAudioSyncedScroll,
+  type SummaryPlaybackState,
+} from "@council/summaryScrollSync";
 import { externalLinks } from "@/i18n/externalLinks";
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -14,6 +29,8 @@ export interface SummaryData {
 interface SummaryProps {
   summary: SummaryData;
   meetingId: string | number | null;
+  audioContext?: React.RefObject<AudioContext | null>;
+  summaryPlayback?: SummaryPlaybackState;
 }
 
 /**
@@ -26,10 +43,121 @@ interface SummaryProps {
  * - Renders markdown summary provided by server.
  * - Uses `jspdf` to generate a printable PDF from a hidden HTML element (`PDFToPrint`).
  */
-function Summary({ summary, meetingId }: SummaryProps): React.ReactElement {
+function Summary({
+  summary,
+  meetingId,
+  audioContext,
+  summaryPlayback = null,
+}: SummaryProps): React.ReactElement {
   const isMobile = useMobile();
   const protocolRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [teleprompterBottomPad, setTeleprompterBottomPad] = useState(0);
+  const fallbackAudioContext = useRef<AudioContext | null>(null);
+  const prevPressedRef = useRef(false);
+  const navigate = useNavigate();
+  const { rootPath } = useRouting();
   const { t } = useTranslation();
+  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const isButtonSummaryMode = isMuseumMode && agentMode === "ptt";
+  const teleprompterTopPad = isMuseumMode ? computeTeleprompterTopPadding(isMobile) : 0;
+  const autoplayPhase = useAutoplayStore((state) => state.phase);
+  const summaryProtocolFinished = useAutoplayStore((state) => state.summaryProtocolFinished);
+  const button = useButton("summary");
+  const showDownload = !isMuseumMode;
+
+  useEffect(() => {
+    if (!isButtonSummaryMode) {
+      return;
+    }
+    button.claim();
+    return () => button.release();
+  }, [isButtonSummaryMode, button.claim, button.release]);
+
+  useEffect(() => {
+    if (!isButtonSummaryMode) {
+      return;
+    }
+    button.setLed("pulse");
+  }, [isButtonSummaryMode, button.setLed]);
+
+  useButtonBanner({
+    owner: "summary",
+    sessionActive: isButtonSummaryMode,
+    micOpen: false,
+    isConnecting: false,
+    bannerImmediate: true,
+    messageKey: "summary.banner.pressToRestart",
+  });
+
+  useEffect(() => {
+    if (!isButtonSummaryMode) {
+      return;
+    }
+
+    const pressed = button.pressed;
+    const wasPressed = prevPressedRef.current;
+    prevPressedRef.current = pressed;
+
+    if (pressed && !wasPressed) {
+      navigate(rootPath);
+    }
+  }, [button.pressed, isButtonSummaryMode, navigate, rootPath]);
+
+  useEffect(() => {
+    if (!isButtonSummaryMode || autoplayPhase === "active") {
+      return;
+    }
+    if (!summaryProtocolFinished) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      navigate(rootPath);
+    }, SUMMARY_RETURN_TO_ROOT_MS);
+
+    return () => window.clearTimeout(timerId);
+  }, [
+    autoplayPhase,
+    isButtonSummaryMode,
+    navigate,
+    rootPath,
+    summaryProtocolFinished,
+  ]);
+
+  useAudioSyncedScroll({
+    scrollRef,
+    enabled: isMuseumMode,
+    playback: summaryPlayback,
+    audioContext: audioContext ?? fallbackAudioContext,
+    bottomPadding: teleprompterBottomPad,
+  });
+
+  useLayoutEffect(() => {
+    if (!isMuseumMode) {
+      setTeleprompterBottomPad(0);
+      return;
+    }
+
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) {
+      return;
+    }
+
+    const updateBottomPadding = (): void => {
+      const el = scrollRef.current;
+      if (!el) {
+        return;
+      }
+      setTeleprompterBottomPad(computeTeleprompterBottomPadding(el.clientHeight));
+    };
+
+    updateBottomPadding();
+
+    const observer = new ResizeObserver(updateBottomPadding);
+    observer.observe(scrollEl);
+    return () => observer.disconnect();
+  }, [isMuseumMode, summary.text, isMobile]);
 
   const handleCreatePdf = (): void => {
     import("../../Tinos.js").then(() => {
@@ -47,23 +175,38 @@ function Summary({ summary, meetingId }: SummaryProps): React.ReactElement {
     });
   };
 
+  const downloadRowHeight = isMobile ? 30 : 40;
+  const controlsClearance = isMobile ? 45 : 56;
+
   const summaryWrapper: React.CSSProperties = {
-    height: isMobile ?
-      'calc(100% - 30px)'
-      : 'calc(100% - 40px)',
+    height: showDownload
+      ? `calc(100% - ${downloadRowHeight}px)`
+      : "100%",
     overflowY: "auto",
     mask: "linear-gradient(to bottom, rgb(0, 0, 0) 0, rgb(0,0,0) 93%, rgba(0,0,0, 0) 100% ) repeat-x",
   };
 
-  const wrapper: React.CSSProperties = {
-    height: isMobile
-      ? `calc(100${dvh} - 45px - 10px)`
-      : `calc(100${dvh} - 60px - 56px - 20px)`,
-    minHeight: "255px",
-    marginBottom: isMobile ? "45px" : "56px",
-    marginTop: isMobile ? "10px" : "20px",
-    width: isMobile ? "600px" : "800px"
-  };
+  const wrapper: React.CSSProperties = isMuseumMode
+    ? {
+      position: "fixed",
+      top: 0,
+      left: "50%",
+      transform: "translateX(-50%)",
+      height: `100${dvh}`,
+      width: isMobile ? "600px" : "800px",
+      margin: 0,
+      minHeight: 0,
+    }
+    : {
+      maxHeight: isMobile
+        ? `calc(100${dvh} - 45px - 10px - ${downloadRowHeight}px)`
+        : `calc(100${dvh} - 60px - 56px - 20px - ${downloadRowHeight}px)`,
+      minHeight: "255px",
+      marginBottom: isMobile ? "45px" : "56px",
+      marginTop: isMobile ? "10px" : "20px",
+      paddingBottom: controlsClearance,
+      width: isMobile ? "600px" : "800px",
+    };
 
   const buttonsWrapper: React.CSSProperties = {
     height: isMobile ? "30px" : "40px",
@@ -78,35 +221,56 @@ function Summary({ summary, meetingId }: SummaryProps): React.ReactElement {
     whiteSpace: "pre-wrap",
   };
 
+  const teleprompterContentStyle: React.CSSProperties = isMuseumMode
+    ? {
+      paddingTop: teleprompterTopPad,
+      paddingBottom: teleprompterBottomPad,
+    }
+    : {};
+
   return (
     <>
-      <div style={wrapper}>
-        <div style={summaryWrapper} className="scroll">
-          <hr />
-          <div style={{ display: "flex", flexDirection: "row", margin: "20px 0", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", flex: "1", paddingLeft: "15px" }}>
-              <h2 style={{ margin: 0 }}>{t('app.council').toUpperCase()}</h2>
-              <h3 style={{ margin: 0 }}>{t('app.meeting')} #{meetingId}</h3>
+      <div style={wrapper} data-testid="summary-wrapper">
+        <div
+          ref={scrollRef}
+          style={summaryWrapper}
+          className={isMuseumMode ? "scroll scroll--hide-scrollbar" : "scroll"}
+          data-testid="summary-protocol"
+        >
+          <div
+            style={teleprompterContentStyle}
+            data-testid="summary-teleprompter-content"
+          >
+            <hr />
+            <div style={{ display: "flex", flexDirection: "row", margin: "20px 0", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", flexDirection: "column", textAlign: "left", flex: "1", paddingLeft: "15px" }}>
+                <h2 style={{ margin: 0 }}>{t('app.council').toUpperCase()}</h2>
+                <h3 style={{ margin: 0 }}>{t('app.meeting')} #{meetingId}</h3>
+              </div>
+              <div>
+                <a href={window.location.href}><QRCodeCanvas value={window.location.href} bgColor="rgba(0,0,0,0)" fgColor="#ffffff" style={{ height: isMobile ? '50px' : "70px", width: isMobile ? '50px' : "70px", marginRight: "20px" }} /></a>
+              </div>
             </div>
-            <div>
-              <a href={window.location.href}><QRCodeCanvas value={window.location.href} bgColor="rgba(0,0,0,0)" fgColor="#ffffff" style={{ height: isMobile ? '50px' : "70px", width: isMobile ? '50px' : "70px", marginRight: "20px" }} /></a>
+            <hr />
+            <div id="protocol-container" style={protocolStyle}>
+              {/* Ensure synchronous parsing for type safety */}
+              {parse(marked.parse(summary.text, { async: false }) as string)}
+              <hr /><br />
+              <Disclaimer />
             </div>
           </div>
-          <hr />
-          <div id="protocol-container" style={protocolStyle}>
-            {/* Ensure synchronous parsing for type safety */}
-            {parse(marked.parse(summary.text, { async: false }) as string)}
-            <hr /><br />
-            <Disclaimer />
+        </div>
+        {showDownload && (
+          <div style={buttonsWrapper}>
+            <button type="button" data-testid="summary-download" onClick={handleCreatePdf}>
+              {t('summary.download')}
+            </button>
           </div>
-        </div>
-        <div style={buttonsWrapper}>
-          <button onClick={handleCreatePdf}>{t('summary.download')}</button>
-        </div>
+        )}
       </div>
 
       {/* Hidden PDF Template */}
-      <div style={{ position: 'absolute', top: '0', display: 'none' }}>
+      {showDownload && <div style={{ position: 'absolute', top: '0', display: 'none' }}>
         <div ref={protocolRef} style={{
           position: 'absolute',
           top: '0',
@@ -125,7 +289,7 @@ function Summary({ summary, meetingId }: SummaryProps): React.ReactElement {
               <h2 style={{ fontSize: '24px', margin: '0', position: 'absolute', left: "10px", top: '2px' }}>{t('app.council').toUpperCase()}</h2>
               <h3 style={{ fontSize: '15px', margin: '0', position: 'absolute', left: "10px", top: "28px" }}>{t('app.meeting')} #{meetingId}</h3>
               <QRCodeCanvas value={window.location.href} style={{ position: 'absolute', right: "10px", top: "2.5px", width: "45px", height: "45px" }} />
-            </div >
+            </div>
             <hr />
             <div id="printed-style">
               {/* Ensure synchronous parsing for type safety */}
@@ -133,9 +297,9 @@ function Summary({ summary, meetingId }: SummaryProps): React.ReactElement {
               <hr /><br />
               <Disclaimer />
             </div>
-          </div >
-        </div >
-      </div >
+          </div>
+        </div>
+      </div>}
     </>
   );
 }

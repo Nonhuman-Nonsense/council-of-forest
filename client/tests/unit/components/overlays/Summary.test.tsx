@@ -51,6 +51,78 @@ vi.mock('@/utils', () => ({
     dvh: 'vh' // Mock dvh constant
 }));
 
+const mockUseCouncilSettings = vi.fn(() => ({
+    isMuseumMode: false,
+    mode: 'web' as const,
+    setAppMode: vi.fn(),
+    agentMode: 'off' as const,
+    setAgentMode: vi.fn(),
+}));
+
+vi.mock('@/settings/councilSettings', () => ({
+    useCouncilSettings: () => mockUseCouncilSettings(),
+}));
+
+const mockClaim = vi.fn();
+const mockRelease = vi.fn();
+const mockSetLed = vi.fn();
+let mockPressed = false;
+
+vi.mock('@museum/button/useButton', () => ({
+    useButton: () => ({
+        claim: mockClaim,
+        release: mockRelease,
+        setLed: mockSetLed,
+        get pressed() {
+            return mockPressed;
+        },
+        isOwner: true,
+    }),
+}));
+
+const mockUseButtonBanner = vi.fn();
+vi.mock('@museum/button/useButtonBanner', () => ({
+    useButtonBanner: (...args: unknown[]) => mockUseButtonBanner(...args),
+}));
+
+const mockNavigate = vi.fn();
+vi.mock('react-router', () => ({
+    useNavigate: () => mockNavigate,
+}));
+
+vi.mock('@/routing', () => ({
+    useRouting: () => ({ rootPath: '/en/' }),
+}));
+
+const mockAutoplayState = {
+    phase: 'off' as 'off' | 'warning' | 'active',
+    summaryProtocolFinished: false,
+};
+
+vi.mock('@/autoplay/autoplayStore', () => ({
+    useAutoplayStore: (selector: (state: typeof mockAutoplayState) => unknown) =>
+        selector(mockAutoplayState),
+    SUMMARY_RETURN_TO_ROOT_MS: 20_000,
+}));
+
+class ResizeObserverMock {
+    private readonly callback: ResizeObserverCallback;
+
+    constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+    }
+
+    observe(target: Element): void {
+        this.callback([{ target } as ResizeObserverEntry], this as unknown as ResizeObserver);
+    }
+
+    disconnect(): void {
+        // no-op
+    }
+}
+
+vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+
 // Mock dynamic import for Tinos.js
 // Intercepting dynamic import in component logic
 
@@ -62,7 +134,17 @@ describe('Summary Overlay', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockPressed = false;
         mockUseMobile.mockReturnValue(false); // Default to desktop
+        mockAutoplayState.phase = 'off';
+        mockAutoplayState.summaryProtocolFinished = false;
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: false,
+            mode: 'web',
+            setAppMode: vi.fn(),
+            agentMode: 'off',
+            setAgentMode: vi.fn(),
+        });
     });
 
     it('renders summary content correctly', () => {
@@ -141,7 +223,7 @@ describe('Summary Overlay', () => {
     it('triggers PDF download when button is clicked', async () => {
         render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
 
-        const downloadBtn = screen.getByText('Download PDF');
+        const downloadBtn = screen.getByTestId('summary-download');
         fireEvent.click(downloadBtn);
 
         // Wait for dynamic import and execution
@@ -150,5 +232,127 @@ describe('Summary Overlay', () => {
             // Since jsPDF is mocked to return an object with save
             expect(mockSave).toHaveBeenCalledWith('Council of Forest Meeting Summary #12345.pdf');
         });
+    });
+
+    it('hides PDF download and template in museum mode', () => {
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: true,
+            mode: 'museum',
+            setAppMode: vi.fn(),
+            agentMode: 'ptt',
+            setAgentMode: vi.fn(),
+        });
+
+        Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+            configurable: true,
+            get() {
+                return 400;
+            },
+        });
+
+        render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        expect(screen.queryByTestId('summary-download')).not.toBeInTheDocument();
+        expect(document.querySelector('#printed-style')).not.toBeInTheDocument();
+        expect(screen.getByTestId('summary-protocol')).toBeInTheDocument();
+        expect(screen.getByTestId('summary-protocol')).toHaveClass('scroll--hide-scrollbar');
+
+        const wrapper = screen.getByTestId('summary-wrapper');
+        expect(wrapper).toHaveStyle({
+            position: 'fixed',
+            top: '0px',
+            height: '100vh',
+        });
+
+        const teleprompter = screen.getByTestId('summary-teleprompter-content');
+        expect(teleprompter).toHaveStyle({ paddingBottom: '140px', paddingTop: '80px' });
+    });
+
+    it('claims the button and shows the summary banner in museum PTT mode', () => {
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: true,
+            mode: 'museum',
+            setAppMode: vi.fn(),
+            agentMode: 'ptt',
+            setAgentMode: vi.fn(),
+        });
+
+        render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        expect(mockClaim).toHaveBeenCalled();
+        expect(mockSetLed).toHaveBeenCalledWith('pulse');
+        expect(mockUseButtonBanner).toHaveBeenCalledWith(
+            expect.objectContaining({
+                owner: 'summary',
+                sessionActive: true,
+                bannerImmediate: true,
+                messageKey: 'summary.banner.pressToRestart',
+            }),
+        );
+    });
+
+    it('navigates to landing on button press in museum PTT mode', () => {
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: true,
+            mode: 'museum',
+            setAppMode: vi.fn(),
+            agentMode: 'ptt',
+            setAgentMode: vi.fn(),
+        });
+
+        const { rerender } = render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        mockPressed = true;
+        rerender(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        expect(mockNavigate).toHaveBeenCalledWith('/en/');
+    });
+
+    it('returns to landing 20s after protocol reading when not in autoplay', () => {
+        vi.useFakeTimers();
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: true,
+            mode: 'museum',
+            setAppMode: vi.fn(),
+            agentMode: 'ptt',
+            setAgentMode: vi.fn(),
+        });
+        mockAutoplayState.phase = 'off';
+        mockAutoplayState.summaryProtocolFinished = true;
+
+        render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(20_000);
+        expect(mockNavigate).toHaveBeenCalledWith('/en/');
+        vi.useRealTimers();
+    });
+
+    it('does not auto-return to landing during an active autoplay loop', () => {
+        vi.useFakeTimers();
+        mockUseCouncilSettings.mockReturnValue({
+            isMuseumMode: true,
+            mode: 'museum',
+            setAppMode: vi.fn(),
+            agentMode: 'ptt',
+            setAgentMode: vi.fn(),
+        });
+        mockAutoplayState.phase = 'active';
+        mockAutoplayState.summaryProtocolFinished = true;
+
+        render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        vi.advanceTimersByTime(20_000);
+        expect(mockNavigate).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('does not claim the button in web mode', () => {
+        render(<Summary summary={mockSummary} meetingId={mockMeetingId} />);
+
+        expect(mockClaim).not.toHaveBeenCalled();
+        expect(mockUseButtonBanner).toHaveBeenCalledWith(
+            expect.objectContaining({ sessionActive: false }),
+        );
     });
 });
