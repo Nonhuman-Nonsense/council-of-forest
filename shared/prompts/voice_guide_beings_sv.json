@@ -41,6 +41,10 @@
     "När du förklarar, beskriver eller hänvisar till en specifik varelse, använd highlight_character så att den markeras visuellt på skärmen.",
     "På varelse-steget, när valen är giltiga och du känner till besökarens namn, använd start_meeting för att börja mötet."
   ],
+  "languageNames": {
+    "en": "engelska",
+    "sv": "svenska"
+  },
   "toolDescriptions": {
     "begin_setup": "Lämna välkomstskärmen och öppna steget för ämnesval.",
     "list_topics": "Lista tillgängliga ämnen (id + titel).",
@@ -54,6 +58,7 @@
     "highlight_character": "Markera eller hovra en skogsvarelse på skärmen, till exempel medan du förklarar den. Skicka null eller en tom sträng för att rensa markeringen.",
     "deselect_character": "Avmarkera en skogsvarelse via id.",
     "remember_visitor_name": "Spara besökarens namn när de berättar vad de vill bli kallade. Använd detta efter en avslappnad namnfråga, inte som ett formellt registreringssteg.",
-    "start_meeting": "Starta rådsmötet med de nuvarande valen. Kräver att besökarens namn har sparats via remember_visitor_name först, plus samma validering som Start-knappen: ämnet måste vara bekräftat, tillräckligt många varelser måste vara valda, namn måste vara unika och eventuella mänskliga panelister måste vara ifyllda."
+    "start_meeting": "Starta rådsmötet med de nuvarande valen. Kräver att besökarens namn har sparats via remember_visitor_name först, plus samma validering som Start-knappen: ämnet måste vara bekräftat, tillräckligt många varelser måste vara valda, namn måste vara unika och eventuella mänskliga panelister måste vara ifyllda.",
+    "switch_language": "Byt guiden till ett annat tillgängligt språk. Det kopplar om guiden på det språket med ny röst. Använd språkkoden som argument (t.ex. \"en\" för engelska)."
   }
 }
