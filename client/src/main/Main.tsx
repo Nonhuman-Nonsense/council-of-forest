@@ -28,8 +28,9 @@ import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
-import CouncilError, { useUnrecoverableError } from "./overlay/CouncilError";
+import CouncilError from "./overlay/CouncilError";
 import Reconnecting from "./overlay/Reconnecting";
+import { useErrorStore } from "./overlay/errorStore";
 
 import MuseumButton from "@/museum/button/MuseumButton";
 import ButtonBanner from "@/museum/button/ButtonBanner";
@@ -59,8 +60,8 @@ interface MainProps {
 export default function Main(props: MainProps) {
   const [topicSelection, setTopicSelection] = useState<Topic | null>(null);
   
-  const { unrecoverableError, setUnrecoverableError } = useUnrecoverableError();
-  const [connectionError, setConnectionError] = useState(false);
+  const connectionError = useErrorStore((s) => s.connectionError);
+  const unrecoverableError = useErrorStore((s) => s.unrecoverableError);
   const [meetingliveKey, setMeetingliveKey] = useState<string | null>(null);
 
   //Had to lift up navbar state to this level to be able to close it from main overlay
@@ -200,7 +201,6 @@ export default function Main(props: MainProps) {
             <Route
               element={
                 <MeetingSetupShell
-                  setUnrecoverableError={setUnrecoverableError}
                   topicSelection={topicSelection}
                   setTopicSelection={setTopicSelection}
                   setMeetingliveKey={setMeetingliveKey}
@@ -219,9 +219,6 @@ export default function Main(props: MainProps) {
                   setTopic={setTopicSelection}
                   liveKey={meetingliveKey}
                   setliveKey={setMeetingliveKey}
-                  setUnrecoverableError={setUnrecoverableError}
-                  connectionError={connectionError}
-                  setConnectionError={setConnectionError}
                   currentSpeakerId={currentSpeakerId}
                   setCurrentSpeakerId={setCurrentSpeakerId}
                   isPaused={isPaused}

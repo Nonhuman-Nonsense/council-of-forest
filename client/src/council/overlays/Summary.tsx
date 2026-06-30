@@ -7,6 +7,7 @@ import { jsPDF } from "jspdf";
 import { useTranslation, Trans } from "react-i18next";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { useRouting } from "@/routing";
+import { useErrorStore } from "@main/overlay/errorStore";
 import { useButton } from "@/museum/button/useButton";
 import { useButtonBanner } from "@/museum/button/useButtonBanner";
 import {
@@ -49,6 +50,7 @@ function Summary({
   audioContext,
   summaryPlayback = null,
 }: SummaryProps): React.ReactElement {
+  const connectionError = useErrorStore((s) => s.connectionError);
   const isMobile = useMobile();
   const protocolRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -108,6 +110,9 @@ function Summary({
     if (!isButtonSummaryMode || autoplayPhase === "active") {
       return;
     }
+    if (connectionError) {
+      return;
+    }
     if (!summaryProtocolFinished) {
       return;
     }
@@ -119,6 +124,7 @@ function Summary({
     return () => window.clearTimeout(timerId);
   }, [
     autoplayPhase,
+    connectionError,
     isButtonSummaryMode,
     navigate,
     rootPath,
