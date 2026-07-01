@@ -129,6 +129,7 @@
       "usbWrongDeviceHint": "En USB-serienhet hittades, men den kör inte Skogsrådets knappfirmware. Flasha om Arduino-skissen eller kontrollera USB-kabeln/porten.",
       "debugTitle": "Knappfelsökning",
       "ledDebugOverlay": "LED-förhandsvisning",
+      "hardwareButton": "Hårdvaruknapp",
       "owners": {
         "none": "—",
         "setup": "Inställningar",
@@ -173,7 +174,10 @@
     "nevermind": "Nej, strunta i det."
   },
   "summary": {
-    "download": "Ladda ned PDF"
+    "download": "Ladda ned PDF",
+    "banner": {
+      "pressToRestart": "Tryck på knappen för att starta ett nytt möte."
+    }
   },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
