@@ -90,6 +90,7 @@
         "SOCKET": "Socket",
         "AGENT": "Agent tools",
         "REALTIME": "Realtime",
+        "TURN": "Turn pipeline",
         "BUTTON": "Button",
         "META": "Meta agent",
         "AUTOPLAY": "Autoplay",
