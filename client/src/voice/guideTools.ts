@@ -123,7 +123,7 @@ export function createGuideTools({
       type: "function",
       name: "select_topic",
       description:
-        "Highlight a topic in the UI by title and return its description so you can explain it to the visitor. Does NOT advance to food selection — call confirm_topic when the visitor is ready to proceed.",
+        "Highlight a topic in the UI by title and return its description so you can explain it to the visitor. Does NOT advance to being selection — call confirm_topic when the visitor is ready to proceed.",
       parameters: {
         type: "object",
         additionalProperties: false,
@@ -135,7 +135,7 @@ export function createGuideTools({
       type: "function",
       name: "confirm_topic",
       description:
-        "Confirm the currently highlighted topic and advance to the food selection step. Returns an error if no topic is selected yet — ask the visitor to pick one first.",
+        "Confirm the currently highlighted topic and advance to the being selection step. Returns an error if no topic is selected yet — ask the visitor to pick one first.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
     {
@@ -167,7 +167,7 @@ export function createGuideTools({
       type: "function",
       name: "select_character",
       description:
-        "Select a food character by name: adds them to the council and highlights them on the screen. Returns their name and description so you can introduce them. Call once per character; multiple characters can be selected.",
+        "Select a forest being by name: adds them to the council and highlights them on the screen. Returns their name and description so you can introduce them. Call once per being; multiple beings can be selected.",
       parameters: {
         type: "object",
         additionalProperties: false,
@@ -178,7 +178,7 @@ export function createGuideTools({
     {
       type: "function",
       name: "deselect_character",
-      description: "Remove a food character from the selection by name.",
+      description: "Remove a forest being from the selection by name.",
       parameters: {
         type: "object",
         additionalProperties: false,
@@ -190,7 +190,7 @@ export function createGuideTools({
       type: "function",
       name: "current_characters",
       description:
-        "Return the names of currently selected food characters and human panelists. Use to check state when unsure or when there is conflicting information.",
+        "Return the names of currently selected forest beings and human panelists. Use to check state when unsure or when there is conflicting information.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
     {
@@ -209,7 +209,7 @@ export function createGuideTools({
       type: "function",
       name: "start_meeting",
       description:
-        "Start the council meeting with the current selections. Requires the visitor's name to be stored via remember_visitor_name first, plus the same validation as the Start button: topic confirmed, enough foods selected, unique names, and any human panelists filled in.",
+        "Start the council meeting with the current selections. Requires the visitor's name to be stored via remember_visitor_name first, plus the same validation as the Start button: topic confirmed, enough beings selected, unique names, and any human panelists filled in.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   ];
@@ -358,19 +358,19 @@ export function createGuideToolHandlers(ctx: GuideToolContext): Record<string, T
 
     current_characters: () => {
       const store = useMeetingSetupStore.getState();
-      const foodCharIds = new Set(
+      const beingIds = new Set(
         ctx.characters
           .filter((c) => !c.id.startsWith("panelist") && c.id !== "addhuman")
           .map((c) => c.id),
       );
-      const foods = store.selectedCharacters
-        .filter((id) => foodCharIds.has(id))
+      const beings = store.selectedCharacters
+        .filter((id) => beingIds.has(id))
         .map((id) => ctx.characters.find((c) => c.id === id)!.name);
       const humans = store.humans
         .slice(0, store.numberOfHumans)
         .map((h) => h.name)
         .filter(Boolean);
-      return { ok: true, data: { foods, humans } };
+      return { ok: true, data: { beings, humans } };
     },
 
     human_panelist: (raw) => {

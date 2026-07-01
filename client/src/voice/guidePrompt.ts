@@ -2,6 +2,7 @@ import type { Topic, Character } from "@shared/ModelTypes";
 import type { MeetingSetupPhase } from "@newMeeting/meetingSetup";
 import type { AgentMode } from "@/settings/councilSettings";
 import { buildEnPrompt } from "./guidePromptEn";
+import { buildSvPrompt } from "./guidePromptSv";
 
 export type GuideTopic = Pick<Topic, "id" | "title" | "description">;
 export type GuideCharacter = Pick<Character, "id" | "name"> & { description?: string };
@@ -18,6 +19,7 @@ export type GuidePromptParams = {
 /** Add an entry here when adding a new language prompt file. */
 const builders: Record<string, (params: GuidePromptParams) => string> = {
   en: buildEnPrompt,
+  sv: buildSvPrompt,
 };
 
 export function buildGuidePrompt(params: GuidePromptParams & { language: string }): string {
