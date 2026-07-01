@@ -1,8 +1,7 @@
 import { GlobalOptionsSchema } from "@logic/GlobalOptions.js";
 import { z } from "zod";
-import { type Character, AVAILABLE_VOICES, AVAILABLE_VOICES_GEMINI } from "@shared/ModelTypes.js";
+import { type Character, AVAILABLE_VOICES } from "@shared/ModelTypes.js";
 import type {
-    InjectionMessage,
     HandRaisedOptions,
     ReconnectionOptions,
     ReportMaximumPlayedIndexPayload,
@@ -18,7 +17,6 @@ import type {
 // Shared Sub-schemas
 const MAX_HUMAN_INPUT_LENGTH = 10000;
 const VoiceOptionSchema = z.enum(AVAILABLE_VOICES);
-const VoiceOptionGeminiSchema = z.enum(AVAILABLE_VOICES_GEMINI);
 
 const CharacterSchema: z.ZodType<Character> = z.object({
     id: z.string().min(1),
@@ -26,7 +24,7 @@ const CharacterSchema: z.ZodType<Character> = z.object({
     description: z.string(),
     prompt: z.string(),
     voice: z.string(),
-    voiceProvider: z.enum(['openai', 'gemini', 'inworld', 'elevenlabs']).optional().default('openai'),
+    voiceProvider: z.enum(['openai', 'inworld', 'elevenlabs']).optional().default('openai'),
     voiceLocale: z.string().optional(),
     voiceInstruction: z.string().optional(),
     voiceTemperature: z.number().min(0.1).max(2.0).optional(),
@@ -42,15 +40,6 @@ const CharacterSchema: z.ZodType<Character> = z.object({
                 params: { options: [...AVAILABLE_VOICES] },
                 path: ['voice'],
                 message: "Invalid OpenAI Voice"
-            });
-        }
-    } else if (data.voiceProvider === 'gemini') {
-        if (!VoiceOptionGeminiSchema.safeParse(data.voice).success) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                params: { options: [...AVAILABLE_VOICES_GEMINI] },
-                path: ['voice'],
-                message: "Invalid Gemini Voice"
             });
         }
     }
@@ -112,15 +101,7 @@ export const ReportMaximumPlayedIndexSchema: z.ZodType<ReportMaximumPlayedIndexP
     index: z.number().int(),
 });
 
-// 5. submit_injection
-export const InjectionMessageSchema: z.ZodType<InjectionMessage> = z.object({
-    text: z.string(),
-    date: z.string(),
-    index: z.number(),
-    length: z.number(),
-});
-
-// 6. conclude_meeting
+// 5. conclude_meeting
 export const ConcludeMeetingMessageSchema: z.ZodType<ConcludeMeetingMessage> = z.object({
     date: z.string(),
 });

@@ -74,8 +74,8 @@ const Landing: React.FC = () => {
 
         <div>
           <div style={{ textAlign: "center" }}>
-            <h2 style={{ marginBottom: "-10px", marginTop: isMobile ? "0" : "" }}>{t('landing.welcome')}</h2>
-            <h1 style={{ margin: isMobile ? "5px 0 0 0" : "" }}>{t('council').toUpperCase()}</h1>
+            <h2 style={{ marginBottom: "-10px", marginTop: isMobile ? "0" : "" }}>{t("landing.welcome")}</h2>
+            <h1 style={{ margin: isMobile ? "5px 0 0 0" : "" }}>{t("app.council").toUpperCase()}</h1>
           </div>
 
           {!isMuseumMode && (
@@ -84,7 +84,7 @@ const Landing: React.FC = () => {
                 <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
               </Link>
               <Link to={{ hash: "contact" }}>
-                <img src={biosphereLogo} alt={t('biosphere')} style={biosphereLogoStyle} />
+                <img src={biosphereLogo} alt="Biosphere Area Vindelälven-Juhttátahkka" style={biosphereLogoStyle} />
               </Link>
             </div>
           )}

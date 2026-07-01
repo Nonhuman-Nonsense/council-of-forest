@@ -2,7 +2,6 @@
   "conversationModel": "mistral/mistral-large-3",
   "conversationReasoning": "none",
   "voiceModel": "gpt-4o-mini-tts",
-  "geminiVoiceModel": "gemini-2.5-flash-tts",
   "inworldVoiceModel": "inworld-tts-1.5-max",
   "elevenlabsVoiceModel": "eleven_flash_v2_5",
   "temperature": 1,
@@ -20,29 +19,29 @@
   "extraMessageCount": 5,
   "meetingVeryMaxLength": 30,
   "raiseHandPrompt": {
-    "en": "We have a question or comment from the audience, please invite a human speaker called [NAME] to the debate. After listening to the human, answer and engage deeper with their thoughts.",
-    "sv": "Vi har en fråga eller kommentar från publiken, bjud in a mänsklig talare vid namn [NAME] till samtalet. After att du lyssnat till människan, svara på dess fråga och engagera djupare med dess tankar."
+    "en": "We have a question or comment from the audience, please invite a human speaker called [NAME] to the debate. Use at most 2 sentences.",
+    "sv": "Vi har en fråga eller kommentar från publiken, bjud in en mänsklig talare vid namn [NAME] till samtalet. Använd som mest 2 meningar."
   },
   "raiseHandInvitationLength": 150,
   "panelistInvitationPrompt": {
     "en": "We are now joined by a special guest speaker, [NAME]. Please welcome them to the debate and invite them to share their perspective.",
-    "sv": "Vi har nu fått besök av en särskild gästtalare, [NAME]. Välkomna dem till debatten och bjud in dem att dela sina tankar."
+    "sv": "Vi har nu fått besök av en särskild gästtalare, [NAME]. Välkomna dem till samtalet och bjud in dem att dela sina tankar."
   },
   "panelistInvitationLength": 150,
   "concludeMeetingPrompt": {
-    "en": "The meeting is coming to a close. As chair, say one brief in-character closing line to the council and the visitor — thank them, reflect lightly on the discussion, and do not summarise or write a protocol yet.",
-    "sv": "Mötet närmar sig sitt slut. Som ordförande, säg en kort avslutande replik i karaktär till rådet och besökaren — tacka dem, reflektera lätt över diskussionen, och sammanfatta inte eller skriv protokoll ännu."
+    "en": "The meeting is coming to a close. As chair, say one brief closing line to the council and the visitor — thank them, reflect lightly on the discussion. Say something actually meaningful, not just empty words. Think about something that would inspire people to take action. End with the words: This concludes Council of Forest meeting #[MEETING_ID].",
+    "sv": "Mötet närmar sig sitt slut. Som ordförande, säg en kort avslutande replik till rådet och besökaren — tacka dem och reflektera lätt över diskussionen. VIKTIGT: Använd max 3 meningar. Säg något faktiskt meningsfullt, inte bara tomma ord. Tänk på något som skulle inspirera människor till handling. Avsluta med orden: Detta avslutar Skogsrådets möte #[MEETING_ID]."
   },
   "concludeMeetingLength": 150,
   "summarizeMeetingPrompt": {
-    "en": "Please summarise the meeting, held on [DATE], making a document that could work as a meeting protocol and a policy recommendation, that could be sent to the Swedish government for consideration.",
-    "sv": "Sammanfatta mötet, som hölls på datumet [DATE], och skapa ett dokument som kan användas som mötesprotokoll och rekommendation av lagändringar, som skulle kunna skickas till Sveriges Regering."
+    "en": "Please summarise the meeting held on [DATE] making a document that could work as a meeting protocol and a policy recommendation, that could be sent to the Swedish government for consideration. Maximum 1500 characters, DO NOT EXCEED THIS LIMIT. Do not continue the debate.",
+    "sv": "Sammanfatta mötet som hölls den [DATE] och skapa ett kort dokument som kan fungera som mötesprotokoll och policerekommendation som skulle kunna skickas till Sveriges regering för övervägande. Maximalt 1500 tecken, ÖVERSKRID INTE DETTA GRÄNSVÄRDE. Fortsätt inte debatten."
   },
-  "summarizeMeetingLength": 800,
+  "summarizeMeetingLength": 500,
   "transcribeModel": "gpt-4o-transcribe",
   "transcribePrompt": {
     "en": "Expect english input.",
-    "sv": "Förvänta dig svenska."
+    "sv": "Förvänta dig svenskt tal."
   },
   "audioConcurrency": 10,
   "voiceGuideRealtimeModel": "google-ai-studio/gemini-2.5-flash",
@@ -53,7 +52,7 @@
       "en": {
         "provider": "inworld",
         "llmModel": "google-ai-studio/gemini-2.5-flash",
-        "transcriptionModel": "assemblyai/u3-rt-pro"
+        "transcriptionModel": "soniox/stt-rt-v4"
       },
       "sv": {
         "provider": "inworld",
@@ -69,7 +68,7 @@
         "provider": "inworld",
         "llmModel": "google-ai-studio/gemini-2.5-flash",
         "ttsModel": "inworld-tts-1.5-max",
-        "transcriptionModel": "assemblyai/u3-rt-pro",
+        "transcriptionModel": "soniox/stt-rt-v4",
         "agentVoice": {
           "voice": "Ashley",
           "voiceProvider": "inworld",
@@ -91,5 +90,5 @@
     }
   },
   "speakerClassifierModel": "google-ai-studio/gemini-2.5-flash",
-  "autoplayEarliestMeetingDate": "2025-01-01T00:00:00.000Z"
+  "autoplayEarliestMeetingDate": "2026-06-29T00:00:00.000Z"
 }

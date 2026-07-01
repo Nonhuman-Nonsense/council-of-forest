@@ -4,6 +4,17 @@ const CHARACTERS_FILE = "beings";
 const PROTOTYPE_CUSTOM_TOPIC_ID = "customtopic";
 const PROTOTYPE_CUSTOM_TOPIC_TOKEN = "[VISITOR_INPUT]";
 
+const NON_PLAYABLE_TURN_TYPES = new Set([
+  'query_extension',
+  'awaiting_human_question',
+  'awaiting_human_panelist',
+  'meeting_incomplete',
+]);
+
+function isSyntheticTurn(turn) {
+  return Boolean(turn && NON_PLAYABLE_TURN_TYPES.has(turn.type));
+}
+
 function usesCustomVoiceId(character) {
   return character?.voiceProvider === 'inworld' || character?.voiceProvider === 'elevenlabs';
 }
@@ -16,7 +27,6 @@ const LANGUAGE_MODEL_KEYS = [
   'conversationModel',
   'conversationReasoning',
   'voiceModel',
-  'geminiVoiceModel',
   'inworldVoiceModel',
   'elevenlabsVoiceModel',
 ];
@@ -25,8 +35,7 @@ const defaultLanguageModelProfile = {
   conversationModel: "mistral/mistral-large-3",
   conversationReasoning: "none",
   voiceModel: "gpt-4o-mini-tts",
-  geminiVoiceModel: "gemini-2.5-flash-tts",
-  inworldVoiceModel: "inworld-tts-1.5-max",
+  inworldVoiceModel: "inworld-tts-1.5-mini",
   elevenlabsVoiceModel: "eleven_flash_v2_5",
 };
 
@@ -38,11 +47,11 @@ const defaultLanguageModels = {
 const defaultOptions = {
   languageModels: JSON.parse(JSON.stringify(defaultLanguageModels)),
   temperature: 1,
-  maxTokens: 600,
-  chairMaxTokens: 600,
-  defaultAudioSpeed: 1.1,
+  maxTokens: 400,
+  chairMaxTokens: 400,
+  defaultAudioSpeed: 1.15,
 
-  trimSentance: false,
+  trimSentance: true,
   trimParagraph: false,
   trimChairSemicolon: false,
 
@@ -54,9 +63,6 @@ const defaultOptions = {
   skipAudio: false,
   directedSpeakerRouting: true,
 
-  injectPrompt: "",
-  maxTokensInject: 800,
-
   language: 'en',
 
   skipMatchingSubtitles: true
@@ -67,11 +73,11 @@ const defaultOptions = {
  */
 function countPlayableMessages(conversation) {
   if (!conversation || conversation.length === 0) return 0;
-  const last = conversation[conversation.length - 1];
-  if (last && last.type === 'query_extension') {
-    return conversation.length - 1;
+  let count = conversation.length;
+  while (count > 0 && isSyntheticTurn(conversation[count - 1])) {
+    count--;
   }
-  return conversation.length;
+  return count;
 }
 
 const defaultLocalOptions = {
@@ -84,7 +90,6 @@ const defaultLocalOptions = {
   topicStates: {},
   selectedTopicId: null,
   editorWidthPercent: 50,
-  isInjectionDrawerOpen: false,
   customTopicVisitorInput: "",
   languageModelsText: JSON.stringify(defaultLanguageModels.en, null, 2),
   languageModelsError: "",
@@ -124,11 +129,7 @@ const CharacterCard = {
     },
     onProviderChange() {
       const char = this.character;
-      if (char.voiceProvider === 'gemini') {
-        char.voice = this.voiceLists.gemini[0];
-        if (!char.voiceLocale) char.voiceLocale = 'en-GB';
-        if (char.voiceInstruction === undefined) char.voiceInstruction = "";
-      } else if (char.voiceProvider === 'inworld') {
+      if (char.voiceProvider === 'inworld') {
         if (!char.voice) char.voice = "";
         if (char.voiceTemperature === undefined) char.voiceTemperature = 1.1;
       } else if (char.voiceProvider === 'elevenlabs') {
@@ -151,7 +152,6 @@ createApp({
 
       // UI State
       status: 'IDLE', // IDLE, CONNECTING, ACTIVE, PAUSED, ENDED, ERROR
-      injectionStatus: '',
 
       // Data Model
       options: { ...defaultOptions },
@@ -165,11 +165,6 @@ createApp({
 
       // Runtime
       audioVoices: ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse"],
-      audioVoicesGemini: [
-        "Achernar", "Achird", "Algenib", "Algieba", "Alnilam", "Aoede", "Autonoe", "Callirrhoe", "Charon", "Despina",
-        "Enceladus", "Erinome", "Fenrir", "Gacrux", "Iapetus", "Kore", "Laomedeia", "Leda", "Orus", "Pulcherrima",
-        "Puck", "Rasalgethi", "Sadachbia", "Sadaltager", "Schedar", "Sulafat", "Umbriel", "Vindemiatrix", "Zephyr", "Zubenelgenubi"
-      ],
       sortableInstance: null,
       isResizing: false,
 
@@ -258,6 +253,12 @@ createApp({
     hasQueryExtension() {
       const last = this.conversation[this.conversation.length - 1];
       return !!(last && last.type === 'query_extension');
+    },
+
+    canRaiseHand() {
+      if (!this.socket || this.conversation.length === 0) return false;
+      if (this.status !== 'ACTIVE' && this.status !== 'PAUSED') return false;
+      return !this.conversation.some((turn) => turn.type === 'awaiting_human_question');
     },
 
     languageModelsText: {
@@ -505,9 +506,7 @@ createApp({
     },
 
     updateVoice(char) {
-      if (char.voiceProvider === 'gemini') {
-        char.voice = this.audioVoicesGemini[0];
-      } else if (char.voiceProvider === 'inworld') {
+      if (char.voiceProvider === 'inworld') {
         char.voice = "";
       } else if (char.voiceProvider === 'elevenlabs') {
         char.voice = "";
@@ -749,8 +748,7 @@ createApp({
         if (!c.id && c.name) c.id = c.name;
         if (!c.voiceProvider) c.voiceProvider = 'openai';
         if (!c.voice) {
-          if (c.voiceProvider === 'gemini') c.voice = this.audioVoicesGemini[0];
-          else if (c.voiceProvider !== 'inworld' && c.voiceProvider !== 'elevenlabs') c.voice = this.audioVoices[0];
+          if (c.voiceProvider !== 'inworld' && c.voiceProvider !== 'elevenlabs') c.voice = this.audioVoices[0];
         }
         delete c._ui_id;
       });
@@ -914,7 +912,6 @@ createApp({
         extraMessageCount: this.options.extraMessageCount,
         meetingVeryMaxLength: this.options.meetingVeryMaxLength,
         voiceModel: languageModels.voiceModel,
-        geminiVoiceModel: languageModels.geminiVoiceModel,
         inworldVoiceModel: languageModels.inworldVoiceModel,
         elevenlabsVoiceModel: languageModels.elevenlabsVoiceModel,
       };
@@ -944,7 +941,6 @@ createApp({
           this.status = 'ACTIVE';
         }
 
-        this.injectionStatus = ""; // Clear status on response
         this.scrollToBottom();
       });
 
@@ -1137,10 +1133,7 @@ createApp({
         charExport.voiceSpeed = rest.voiceSpeed;
       }
 
-      if (provider === 'gemini') {
-        charExport.voiceLocale = rest.voiceLocale || 'en-GB';
-        charExport.voiceInstruction = rest.voiceInstruction || "";
-      } else if (provider === 'openai') {
+      if (provider === 'openai') {
         charExport.voiceInstruction = rest.voiceInstruction || "";
       } else if (provider === 'inworld') {
         if (rest.voiceLocale?.trim()) charExport.voiceLocale = rest.voiceLocale.trim();
@@ -1488,23 +1481,15 @@ createApp({
       this.socket.emit("extend_meeting");
     },
 
-    removeLastMessage() {
-      this.socket.emit("remove_last_message");
-    },
+    raiseHand() {
+      if (!this.canRaiseHand) return;
 
-    submitInjection() {
-      const message = {
-        text: this.options.injectPrompt,
-        length: this.options.maxTokensInject,
-        index: this.conversation.length,
-        // Use local browser date
-        date: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-      };
+      const index = this.conversation.length;
+      const humanName = 'Visitor';
 
-      this.injectionStatus = "Instruction injected, just wait...";
-
-      this.log('SOCKET_OUT', 'Submit Injection', message);
-      this.socket.emit("submit_injection", message);
+      this.status = 'CONNECTING';
+      this.log('SOCKET_OUT', 'Raise Hand', { index, humanName });
+      this.socket.emit('raise_hand', { index, humanName });
     },
 
     // ===========================
@@ -1720,7 +1705,19 @@ createApp({
       const chars = this.currentLanguageData?.characters || [];
       const match = chars.find((c) => c.id === idOrName || c.name === idOrName);
       return match?.name || match?.id || idOrName;
-    }
+    },
+
+    formatInvitationGuest(index) {
+      const next = this.conversation[index + 1];
+      if (next?.type === 'awaiting_human_question' || next?.type === 'awaiting_human_panelist') {
+        return this.formatSpeakerLabel(next.speaker);
+      }
+      return 'Visitor';
+    },
+
+    isSyntheticTurnType(type) {
+      return NON_PLAYABLE_TURN_TYPES.has(type);
+    },
   }
 })
   .directive('auto-resize', {

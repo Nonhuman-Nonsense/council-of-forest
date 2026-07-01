@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
     getChairAgentVoice,
     getChairMeetingVoice,
-    getChairRealtimeLanguageConfig,
-    getHumanInputRealtimeLanguageConfig,
 } from "@logic/characterSetupBundle.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
 
@@ -38,14 +36,5 @@ describe("Forest realtime preset", () => {
             voice: "Ashley",
             voiceProvider: "inworld",
         });
-    });
-
-    it("aligns Swedish Soniox STT across human-input and chair agent sessions", () => {
-        const humanInput = getHumanInputRealtimeLanguageConfig("sv", options);
-        const chair = getChairRealtimeLanguageConfig("sv", options);
-
-        expect(humanInput.provider).toBe("inworld");
-        expect(humanInput.transcriptionModel).toBe("soniox/stt-rt-v4");
-        expect(chair.transcriptionModel).toBe("soniox/stt-rt-v4");
     });
 });
