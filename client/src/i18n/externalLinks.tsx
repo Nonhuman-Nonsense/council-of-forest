@@ -8,6 +8,7 @@ export const externalLinks = {
   nhn: <a href="https://nonhuman-nonsense.com" />,
   biosphere: <a href="https://vindelalvenbiosfar.se/" />,
   gundega: <a href="https://www.gundegastrauberga.com/" />,
+  jonas: <a href="https://www.instagram.com/_funberg_" />,
   albin: <a href="https://www.polymorf.se/" />,
   vinnova: <a href={VINNOVA_FOREST_URL} />,
   cof: <a href="https://council-of-foods.com/" />,
