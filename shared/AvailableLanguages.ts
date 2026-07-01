@@ -6,6 +6,7 @@ export const AVAILABLE_LANGUAGES = ["en", "sv"] as const;
  * On single-language deployments (e.g. Foods) leave this empty.
  */
 export const COUNTRY_DEFAULT_LANGUAGE: Partial<Record<string, AvailableLanguage>> = {
+    'SE': 'sv',
 };
 
 export type AvailableLanguage = typeof AVAILABLE_LANGUAGES[number];
