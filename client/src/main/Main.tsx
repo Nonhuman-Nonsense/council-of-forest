@@ -23,7 +23,7 @@ import Forest from "@forest/Forest";
 import { isMeetingPath, isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
 import RotateDevice from "./overlay/RotateDevice";
 import FullscreenButton from "./FullscreenButton";
-import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
+import MuseumSwitchButton from "@/museum/MuseumSwitchButton";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
@@ -85,7 +85,7 @@ export default function Main(props: MainProps) {
   const navigate = useNavigate();
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode, museumSwitchButtonEnabled } = useCouncilSettings();
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
 
   useEffect(() => {
@@ -191,7 +191,7 @@ export default function Main(props: MainProps) {
         />
       }
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
-      {isMuseumMode && <MuseumModeEscapeHatch />}
+      {museumSwitchButtonEnabled && <MuseumSwitchButton />}
       {unrecoverableError == null &&
         <Overlay
           isActive={!isMeetingPath(location.pathname)}

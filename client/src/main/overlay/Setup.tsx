@@ -16,6 +16,7 @@ import type {
   UsbPortInfo,
 } from "@/museum/button/buttonBridge";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
+import { museumSwitchButtonToggleStyle } from "@/museum/MuseumSwitchButton";
 
 type StatusTone = "ok" | "warn" | "error" | "idle";
 
@@ -325,6 +326,8 @@ function Setup(): ReactElement {
     setAgentMode,
     pttHardwareEnabled,
     setPttHardwareEnabled,
+    museumSwitchButtonEnabled,
+    setMuseumSwitchButtonEnabled,
     devLogEnabled,
     setDevLogEnabled,
     devLogCategories,
@@ -404,6 +407,19 @@ function Setup(): ReactElement {
               {t("setup.museum")}
             </button>
           </SetupSegmented>
+          <button
+            type="button"
+            data-testid="setup-museum-switch-button-toggle"
+            className={museumSwitchButtonEnabled ? "control" : ""}
+            aria-pressed={museumSwitchButtonEnabled}
+            onClick={() => setMuseumSwitchButtonEnabled(!museumSwitchButtonEnabled)}
+            style={museumSwitchButtonToggleStyle(museumSwitchButtonEnabled, {
+              ...setupCompactButton,
+              width: "100%",
+            })}
+          >
+            {t("setup.museumSwitchButton")}
+          </button>
         </SetupPanel>
 
         <SetupPanel title={t("setup.panels.agentMode")}>

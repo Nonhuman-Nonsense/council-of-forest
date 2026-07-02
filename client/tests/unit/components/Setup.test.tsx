@@ -111,6 +111,41 @@ describe('Setup overlay', () => {
     expect(web).toHaveClass('selected');
   });
 
+  it('shows museum switch button toggle below installation mode', () => {
+    render(<Setup />);
+
+    const toggle = screen.getByTestId('setup-museum-switch-button-toggle');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(toggle).toHaveTextContent('setup.museumSwitchButton');
+  });
+
+  it('persists museum switch button enablement', () => {
+    render(<Setup />);
+
+    fireEvent.click(screen.getByTestId('setup-museum-switch-button-toggle'));
+    expect(localStorage.getItem('councilMuseumSwitchButtonEnabled')).toBe('true');
+  });
+
+  it('clears museum switch button storage when toggled off', () => {
+    localStorage.setItem('councilMuseumSwitchButtonEnabled', 'true');
+
+    render(<Setup />);
+
+    fireEvent.click(screen.getByTestId('setup-museum-switch-button-toggle'));
+    expect(localStorage.getItem('councilMuseumSwitchButtonEnabled')).toBeNull();
+  });
+
+  it('shows museum switch button toggle with red border glow when active', () => {
+    localStorage.setItem('councilMuseumSwitchButtonEnabled', 'true');
+
+    render(<Setup />);
+
+    const toggle = screen.getByTestId('setup-museum-switch-button-toggle');
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(toggle).toHaveStyle({ borderColor: 'rgb(252, 165, 165)' });
+    expect(toggle).not.toHaveStyle({ backgroundColor: 'rgb(239, 68, 68)' });
+  });
+
   it('selects off by default without persisting agent mode', () => {
     render(<Setup />);
 
