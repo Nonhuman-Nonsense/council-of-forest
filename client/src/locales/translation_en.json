@@ -71,8 +71,8 @@
     "socialWebsite": "nonhuman-nonsense.com",
     "socialEmail": "hello@nonhuman-nonsense.com"
   },
-  "setup": {
-    "title": "SETUP",
+  "staff": {
+    "title": "STAFF",
     "panels": {
       "installation": "Installation",
       "agentMode": "Agent mode",
@@ -134,7 +134,7 @@
       "hardwareButton": "Hardware button",
       "owners": {
         "none": "—",
-        "setup": "Setup",
+        "staff": "Staff",
         "autoplay": "Autoplay",
         "voice-guide": "Voice guide",
         "human-input": "Human input",
