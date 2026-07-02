@@ -71,8 +71,8 @@
     "socialWebsite": "nonhuman-nonsense.com",
     "socialEmail": "hello@nonhuman-nonsense.com"
   },
-  "setup": {
-    "title": "INSTÄLLNINGAR",
+  "staff": {
+    "title": "PERSONAL",
     "panels": {
       "installation": "Installation",
       "agentMode": "Agentläge",
@@ -90,6 +90,7 @@
         "SOCKET": "Socket",
         "AGENT": "Agentverktyg",
         "REALTIME": "Realtime",
+        "TURN": "Turpipeline",
         "BUTTON": "Knapp",
         "META": "Metaagent",
         "AUTOPLAY": "Autouppspelning",
@@ -99,6 +100,7 @@
     },
     "web": "Webb",
     "museum": "Museum",
+    "museumSwitchButton": "Museums växlingsknapp",
     "button": {
       "title": "Knapp",
       "bridgeLabel": "Brygga",
@@ -132,7 +134,7 @@
       "hardwareButton": "Hårdvaruknapp",
       "owners": {
         "none": "—",
-        "setup": "Inställningar",
+        "staff": "Personal",
         "autoplay": "Autouppspelning",
         "voice-guide": "Röstguide",
         "human-input": "Mänsklig inmatning",
