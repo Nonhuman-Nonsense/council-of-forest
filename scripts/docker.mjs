@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-export const IMAGE = 'nonhumannonsense/council-of-foods';
+export const IMAGE = 'nonhumannonsense/council-of-forest';
 
 export const FLAVORS = {
   latest: { tag: 'latest', dockerfile: 'Dockerfile' },
