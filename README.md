@@ -65,12 +65,15 @@ Set `PORT` in `server/.env` to run multiple checkouts side by side (e.g. `PORT=3
 
 ## Build docker image
 
+From the `server/` folder:
+
 ```
-docker build . -t nonhumannonsense/council-of-forest:latest
-docker push nonhumannonsense/council-of-forest:latest
+npm run docker              # latest
+npm run docker -- test
+npm run push -- test
 ```
 
-on Apple silicon, you might need to add `--platform linux/amd64` or similar to the build command
+Flavors: `latest`, `test`, `proto`. On Apple Silicon, builds automatically target `linux/amd64`.
 
 ## Database example
 
