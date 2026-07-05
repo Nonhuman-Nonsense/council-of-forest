@@ -23,7 +23,7 @@ import Forest from "@forest/Forest";
 import { isMeetingPath, isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
 import RotateDevice from "./overlay/RotateDevice";
 import FullscreenButton from "./FullscreenButton";
-import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
+import MuseumSwitchButton from "@/museum/MuseumSwitchButton";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
@@ -34,8 +34,10 @@ import { useErrorStore } from "./overlay/errorStore";
 
 import MuseumButton from "@/museum/button/MuseumButton";
 import ButtonBanner from "@/museum/button/ButtonBanner";
+import { useMuseumCursorHide } from "@/museum/useMuseumCursorHide";
 
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
+import { useAutoplayStore } from "@/autoplay/autoplayStore";
 
 import { z } from "@/zIndexLayers";
 import routes from "@/routes.json";
@@ -85,8 +87,10 @@ export default function Main(props: MainProps) {
   const navigate = useNavigate();
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode, museumSwitchButtonEnabled } = useCouncilSettings();
+  const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
+  useMuseumCursorHide();
 
   useEffect(() => {
     if (i18n.language !== props.lang) {
@@ -191,7 +195,7 @@ export default function Main(props: MainProps) {
         />
       }
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
-      {isMuseumMode && <MuseumModeEscapeHatch />}
+      {museumSwitchButtonEnabled && <MuseumSwitchButton />}
       {unrecoverableError == null &&
         <Overlay
           isActive={!isMeetingPath(location.pathname)}
@@ -214,7 +218,7 @@ export default function Main(props: MainProps) {
               path={`${routes.meeting}/:meetingId`}
               element={
                 <Council
-                  key={stripLanguagePrefix(location.pathname)}
+                  key={`${stripLanguagePrefix(location.pathname)}@${meetingGeneration}`}
                   topic={topicSelection}
                   setTopic={setTopicSelection}
                   liveKey={meetingliveKey}
@@ -230,11 +234,6 @@ export default function Main(props: MainProps) {
             <Route path="*" element={<Navigate to={rootPath} replace />} />
           </Routes>
           {!isIphone && !isMuseumMode && !(agentMode === "ptt" && ledDebugOverlay) && <FullscreenButton />}
-          <MainOverlays
-            topic={topicSelection}
-            onReset={onReset}
-            onCloseOverlay={onCloseOverlay}
-          />
           {isPortrait && location.pathname !== "/" && <RotateOverlay />}
         </Overlay>
       }
@@ -252,6 +251,11 @@ export default function Main(props: MainProps) {
           <Reconnecting />
         </Overlay>
       )}
+      <MainOverlays
+        topic={topicSelection}
+        onReset={onReset}
+        onCloseOverlay={onCloseOverlay}
+      />
     </>
   );
 }
