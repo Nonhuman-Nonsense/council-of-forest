@@ -3,12 +3,12 @@ import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import Overlay from "@main/overlay/Overlay";
 import AutoplayWarning from "@main/overlay/AutoplayWarning";
-import { fetchAutoplayMeetingId } from "@api/fetchAutoplayMeeting";
 import { useButton } from "@/museum/button/useButton";
 import { useButtonStore } from "@/museum/button/buttonStore";
 import { useCouncilSettings } from "@/settings/councilSettings";
-import { isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
+import { isRootPath, stripLanguagePrefix } from "@/routing";
 import routes from "@/routes.json";
+import { getPreferredLanguage } from "@/i18n";
 import {
   AUTOPLAY_NEXT_MEETING_MS,
   bumpAutoplayActivity,
@@ -16,10 +16,9 @@ import {
   useAutoplayStore,
 } from "./autoplayStore";
 import { log } from "@/logger";
-import { useErrorStore } from "@main/overlay/errorStore";
+import { setUnrecoverableError, useErrorStore } from "@main/overlay/errorStore";
 
 const IDLE_POLL_MS = 1_000;
-const FETCH_RETRY_MS = 5_000;
 
 /** Setup-entry flow: welcome screen (/) and in-progress meeting setup (/new). */
 function isInSetupEntryFlow(pathname: string): boolean {
@@ -52,13 +51,13 @@ export default function AutoplayCoordinator({
   const location = useLocation();
   const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const { meetingPath } = useRouting();
   const button = useButton("autoplay");
 
   const phase = useAutoplayStore((state) => state.phase);
   const councilOnSummary = useAutoplayStore((state) => state.councilOnSummary);
   const summaryProtocolFinished = useAutoplayStore((state) => state.summaryProtocolFinished);
   const setPhase = useAutoplayStore((state) => state.setPhase);
+  const navigateToAutoplayMeeting = useAutoplayStore((state) => state.navigateToAutoplayMeeting);
 
   const enterInFlightRef = useRef(false);
   const prevPressedRef = useRef(false);
@@ -85,6 +84,18 @@ export default function AutoplayCoordinator({
     });
   }, [isMuseumMode]);
 
+  const startAutoplayMeeting = useCallback(async () => {
+    try {
+      const language = getPreferredLanguage();
+      await i18n.changeLanguage(language);
+      await navigateToAutoplayMeeting(navigate, language);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.event("ERROR", "autoplay failed", error);
+      setUnrecoverableError({ message, source: "autoplay", cause: error });
+    }
+  }, [i18n, navigate, navigateToAutoplayMeeting]);
+
   const enterAutoplay = useCallback(async () => {
     if (enterInFlightRef.current) {
       log.event("AUTOPLAY", "enter skipped", { reason: "already_in_flight" });
@@ -96,23 +107,9 @@ export default function AutoplayCoordinator({
     setMeetingliveKey(null);
     bumpAutoplayActivity("enter-autoplay");
 
-    const language = i18n.language.toLowerCase().startsWith("sv") ? "sv" : "en";
-
-    try {
-      const meetingId = await fetchAutoplayMeetingId(language);
-      navigate(meetingPath(meetingId), { replace: true });
-      log.event("AUTOPLAY", "enter navigated", { meetingId, language });
-    } catch (error) {
-      log.event("ERROR", "autoplay enter failed", error);
-      setPhase("off");
-      window.setTimeout(() => {
-        enterInFlightRef.current = false;
-      }, FETCH_RETRY_MS);
-      return;
-    }
-
+    await startAutoplayMeeting();
     enterInFlightRef.current = false;
-  }, [i18n.language, meetingPath, navigate, setMeetingliveKey, setPhase]);
+  }, [setMeetingliveKey, setPhase, startAutoplayMeeting]);
 
   const dismissWarning = useCallback(() => {
     log.event("AUTOPLAY", "warning dismissed", { via: "hardware_button" });
@@ -209,15 +206,9 @@ export default function AutoplayCoordinator({
 
     const timerId = window.setTimeout(() => {
       void (async () => {
-        const language = i18n.language.toLowerCase().startsWith("sv") ? "sv" : "en";
-        try {
-          const meetingId = await fetchAutoplayMeetingId(language);
+        await startAutoplayMeeting();
+        if (useErrorStore.getState().unrecoverableError == null) {
           bumpAutoplayActivity("loop-next-meeting");
-          navigate(meetingPath(meetingId), { replace: true });
-          log.event("AUTOPLAY", "loop navigated", { meetingId, language });
-        } catch (error) {
-          log.event("ERROR", "autoplay loop failed", error);
-          bumpAutoplayActivity("loop-retry");
         }
       })();
     }, AUTOPLAY_NEXT_MEETING_MS);
@@ -226,10 +217,8 @@ export default function AutoplayCoordinator({
   }, [
     connectionError,
     councilOnSummary,
-    i18n.language,
     isMuseumMode,
-    meetingPath,
-    navigate,
+    startAutoplayMeeting,
     phase,
     summaryProtocolFinished,
   ]);

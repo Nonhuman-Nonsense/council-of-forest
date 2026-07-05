@@ -6,7 +6,9 @@ import { MemoryRouter } from "react-router";
 import AutoplayCoordinator from "@/autoplay/AutoplayCoordinator";
 import {
   _setAutoplayLastActivityMsForTests,
+  AUTOPLAY_NEXT_MEETING_MS,
   SETUP_IDLE_MS,
+  notifyAutoplay,
   useAutoplayStore,
 } from "@/autoplay/autoplayStore";
 import { _resetButtonStoreForTests, useButtonStore } from "@/museum/button/buttonStore";
@@ -62,13 +64,17 @@ vi.mock("@/museum/button/useButton", () => ({
   }),
 }));
 
+const mockFetchAutoplayMeetingId = vi.hoisted(() => vi.fn().mockResolvedValue(99));
+
 vi.mock("@api/fetchAutoplayMeeting", () => ({
-  fetchAutoplayMeetingId: vi.fn().mockResolvedValue(99),
+  fetchAutoplayMeetingId: mockFetchAutoplayMeetingId,
 }));
+
+const mockChangeLanguage = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    i18n: { language: "en" },
+    i18n: { language: "en", changeLanguage: mockChangeLanguage },
     t: (key: string) => key,
   }),
 }));
@@ -184,5 +190,53 @@ describe("AutoplayCoordinator setup-entry idle", () => {
     });
 
     expect(useAutoplayStore.getState().phase).toBe("off");
+  });
+
+  it("enters autoplay using getPreferredLanguage for fetch and navigation", async () => {
+    window.__COF_BOOTSTRAP__ = { preferredLang: "de" };
+    renderCoordinator();
+
+    await advanceIdlePastThreshold();
+    await act(async () => {
+      screen.getByText("autoplay.stillThere.confirm").click();
+    });
+
+    expect(mockChangeLanguage).toHaveBeenCalledWith("en");
+    expect(mockFetchAutoplayMeetingId).toHaveBeenCalledWith("en");
+    expect(mockNavigate).toHaveBeenCalledWith("/meeting/99", { replace: true });
+    expect(useAutoplayStore.getState().meetingGeneration).toBe(1);
+  });
+
+  it("surfaces autoplay fetch failure via unrecoverable error", async () => {
+    mockFetchAutoplayMeetingId.mockRejectedValueOnce(new Error("Autoplay meeting failed (404)"));
+    renderCoordinator();
+
+    await advanceIdlePastThreshold();
+    await act(async () => {
+      screen.getByText("autoplay.stillThere.confirm").click();
+    });
+
+    expect(useErrorStore.getState().unrecoverableError).toMatchObject({
+      message: "Autoplay meeting failed (404)",
+      source: "autoplay",
+    });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("increments meetingGeneration when loop fetches the same meeting id", async () => {
+    mockLocation.pathname = "/meeting/99";
+    mockFetchAutoplayMeetingId.mockResolvedValue(99);
+    useAutoplayStore.getState().setPhase("active");
+    notifyAutoplay({ type: "council-state", state: "summary" });
+    notifyAutoplay({ type: "summary-playback-finished" });
+
+    renderCoordinator();
+
+    await act(async () => {
+      vi.advanceTimersByTime(AUTOPLAY_NEXT_MEETING_MS);
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith("/meeting/99", { replace: true });
+    expect(useAutoplayStore.getState().meetingGeneration).toBe(1);
   });
 });
