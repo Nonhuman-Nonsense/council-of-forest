@@ -196,6 +196,7 @@
     "message": "Något gick snett...",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
-    "reconnecting": "Försöker återansluta..."
+    "reconnecting": "Försöker återansluta...",
+    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
   }
 }
