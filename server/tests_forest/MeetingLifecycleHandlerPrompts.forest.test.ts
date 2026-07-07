@@ -18,7 +18,10 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
             environment: "test",
             socket: { emit: vi.fn(), on: vi.fn() },
             services: {
-                meetingsCollection: { updateOne: vi.fn() },
+                meetingsCollection: {
+                    updateOne: vi.fn(),
+                    findOne: vi.fn().mockResolvedValue(null),
+                },
                 getOpenAI: vi.fn().mockReturnValue({ apiKey: "mock-key" }),
             },
             serverOptions: {
@@ -47,6 +50,7 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
             audioSystem: {
                 generateAudio: vi.fn(),
                 queueAudioGeneration: vi.fn(),
+                waitForIdle: vi.fn().mockResolvedValue(undefined),
             },
             broadcaster: {
                 broadcastConversationUpdate: vi.fn(),
