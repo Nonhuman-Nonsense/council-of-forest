@@ -1,13 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import FoodItem from '@council/FoodItem';
+import type { CSSProperties } from 'react';
+import type { Character } from '@shared/ModelTypes';
 
 // Mock the child component FoodAnimation to isolate FoodItem testing
 // But actually FoodAnimation is simple enough we might want to test the composition.
 // However, FoodAnimation uses video APIs which are not fully implemented in JSDOM.
 // Let's mock it to avoid video.play() errors and focus on FoodItem logic.
 vi.mock('@council/FoodAnimation', () => ({
-    default: ({ character, styles, isPerforming }) => (
+    default: ({ character, styles, isPerforming }: { character: { id: string }; styles: CSSProperties; isPerforming: boolean }) => (
         <div data-testid={`food-animation-${character?.id || 'undefined'}`} style={styles}>
             Video for {character?.id}
             {isPerforming ? ' (Breathing)' : ' (Idle)'}
@@ -15,8 +17,12 @@ vi.mock('@council/FoodAnimation', () => ({
     )
 }));
 
-const mockFood = {
+const mockFood: Character = {
     id: 'banana',
+    name: 'Banana',
+    voice: 'alloy',
+    description: 'A cheerful banana',
+    prompt: 'You are a banana.',
     size: 1, // Standard size
 };
 
@@ -74,7 +80,7 @@ describe('FoodItem', () => {
     });
 
     it('stays zoomed and visible when focused but not performing (meta-agent idle)', () => {
-        const waterFood = { id: 'water', size: 1 };
+        const waterFood: Character = { ...mockFood, id: 'water' };
         const { asFragment } = render(
             <FoodItem
                 food={waterFood}
@@ -141,7 +147,8 @@ describe('FoodItem', () => {
     });
 
     it('should handle food with missing id gracefully', () => {
-        const noIdFood = { ...mockFood, id: undefined };
+        // Deliberately violates the Character contract to verify graceful degradation.
+        const noIdFood = { ...mockFood, id: undefined } as unknown as Character;
         const { asFragment } = render(
             <FoodItem
                 food={noIdFood}

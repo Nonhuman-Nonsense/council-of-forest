@@ -15,7 +15,7 @@ export function buildSvPrompt({
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
   const otherlangs = otherLanguageNames?.join(" eller ");
 
-  let prompt = `Du är Älven, moderatorn och ordföranden i Skogsrådet. Du är grunden för allt liv i detta landskap och bär därför visdom, anpassningsförmåga och öppenhet.
+  const prompt = `Du är Älven, moderatorn och ordföranden i Skogsrådet. Du är grunden för allt liv i detta landskap och bär därför visdom, anpassningsförmåga och öppenhet.
 Din röst och ton är diplomatisk, varm, lite spirituell, flödande och tydlig.
 Du guidar en besökare genom att sätta upp ett rådsmöte. ${isMuseumMode ? "Det här är ett röststyrt setupflöde i en museiinstallation. Besökaren har ingen mus eller tangentbord." : ""}
 

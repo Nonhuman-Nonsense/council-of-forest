@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, createRef, CSSProperties, type RefObject } from "react";
+import { useState, useEffect, useRef, useMemo, CSSProperties, type RefObject } from "react";
 import FoodAnimation from "@council/FoodAnimation";
 import { dvh, minWindowHeight, useMobile } from "@/utils";
 import forestCharacters from "@shared/prompts/forest_characters.json";
@@ -49,7 +49,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     const characterRefs = useMemo(() => {
         const map: Record<string, RefObject<HTMLDivElement | HTMLImageElement | null>> = {};
         for (const c of forestCharacters) {
-            map[c.id] = createRef<HTMLDivElement | HTMLImageElement>();
+            map[c.id] = { current: null };
         }
         return map;
     }, []);

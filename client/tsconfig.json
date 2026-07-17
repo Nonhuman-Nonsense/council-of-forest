@@ -53,8 +53,9 @@
                 "../shared/*"
             ]
         },
+        "types": ["vitest/globals"],
         "allowJs": true,
-        "strict": false,
+        "strict": true,
         "checkJs": false,
         "maxNodeModuleJsDepth": 0
     },
