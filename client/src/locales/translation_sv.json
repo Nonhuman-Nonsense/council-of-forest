@@ -193,7 +193,7 @@
   },
   "error": {
     "title": "FEL",
-    "message": "Något gick snett...",
+    "message": "Något gick snett...\nRådet kan inte fortsätta",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
     "reconnecting": "Försöker återansluta...",
