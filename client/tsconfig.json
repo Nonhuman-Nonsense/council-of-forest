@@ -54,7 +54,7 @@
             ]
         },
         "types": ["vitest/globals"],
-        "allowJs": true,
+        "allowJs": false,
         "strict": true,
         "checkJs": false,
         "maxNodeModuleJsDepth": 0

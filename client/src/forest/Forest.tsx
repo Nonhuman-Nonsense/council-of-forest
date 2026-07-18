@@ -86,7 +86,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
         zIndex: z.forestBackdrop,
         transform: `scale(${zoomInValue}) translate(${translate[0]}, ${translate[1]})`,
         transformOrigin: `${transformOrigin[0]} ${transformOrigin[1]}`,
-        transition: !disableAnimations && `transform 2s ease-out, transform-origin ${animateTransformOrigin ? "2s" : "0.0001s"} ease-out`
+        transition: disableAnimations ? undefined : `transform 2s ease-out, transform-origin ${animateTransformOrigin ? "2s" : "0.0001s"} ease-out`
     };
 
 
@@ -151,7 +151,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
         setDisableAnimations(false);
     }, [zoomInOnBeing]);
 
-    function l(amount) {
+    function l(amount: number) {
         //Position is from center, minus percentage of view height
         //capped at 300px view height, which is our minimum
         const sign = Math.sign(amount) === 1 ? "+" : "-";
@@ -220,8 +220,8 @@ type BeingAudioProps = {
 };
 
 function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
-    const gainNode = useRef(null); //The general volume control node
-    const sourceNode = useRef(null);
+    const gainNode = useRef<GainNode | null>(null); //The general volume control node
+    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
 
     const [play, setPlay] = useState(false);
 
@@ -234,33 +234,42 @@ function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioPr
     }, [currentSpeakerId]);
 
     useEffect(() => {
+        if (!gainNode.current || !audioContext.current) return;
+        const gain = gainNode.current;
+        const ctx = audioContext.current;
         if (play) {
-            gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
-            gainNode.current.gain.linearRampToValueAtTime(volume, audioContext.current.currentTime + 2);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 2);
         } else {
-            gainNode.current.gain.linearRampToValueAtTime(0, audioContext.current.currentTime + 2);
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
         }
     }, [play]);
 
     if (audioContext.current && gainNode.current === null) {
-        gainNode.current = audioContext.current.createGain();
-        gainNode.current.connect(audioContext.current.destination);
-        sourceNode.current = audioContext.current.createBufferSource();
+        const ctx = audioContext.current;
+        const gain = ctx.createGain();
+        gain.connect(ctx.destination);
+        gainNode.current = gain;
+        sourceNode.current = ctx.createBufferSource();
 
         loadBeingAudio();
     }
 
     async function loadBeingAudio() {
+        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
+        const ctx = audioContext.current;
+        const source = sourceNode.current;
+        const gain = gainNode.current;
 
         const audioBuffer = await fetch(characterMp3Url(id))
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
 
-        sourceNode.current.buffer = audioBuffer;
-        sourceNode.current.loop = true;
-        sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
-        sourceNode.current.start();
+        source.buffer = audioBuffer;
+        source.loop = true;
+        source.connect(gain);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        source.start();
     }
 
     return null;
@@ -271,35 +280,41 @@ type AmbientAudioProps = {
 };
 
 function AmbientAudio({ audioContext }: AmbientAudioProps) {
-    const gainNode = useRef(null); //The general volume control node
-    const sourceNode = useRef(null);
+    const gainNode = useRef<GainNode | null>(null); //The general volume control node
+    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
 
     //Global ambience volume
     const onVolume = 0.05;
 
     if (audioContext.current && gainNode.current === null) {
-        gainNode.current = audioContext.current.createGain();
-        gainNode.current.connect(audioContext.current.destination);
+        const ctx = audioContext.current;
+        const gain = ctx.createGain();
+        gain.connect(ctx.destination);
 
         //Set ambience volume
-        gainNode.current.gain.setValueAtTime(onVolume, audioContext.current.currentTime);
+        gain.gain.setValueAtTime(onVolume, ctx.currentTime);
 
-
-        sourceNode.current = audioContext.current.createBufferSource();
+        gainNode.current = gain;
+        sourceNode.current = ctx.createBufferSource();
         loadAmbience();
     }
 
     async function loadAmbience() {
+        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
+        const ctx = audioContext.current;
+        const source = sourceNode.current;
+        const gain = gainNode.current;
+
         const audioBuffer = await fetch(characterAmbienceUrl)
             .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => audioContext.current.decodeAudioData(ArrayBuffer));
+            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
 
-        sourceNode.current.buffer = audioBuffer;
-        sourceNode.current.loop = true;
-        sourceNode.current.connect(gainNode.current);
-        gainNode.current.gain.setValueAtTime(0, audioContext.current.currentTime);
-        gainNode.current.gain.linearRampToValueAtTime(onVolume, audioContext.current.currentTime + 5);
-        sourceNode.current.start();
+        source.buffer = audioBuffer;
+        source.loop = true;
+        source.connect(gain);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(onVolume, ctx.currentTime + 5);
+        source.start();
     }
 
     return null;

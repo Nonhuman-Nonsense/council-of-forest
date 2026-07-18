@@ -9,7 +9,7 @@ vi.mock('@council/FoodAnimation', () => ({ default: () => <div data-testid="food
 vi.mock('@/utils', () => ({
     dvh: 'px',
     minWindowHeight: 600,
-    filename: (id) => id,
+    filename: (id: string) => id,
     useMobile: () => false,
     useDocumentVisibility: () => true
 }));
@@ -17,10 +17,11 @@ vi.mock('@/utils', () => ({
 // Mock global fetch
 global.fetch = vi.fn(() => Promise.resolve({
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(8))
-}));
+})) as unknown as typeof fetch;
 
 describe('Forest Visual Logic', () => {
-    const mockAudioContext = {
+    // Loose Web Audio API mock; typed `any` per this repo's test-mock convention.
+    const mockAudioContext: any = {
         current: {
             createGain: vi.fn(() => ({
                 gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
@@ -36,7 +37,7 @@ describe('Forest Visual Logic', () => {
     };
 
     it('renders Forest background', () => {
-        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
         const html = container.innerHTML;
         // Forest background + characters
         expect(html).toContain('forest');
@@ -44,7 +45,7 @@ describe('Forest Visual Logic', () => {
 
     it('zooms in when valid speaker is active', async () => {
         const { container, rerender } = render(
-            <Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
         );
         const forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
@@ -55,7 +56,7 @@ describe('Forest Visual Logic', () => {
 
         // Wait for effect
         await import('@testing-library/react').then(({ waitFor }) => waitFor(() => {
-            const forestContainer = container.firstChild;
+            const forestContainer = container.firstChild as HTMLElement;
             // JSDOM may reject complex calculated 'transform' values (like translate(min(...))), falling back to default.
             // However, transform-origin is successfully updated, proving the zoom logic ran and targeted the character.
             // Default is "0 0" (from state init).
@@ -80,13 +81,13 @@ describe('Forest Visual Logic', () => {
 
     it('does not zoom for unknown speaker', async () => {
         const { container, rerender } = render(
-            <Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />
+            <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
         );
         rerender(
             <Forest currentSpeakerId="unknown_blob" isPaused={false} audioContext={mockAudioContext} />
         );
         // Should stay at default
-        const forestContainer = container.firstChild;
+        const forestContainer = container.firstChild as HTMLElement;
         expect(forestContainer.style.transform).toBe('scale(1) translate(0, 0)');
     });
 });

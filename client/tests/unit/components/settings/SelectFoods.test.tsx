@@ -195,7 +195,7 @@ describe('SelectCharacters Component', () => {
         fireEvent.click(addBtn);
 
         await waitFor(() => {
-            const nextNameInput = screen.getByPlaceholderText('meeting.characters.humanname');
+            const nextNameInput = screen.getByPlaceholderText('meeting.characters.humanname') as HTMLInputElement;
             expect(nextNameInput.value).toBe('');
         });
 

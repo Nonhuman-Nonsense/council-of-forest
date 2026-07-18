@@ -26,9 +26,13 @@ describe('FoodAnimation Compatibility', () => {
     });
 
     it('handles legacy Foods props gracefully (ignores emotion)', () => {
+        // Legacy callers may still pass an extra `emotion` field; assigned to a
+        // variable (not an inline literal) so TS's excess-property check doesn't
+        // fight the very thing this test verifies — that it's silently ignored.
+        const legacyCharacter = { id: "river", emotion: "happy" };
         const { container } = render(
             <FoodAnimation
-                character={{ id: "river", emotion: "happy" }}
+                character={legacyCharacter}
                 isPaused={false}
                 currentSpeakerId=""
                 styles={{}}

@@ -6,7 +6,7 @@ import Forest from '@forest/Forest';
 vi.mock('@/utils', () => ({
     dvh: 'px',
     minWindowHeight: 600,
-    filename: (id) => id,
+    filename: (id: string) => id,
     useMobile: () => false,
     useDocumentVisibility: () => true
 }));
@@ -16,12 +16,13 @@ global.fetch = vi.fn(() =>
     Promise.resolve({
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
     })
-);
+) as unknown as typeof fetch;
 
 describe('Forest Audio Logic', () => {
-    let mockAudioContext;
-    let mockGainNode;
-    let mockBufferSource;
+    // Loose Web Audio API mocks; typed `any` per this repo's test-mock convention.
+    let mockAudioContext: any;
+    let mockGainNode: any;
+    let mockBufferSource: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -70,7 +71,7 @@ describe('Forest Audio Logic', () => {
     it('AmbientAudio initializes and loads ambience on mount', async () => {
         const audioContextRef = { current: mockAudioContext };
 
-        render(<Forest currentSpeakerId={null} isPaused={false} audioContext={audioContextRef} />);
+        render(<Forest currentSpeakerId="" isPaused={false} audioContext={audioContextRef} />);
 
         // AmbientAudio is rendered unconditionally
         await waitFor(() => {
@@ -127,7 +128,7 @@ describe('Forest Audio Logic', () => {
         mockGainNode.gain.linearRampToValueAtTime.mockClear();
 
         // Change speaker to null (or someone else)
-        rerender(<Forest currentSpeakerId={null} isPaused={false} audioContext={audioContextRef} />);
+        rerender(<Forest currentSpeakerId="" isPaused={false} audioContext={audioContextRef} />);
 
         await waitFor(() => {
             // Should ramp to 0

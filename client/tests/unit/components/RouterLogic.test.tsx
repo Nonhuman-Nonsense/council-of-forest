@@ -103,7 +103,7 @@ describe('Router Logic', () => {
     describe('Single Language (en)', () => {
         beforeEach(() => {
             localStorage.clear();
-            vi.spyOn(AvailableLanguagesModule, 'AVAILABLE_LANGUAGES', 'get').mockReturnValue(['en']);
+            vi.spyOn(AvailableLanguagesModule, 'AVAILABLE_LANGUAGES', 'get').mockReturnValue(['en'] as any);
         });
 
         afterEach(() => {

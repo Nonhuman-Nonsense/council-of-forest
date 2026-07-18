@@ -1,6 +1,7 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import Main from '@main/Main';
 import routes from '@/routes.json';
@@ -20,7 +21,7 @@ vi.mock('@shared/prompts/topics_en.json', () => ({
 }));
 
 vi.mock('@main/overlay/Overlay', () => ({
-    default: ({ children }) => <div data-testid="overlay">{children}</div>
+    default: ({ children }: { children?: ReactNode }) => <div data-testid="overlay">{children}</div>
 }));
 vi.mock('@main/overlay/MainOverlays', () => ({
     default: () => <div data-testid="main-overlays">MainOverlays</div>
@@ -50,7 +51,7 @@ vi.mock('@main/Navbar', () => ({
     default: () => <div data-testid="navbar">Navbar</div>
 }));
 vi.mock('@newMeeting/SelectTopic', () => ({
-    default: ({ onContinueForward }) => (
+    default: ({ onContinueForward }: { onContinueForward: (topic: any) => void }) => (
         <div data-testid="select-topic">
             <button
                 type="button"
@@ -65,7 +66,7 @@ vi.mock('@newMeeting/SelectTopic', () => ({
     )
 }));
 vi.mock('@newMeeting/SelectCharacters', () => ({
-    default: ({ onContinueForward }) => (
+    default: ({ onContinueForward }: { onContinueForward: (result: any) => void }) => (
         <div data-testid="select-foods">
             <button type="button" onClick={() => onContinueForward({ characters: [{ id: "apple" }] })} data-testid="foods-btn">Select Foods</button>
         </div>
@@ -105,23 +106,23 @@ vi.mock('@/utils', () => ({
     useDocumentVisibility: () => true,
     dvh: 'vh',
     minWindowHeight: 300,
-    filename: (str) => str,
-    toTitleCase: (str) => str,
-    capitalizeFirstLetter: (str) => str
+    filename: (str: string) => str,
+    toTitleCase: (str: string) => str,
+    capitalizeFirstLetter: (str: string) => str
 }));
 
 global.fetch = vi.fn(() =>
     Promise.resolve({
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
     })
-);
+) as unknown as typeof fetch;
 
-window.AudioContext = class {
-    constructor() {
-        this.state = 'running';
-        this.destination = {};
-        this.currentTime = 0;
-    }
+// Loose Web Audio API mock; cast to `typeof AudioContext` since it only implements
+// the subset of the interface these tests exercise.
+class MockAudioContext {
+    state = 'running';
+    destination = {};
+    currentTime = 0;
     createGain() {
         return {
             connect: vi.fn(),
@@ -154,7 +155,8 @@ window.AudioContext = class {
     }
     suspend() { }
     resume() { }
-};
+}
+window.AudioContext = MockAudioContext as unknown as typeof AudioContext;
 
 window.HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());
 window.HTMLMediaElement.prototype.pause = vi.fn();

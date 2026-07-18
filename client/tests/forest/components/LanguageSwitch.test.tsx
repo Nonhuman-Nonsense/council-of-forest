@@ -13,6 +13,7 @@ const EN_TOPIC_TITLE = 'Test English Topic';
 const SV_TOPIC_TITLE = 'Test Swedish Topic';
 
 const mockEnTopicsBundle = {
+    language: 'en',
     metadata: { version: 'test', last_updated: 'test' },
     system: 'System [TOPIC]',
     custom_topic: MockFactory.createTopic({ id: 'customtopic', title: 'Custom Topic' }),
@@ -22,6 +23,7 @@ const mockEnTopicsBundle = {
 };
 
 const mockSvTopicsBundle = {
+    language: 'sv',
     metadata: { version: 'test', last_updated: 'test' },
     system: 'System [TOPIC]',
     custom_topic: MockFactory.createTopic({ id: 'customtopic', title: 'Eget Ämne' }),
@@ -92,12 +94,10 @@ describe('Language Switching', () => {
             lang === 'sv' ? mockSvCharacterBundle : mockEnCharacterBundle
         );
 
-        window.AudioContext = class {
-            constructor() {
-                this.state = 'running';
-                this.destination = {};
-                this.currentTime = 0;
-            }
+        class MockAudioContext {
+            state = 'running';
+            destination = {};
+            currentTime = 0;
             createGain() {
                 return {
                     connect: vi.fn(),
@@ -122,7 +122,8 @@ describe('Language Switching', () => {
             }
             suspend() { }
             resume() { }
-        } as unknown as typeof AudioContext;
+        }
+        window.AudioContext = MockAudioContext as unknown as typeof AudioContext;
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext = window.AudioContext;
 
         window.HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());

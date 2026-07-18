@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router';
 vi.mock('@/utils', () => ({
     dvh: 'px',
     minWindowHeight: 600,
-    filename: (id) => id,
+    filename: (id: string) => id,
     useMobile: () => false,
     useDocumentVisibility: () => true
 }));
@@ -18,7 +18,7 @@ vi.mock('@/utils', () => ({
 // Mock global fetch for Forest audio loading
 global.fetch = vi.fn(() => Promise.resolve({
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(8))
-}));
+})) as unknown as typeof fetch;
 
 // Mock portrait / mobile so Landing shows the main content
 vi.mock('react-responsive', () => ({
@@ -30,15 +30,15 @@ describe('Forest Content & Branding', () => {
     it('Landing page shows Council branding', () => {
         render(
             <MemoryRouter>
-                <Landing newMeetingPath="/en/new" />
+                <Landing />
             </MemoryRouter>
         );
         expect(screen.getByText('COUNCIL OF FOREST')).toBeInTheDocument();
     });
 
     it('Forest component has correct character set', () => {
-        // Mock audio context properly to avoid crash
-        const mockAudioContext = {
+        // Mock audio context properly to avoid crash; typed `any` per this repo's test-mock convention.
+        const mockAudioContext: any = {
             current: {
                 createGain: vi.fn(() => ({
                     gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
@@ -53,7 +53,7 @@ describe('Forest Content & Branding', () => {
             }
         };
 
-        const { container } = render(<Forest currentSpeakerId={null} isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
 
         // Characters might be images or videos depending on the type/browser support mocked.
         // Easiest is to check that their source files are present in the DOM.
