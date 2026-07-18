@@ -2,6 +2,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import type { Topic, Character } from '@shared/ModelTypes';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import Main from '@main/Main';
 import routes from '@/routes.json';
@@ -51,7 +52,7 @@ vi.mock('@main/Navbar', () => ({
     default: () => <div data-testid="navbar">Navbar</div>
 }));
 vi.mock('@newMeeting/SelectTopic', () => ({
-    default: ({ onContinueForward }: { onContinueForward: (topic: any) => void }) => (
+    default: ({ onContinueForward }: { onContinueForward: (topic: Topic) => void }) => (
         <div data-testid="select-topic">
             <button
                 type="button"
@@ -66,9 +67,9 @@ vi.mock('@newMeeting/SelectTopic', () => ({
     )
 }));
 vi.mock('@newMeeting/SelectCharacters', () => ({
-    default: ({ onContinueForward }: { onContinueForward: (result: any) => void }) => (
+    default: ({ onContinueForward }: { onContinueForward: (result: { characters: Character[] }) => void }) => (
         <div data-testid="select-foods">
-            <button type="button" onClick={() => onContinueForward({ characters: [{ id: "apple" }] })} data-testid="foods-btn">Select Foods</button>
+            <button type="button" onClick={() => onContinueForward({ characters: [{ id: "apple", name: "Apple", voice: "alloy", description: "", prompt: "" }] })} data-testid="foods-btn">Select Foods</button>
         </div>
     ),
     createDefaultHumans: () => ([
