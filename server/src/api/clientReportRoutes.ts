@@ -8,7 +8,7 @@ export const ClientReportBody = z.object({
     meetingId: z.number().int().positive().optional(),
     url: z.string().max(500).optional(),
     cause: z.unknown().optional(),
-    severity: z.enum(['warning', 'error', 'critical']).optional(),
+    severity: z.enum(['info', 'warning', 'error', 'critical']).optional(),
     clientImpact: z.enum(['none', 'notified', 'terminal', 'process_exit']).optional(),
 });
 
@@ -17,7 +17,7 @@ export type ClientReportInput = z.infer<typeof ClientReportBody>;
 /** Builds the errorbot report for a validated client report body, applying defaults. */
 export function buildClientErrorReport(input: ClientReportInput): ErrorReport {
     const { message, source, meetingId, url, cause, severity, clientImpact } = input;
-    const context = meetingId != null ? "client" : `client ${source}`;
+    const context = `client ${source}`;
     const detail = url ? `${message} (${url})` : message;
 
     return {
