@@ -175,6 +175,12 @@
     "resume": "Ja, vi fortsätter!",
     "nevermind": "Nej, strunta i det."
   },
+  "meetingElsewhere": {
+    "title": "Mötet pågår någon annanstans",
+    "body": "Det här mötet pågår just nu någon annanstans,\nkom tillbaka senare för att se om det är avslutat, eller starta ett nytt möte.",
+    "goBack": "Gå tillbaka",
+    "startNew": "Starta nytt möte"
+  },
   "summary": {
     "download": "Ladda ned PDF",
     "banner": {
