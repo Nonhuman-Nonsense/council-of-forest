@@ -134,6 +134,7 @@ function Council({
     playingNowIndex,
     playNextIndex,
     visibleOverlay,
+    meetingElsewhere,
     summary,
     isRaisedHand,
     canGoBack,
@@ -286,6 +287,7 @@ function Council({
           {visibleOverlay !== null && (
             <CouncilOverlays
               overlay={visibleOverlay}
+              meetingElsewhere={meetingElsewhere}
               onExtendMeeting={handleOnExtendMeeting}
               onAttemptResume={handleOnAttemptResume}
               onConcludeMeeting={handleOnConcludeMeeting}
