@@ -93,7 +93,7 @@ vi.mock('@forest/Forest', () => ({
 vi.mock('@main/overlay/RotateDevice', () => ({
     default: () => <div data-testid="rotate-device">RotateDevice</div>
 }));
-vi.mock('@voice/MeetingVoiceGuide', () => ({
+vi.mock('@setupAgent/MeetingSetupAgent', () => ({
     default: () => null,
 }));
 vi.mock('@main/FullscreenButton', () => ({

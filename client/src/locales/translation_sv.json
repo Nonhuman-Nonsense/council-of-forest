@@ -136,7 +136,7 @@
         "none": "—",
         "staff": "Personal",
         "autoplay": "Autouppspelning",
-        "voice-guide": "Röstguide",
+        "setup-agent": "Röstguide",
         "human-input": "Mänsklig inmatning",
         "meta-agent": "Metaagent"
       }

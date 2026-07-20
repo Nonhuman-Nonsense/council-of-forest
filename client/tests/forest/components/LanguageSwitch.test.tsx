@@ -51,7 +51,7 @@ const mockSvCharacterBundle = MockFactory.createCharacterSetupBundle({
 vi.mock('@forest/Forest', () => ({
     default: () => <div data-testid="mock-forest">Forest Component</div>
 }));
-vi.mock('@voice/MeetingVoiceGuide', () => ({
+vi.mock('@setupAgent/MeetingSetupAgent', () => ({
     default: () => null,
 }));
 

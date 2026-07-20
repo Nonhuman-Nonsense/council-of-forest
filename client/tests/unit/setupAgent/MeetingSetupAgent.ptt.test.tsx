@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import MeetingVoiceGuide from "@voice/MeetingVoiceGuide";
+import MeetingSetupAgent from "@setupAgent/MeetingSetupAgent";
 import type { AppMode, AgentMode } from "@/settings/councilSettings";
 
 const mockClaim = vi.hoisted(() => vi.fn());
 const mockRelease = vi.hoisted(() => vi.fn());
 const mockSetLed = vi.hoisted(() => vi.fn());
 const mockPressed = vi.hoisted(() => ({ value: false }));
-const mockUseVoiceGuide = vi.hoisted(() => vi.fn((_params?: unknown) => ({
+const mockUseSetupAgent = vi.hoisted(() => vi.fn((_params?: unknown) => ({
   isConnecting: false,
   lastCaption: null,
   lastUserTranscript: null,
@@ -60,11 +60,11 @@ vi.mock("@/museum/button/useButton", () => ({
   }),
 }));
 
-vi.mock("@voice/useVoiceGuide", () => ({
-  useVoiceGuide: (params: unknown) => mockUseVoiceGuide(params),
+vi.mock("@setupAgent/useSetupAgent", () => ({
+  useSetupAgent: (params: unknown) => mockUseSetupAgent(params),
 }));
 
-vi.mock("@voice/VoiceGuideOverlay", () => ({
+vi.mock("@setupAgent/SetupAgentOverlay", () => ({
   default: () => null,
 }));
 
@@ -89,7 +89,7 @@ const defaultProps = {
   onStartMeeting: vi.fn(),
 };
 
-describe("MeetingVoiceGuide PTT (regression)", () => {
+describe("MeetingSetupAgent PTT (regression)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPressed.value = false;
@@ -103,18 +103,18 @@ describe("MeetingVoiceGuide PTT (regression)", () => {
   });
 
   it("claims the button in web mode when agent mode is ptt (not museum-only)", () => {
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
 
     expect(mockClaim).toHaveBeenCalled();
     expect(mockSetLed).toHaveBeenCalledWith(expect.any(String));
   });
 
-  it("passes pressed state to useVoiceGuide micOpen in web mode", () => {
+  it("passes pressed state to useSetupAgent micOpen in web mode", () => {
     mockPressed.value = true;
 
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
 
-    expect(mockUseVoiceGuide).toHaveBeenCalledWith(
+    expect(mockUseSetupAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         agentMode: "ptt",
         micOpen: true,
@@ -131,25 +131,25 @@ describe("MeetingVoiceGuide PTT (regression)", () => {
       setAgentMode: vi.fn(),
     });
 
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
 
     expect(mockClaim).toHaveBeenCalled();
     expect(mockSetLed).toHaveBeenCalledWith(expect.any(String));
   });
 
   it("sets LED pulse when ready and not pressed", () => {
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
     expect(mockSetLed).toHaveBeenCalledWith("pulse");
   });
 
   it("sets LED on while pressed", () => {
     mockPressed.value = true;
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
     expect(mockSetLed).toHaveBeenCalledWith("on");
   });
 
-  it("sets LED off when voice is connecting", () => {
-    mockUseVoiceGuide.mockReturnValue({
+  it("sets LED off when agent is connecting", () => {
+    mockUseSetupAgent.mockReturnValue({
       isConnecting: true,
       lastCaption: null,
       lastUserTranscript: null,
@@ -161,7 +161,7 @@ describe("MeetingVoiceGuide PTT (regression)", () => {
       sendUserMessage: vi.fn(),
     });
 
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
     expect(mockSetLed).toHaveBeenCalledWith("off");
   });
 
@@ -174,7 +174,7 @@ describe("MeetingVoiceGuide PTT (regression)", () => {
       setAgentMode: vi.fn(),
     });
 
-    render(<MeetingVoiceGuide {...defaultProps} />);
+    render(<MeetingSetupAgent {...defaultProps} />);
 
     expect(mockClaim).not.toHaveBeenCalled();
     expect(mockSetLed).not.toHaveBeenCalled();
