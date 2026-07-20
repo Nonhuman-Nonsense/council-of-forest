@@ -3,7 +3,7 @@ import { useMediaQuery } from 'react-responsive'
 import { Link } from "react-router";
 import { useMobile, dvh } from "@/utils";
 import { useTranslation } from 'react-i18next';
-import { useRouting } from "@/routing";
+import { useRouting } from "@/navigation";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import nonhumanLogo from "@assets/logos/nonhuman_nonsense_logo.png";
 import biosphereLogo from "@assets/logos/logo_biosphere.svg?url";
@@ -16,7 +16,7 @@ import biosphereLogo from "@assets/logos/logo_biosphere.svg?url";
  * Core Logic:
  * - **Device Orientation**: Forces landscape on mobile/tablet via `RotateDevice`.
  * - **Welcome Message**: Displays logo and welcome text.
- * - **Museum mode**: Hides description and go button (voice guide handles the flow).
+ * - **Museum mode**: Hides description and go button (setup agent handles the flow).
  */
 const Landing: React.FC = () => {
   const { newMeetingPath } = useRouting();

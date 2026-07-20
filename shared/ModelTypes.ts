@@ -28,9 +28,10 @@ export interface BaseMeeting {
     state: ConversationState;
     conversation: Message[];
     audio: string[]; // List of Audio IDs
-    summary?: Message; // To be defined strictly later
     maximumPlayedIndex?: number | null;
     conversationExtraSlots: number;
+    /** True once conclude audio barrier finished and replay is autoplay-eligible. */
+    meetingComplete: boolean;
 }
 
 export interface Meeting extends BaseMeeting {
@@ -81,7 +82,7 @@ export interface CharacterSetupData {
 
 // For Zod validation
 export const MessageTypeValues = ["message", "human", "panelist", "summary", "response", "invitation", "interjection"] as const;
-export const SyntheticMessageTypeValues = ["skipped", "awaiting_human_question", "awaiting_human_panelist", "meeting_incomplete", "query_extension"] as const;
+export const SyntheticMessageTypeValues = ["skipped", "awaiting_human_question", "awaiting_human_panelist", "meeting_incomplete", "query_extension", "summary_pending"] as const;
 
 // Derive the types from the arrays
 export type MessageType = (typeof MessageTypeValues)[number];
@@ -162,6 +163,9 @@ export interface AwaitingHumanPanelistMessage extends BaseMessage, SpeakerFields
 
 export interface MeetingIncompleteMessage extends BaseMessage {
     type: "meeting_incomplete";
+    /** True when another live session currently holds the meeting (was the separate
+     *  `meeting_elsewhere` type); the client shows different copy/actions in that case. */
+    elsewhere?: boolean;
     id?: never;
     text?: never;
     sentences?: never;
@@ -173,6 +177,24 @@ export interface MeetingIncompleteMessage extends BaseMessage {
 
 export interface QueryExtensionMessage extends BaseMessage {
     type: "query_extension";
+    id?: never;
+    text?: never;
+    sentences?: never;
+    speaker?: never;
+    askParticular?: never;
+    trimmed?: never;
+    pretrimmed?: never;
+}
+
+/**
+ * Durable "the server still owes a summary here" marker, pushed atomically alongside the
+ * chair's closing line when a meeting concludes. The run loop generates the summary when it
+ * sees this at the tail and replaces it in place with the real `summary` message. Being
+ * durable, it also drives crash/reconnect recovery: on resume the loop re-generates the
+ * summary. Carries no id/text/audio, so the client naturally renders it as a loading state.
+ */
+export interface SummaryPendingMessage extends BaseMessage {
+    type: "summary_pending";
     id?: never;
     text?: never;
     sentences?: never;
@@ -194,7 +216,8 @@ export type SyntheticMessage =
     | AwaitingHumanQuestionMessage
     | AwaitingHumanPanelistMessage
     | MeetingIncompleteMessage
-    | QueryExtensionMessage;
+    | QueryExtensionMessage
+    | SummaryPendingMessage;
 
 export type Message =
     | GeneratedTurnMessage
@@ -203,7 +226,8 @@ export type Message =
     | AwaitingHumanQuestionMessage
     | AwaitingHumanPanelistMessage
     | MeetingIncompleteMessage
-    | QueryExtensionMessage;
+    | QueryExtensionMessage
+    | SummaryPendingMessage;
 
 export function isSpeakerMessage(message: Message): message is SpeakerMessage {
     return "speaker" in message;

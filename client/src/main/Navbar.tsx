@@ -3,7 +3,7 @@ import { useLocation, useNavigate, NavigateFunction, Location, Link } from "reac
 import { useMediaQuery } from 'react-responsive'
 import { useTranslation } from 'react-i18next';
 import { capitalizeFirstLetter, useMobile, useMobileXs, usePortrait } from "@/utils";
-import { buildLanguagePath, getMeetingIdFromPathname } from "@/routing";
+import { buildLanguagePath, getMeetingIdFromPathname } from "@/navigation";
 import Lottie from "react-lottie-player";
 import type { ComponentRef } from "react";
 import hamburger from "@assets/animations/hamburger.json";
@@ -233,8 +233,16 @@ function Navbar({ topicTitle: topic, hamburgerOpen, setHamburgerOpen }: NavbarPr
   );
 }
 
+type NavItemName = "settings" | "about" | "contact";
+
+function navItemLabelKey(name: NavItemName): "settings" | "about.label" | "contact.label" {
+  if (name === "about") return "about.label";
+  if (name === "contact") return "contact.label";
+  return "settings";
+}
+
 interface NavItemProps {
-  name: string;
+  name: NavItemName;
   isActive: boolean;
   show: boolean;
   onNavigate: (to: string) => void;
@@ -243,7 +251,7 @@ interface NavItemProps {
 function NavItem({ name, isActive, show, onNavigate }: NavItemProps): React.ReactElement {
   const { t } = useTranslation();
 
-  const labelKey = name === "about" || name === "contact" ? `${name}.label` : name;
+  const labelKey = navItemLabelKey(name);
 
   const navItemStyle: React.CSSProperties = {
     marginLeft: "19px",

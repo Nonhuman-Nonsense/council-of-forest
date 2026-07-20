@@ -62,7 +62,7 @@
   },
   "contact": {
     "label": "Contact",
-    "credits": "The project is an initiative by art & design collective <nhn>Nonhuman Nonsense</nhn> developed in collaboration with <biosphere>Biosphere Area Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, Jonas Thunberg, Johannes Rydinger, <albin>Albin Karlsson</albin>, and others.",
+    "credits": "The project is an initiative by art & design collective <nhn>Nonhuman Nonsense</nhn> developed in collaboration with <biosphere>Biosphere Area Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, <jonas>Jonas Thunberg</jonas>, Johannes Rydinger, <albin>Albin Karlsson</albin>, and others.",
     "interviews": "Based on interviews with Marja Skum, Göran Jonsson, Maidi Eira-Andersson, Anders Granér, Daniel Holmqvist, Erik Alnersson, Isak Landström, Tommy Sandström, Lisa Jonsson, Cecilia Wallinder, Angelika Schindler-Egl, Bertil Nygren.",
     "funding": "Council of Forest is funded by <vinnova>Vinnova (ref. nr. 2025-00344)</vinnova> and is a continuation of the project <cof>Council of Foods</cof> which has received funding from the European\u00a0Union's <horizon>Horizon Europe research and innovation programme under grant agreement 101069990</horizon>.",
     "fundingImageAlt": "Funded by Vinnova",
@@ -71,8 +71,8 @@
     "socialWebsite": "nonhuman-nonsense.com",
     "socialEmail": "hello@nonhuman-nonsense.com"
   },
-  "setup": {
-    "title": "SETUP",
+  "staff": {
+    "title": "STAFF",
     "panels": {
       "installation": "Installation",
       "agentMode": "Agent mode",
@@ -90,6 +90,7 @@
         "SOCKET": "Socket",
         "AGENT": "Agent tools",
         "REALTIME": "Realtime",
+        "TURN": "Turn pipeline",
         "BUTTON": "Button",
         "META": "Meta agent",
         "AUTOPLAY": "Autoplay",
@@ -99,6 +100,7 @@
     },
     "web": "Web",
     "museum": "Museum",
+    "museumSwitchButton": "Museum switch button",
     "button": {
       "title": "Button",
       "bridgeLabel": "Bridge",
@@ -132,9 +134,9 @@
       "hardwareButton": "Hardware button",
       "owners": {
         "none": "—",
-        "setup": "Setup",
+        "staff": "Staff",
         "autoplay": "Autoplay",
-        "voice-guide": "Voice guide",
+        "setup-agent": "Setup agent",
         "human-input": "Human input",
         "meta-agent": "Meta agent"
       }
@@ -173,6 +175,12 @@
     "resume": "Yes, let's continue!",
     "nevermind": "No, never mind."
   },
+  "meetingElsewhere": {
+    "title": "Meeting happening elsewhere",
+    "body": "This meeting is currently in session somewhere else,\ncheck back later to see if it finished, or start a new meeting.",
+    "goBack": "Go back",
+    "startNew": "Start new meeting"
+  },
   "summary": {
     "download": "Download PDF",
     "banner": {
@@ -191,9 +199,10 @@
   },
   "error": {
     "title": "ERROR",
-    "message": "Something went wrong...",
+    "message": "Something went wrong...\nCouncil cannot continue",
     "audioLoad": "Could not load meeting audio.",
     "connection": "Connection Lost",
-    "reconnecting": "Attempting to reconnect..."
+    "reconnecting": "Attempting to reconnect...",
+    "restartUnavailableRetrying": "Server unavailable for restart, retrying…"
   }
 }

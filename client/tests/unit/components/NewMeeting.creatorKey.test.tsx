@@ -9,7 +9,7 @@ import type { Character } from "@newMeeting/SelectCharacters";
 import { MockFactory } from "../factories/MockFactory";
 import { useErrorStore } from "@main/overlay/errorStore";
 
-vi.mock("@voice/MeetingVoiceGuide", () => ({
+vi.mock("@setupAgent/MeetingSetupAgent", () => ({
     default: () => null,
 }));
 
@@ -17,7 +17,7 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({ t: (key: string) => key, i18n: { language: "en" } }),
 }));
 
-vi.mock("@/routing", () => ({
+vi.mock("@/navigation", () => ({
     useRouting: () => ({
         newMeetingPath: `/${routes.newMeeting}`,
         meetingPath: (id: number) => `/${routes.meeting}/${id}`,

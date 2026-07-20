@@ -117,45 +117,45 @@ describe("useButtonStore", () => {
     expect(useButtonStore.getState().ledMode).toBe("off");
   });
 
-  it("autoplay wins over voice-guide when both claim", async () => {
+  it("autoplay wins over setup-agent when both claim", async () => {
     useButtonStore.setState({ bridgeStatus: "connected" });
-    useButtonStore.getState().claimButton("voice-guide");
-    useButtonStore.getState().setButtonLed("voice-guide", "pulse");
+    useButtonStore.getState().claimButton("setup-agent");
+    useButtonStore.getState().setButtonLed("setup-agent", "pulse");
     useButtonStore.getState().claimButton("autoplay");
     useButtonStore.getState().setButtonLed("autoplay", "pulse");
     await Promise.resolve();
     expect(useButtonStore.getState().buttonOwner).toBe("autoplay");
   });
 
-  it("setup wins over autoplay when both claim", async () => {
+  it("staff wins over autoplay when both claim", async () => {
     useButtonStore.setState({ bridgeStatus: "connected" });
     useButtonStore.getState().claimButton("autoplay");
     useButtonStore.getState().setButtonLed("autoplay", "pulse");
-    useButtonStore.getState().claimButton("setup");
-    useButtonStore.getState().setButtonLed("setup", "pulse");
+    useButtonStore.getState().claimButton("staff");
+    useButtonStore.getState().setButtonLed("staff", "pulse");
     await Promise.resolve();
-    expect(useButtonStore.getState().buttonOwner).toBe("setup");
+    expect(useButtonStore.getState().buttonOwner).toBe("staff");
   });
 
-  it("setup wins over human-input when both claim", async () => {
+  it("staff wins over human-input when both claim", async () => {
     useButtonStore.setState({ bridgeStatus: "connected" });
     useButtonStore.getState().claimButton("human-input");
     useButtonStore.getState().setButtonLed("human-input", "on");
-    useButtonStore.getState().claimButton("setup");
-    useButtonStore.getState().setButtonLed("setup", "pulse");
+    useButtonStore.getState().claimButton("staff");
+    useButtonStore.getState().setButtonLed("staff", "pulse");
     await Promise.resolve();
-    expect(useButtonStore.getState().buttonOwner).toBe("setup");
+    expect(useButtonStore.getState().buttonOwner).toBe("staff");
     expect(useButtonStore.getState().ledMode).toBe("pulse");
     expect(transport.setLedMode).toHaveBeenLastCalledWith("pulse");
   });
 
-  it("falls back to human-input LED when setup releases", async () => {
+  it("falls back to human-input LED when staff releases", async () => {
     useButtonStore.setState({ bridgeStatus: "connected" });
     useButtonStore.getState().claimButton("human-input");
     useButtonStore.getState().setButtonLed("human-input", "on");
-    useButtonStore.getState().claimButton("setup");
-    useButtonStore.getState().setButtonLed("setup", "pulse");
-    useButtonStore.getState().releaseButton("setup");
+    useButtonStore.getState().claimButton("staff");
+    useButtonStore.getState().setButtonLed("staff", "pulse");
+    useButtonStore.getState().releaseButton("staff");
     await Promise.resolve();
     expect(useButtonStore.getState().buttonOwner).toBe("human-input");
     expect(useButtonStore.getState().ledMode).toBe("on");

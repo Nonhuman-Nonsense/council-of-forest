@@ -6,26 +6,32 @@ import { Server, Socket } from "socket.io";
 import path from 'path';
 
 import { Logger } from '@utils/Logger.js';
-import { initReporting, sendReport } from '@utils/errorbot.js';
+import { initReporting } from '@utils/errorbot.js';
 import { initDb } from '@services/DbService.js';
 import { initOpenAI } from '@services/OpenAIService.js';
 import { SocketManager } from '@logic/SocketManager.js';
-import { AVAILABLE_LANGUAGES, COUNTRY_DEFAULT_LANGUAGE } from '@shared/AvailableLanguages.js';
+import { AVAILABLE_LANGUAGES } from '@shared/AvailableLanguages.js';
+import {
+  getSpaRedirectTarget,
+  isBlockedScannerPath,
+  preferredLangFromRequest,
+  readSpaShellTemplate,
+  sendSpaShell,
+  shouldServeSpaShell,
+} from '@utils/spaShell.js';
 import { CHARACTERS_FILE } from '@shared/prompts/characterSetupMetadata.js';
 
 import {
   CACHE_CONTROL_DIST_ASSET_IMMUTABLE,
   CACHE_CONTROL_DIST_PUBLIC_ROOT,
-  CACHE_CONTROL_HTML_SHELL,
   CACHE_CONTROL_NO_STORE,
   cacheControlPrivateNoStoreApi,
 } from '@utils/httpCache.js';
-import { getSpaRedirectTarget, isBlockedScannerPath, shouldServeSpaShell } from '@utils/spaFallback.js';
 import { registerMeetingRoutes } from '@api/meetingRoutes.js';
 import { registerRealtimeRoutes } from '@api/realtimeSession.js';
 import { registerAudioRoutes } from '@api/audioRoutes.js';
 import { registerDevErrorbotRoutes } from '@api/devErrorbotRoutes.js';
-import { z } from 'zod';
+import { registerClientReportRoutes } from '@api/clientReportRoutes.js';
 
 const environment: string = config.NODE_ENV;
 
@@ -40,7 +46,7 @@ try {
   await initDb();
   initOpenAI();
 } catch (e) {
-  await Logger.error("init", "Startup failed.", e);
+  await Logger.error("init", "Startup failed.", { error: e });
   process.exit(1);
 }
 
@@ -58,37 +64,7 @@ registerMeetingRoutes(app, environment);
 registerRealtimeRoutes(app);
 registerAudioRoutes(app);
 registerDevErrorbotRoutes(app, environment);
-
-const ClientReportBody = z.object({
-  message: z.string().min(1).max(2000),
-  source: z.string().min(1).max(200),
-  meetingId: z.number().int().positive().optional(),
-  url: z.string().max(500).optional(),
-  cause: z.unknown().optional(),
-});
-
-app.post('/api/client-report', async (req: Request, res: Response) => {
-  const parsed = ClientReportBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ message: 'Invalid client report' });
-    return;
-  }
-
-  const { message, source, meetingId, url, cause } = parsed.data;
-  const context = meetingId != null ? `client meeting ${meetingId}` : `client ${source}`;
-  const detail = url ? `${message} (${url})` : message;
-
-  res.status(204).end();
-
-  await sendReport({
-    context,
-    severity: 'critical',
-    message: `[CLIENT TERMINAL] ${detail}`,
-    error: cause,
-    clientImpact: 'terminal',
-    source: 'client',
-  });
-});
+registerClientReportRoutes(app);
 
 if (environment === "prototype") {
   app.use(express.static(path.join(process.cwd(), "../prototype/", "public"), {
@@ -108,15 +84,26 @@ if (environment === "prototype") {
 } else if (environment !== "development") {
   const clientDistPath = path.join(process.cwd(), "../client/dist");
   const ONE_YEAR_MS = 31536000000;
+
+  const spaShellTemplate = readSpaShellTemplate(clientDistPath);
+
+  if (AVAILABLE_LANGUAGES.length > 1) {
+    app.get("/", function (req: Request, res: Response) {
+      res.setHeader('Cache-Control', CACHE_CONTROL_NO_STORE);
+      res.redirect(302, getSpaRedirectTarget("/", AVAILABLE_LANGUAGES, preferredLangFromRequest(req)));
+    });
+  }
+
+  app.get("/index.html", (req, res) => sendSpaShell(res, spaShellTemplate, preferredLangFromRequest(req)));
+
   app.use(express.static(clientDistPath, {
     maxAge: ONE_YEAR_MS,
     immutable: true,
+    index: false,
     setHeaders(res, filePath) {
       const normalized = filePath.replace(/\\/g, '/');
       if (normalized.includes('/assets/')) {
         res.setHeader('Cache-Control', CACHE_CONTROL_DIST_ASSET_IMMUTABLE);
-      } else if (normalized.endsWith('/index.html')) {
-        res.setHeader('Cache-Control', CACHE_CONTROL_HTML_SHELL);
       } else {
         res.setHeader('Cache-Control', CACHE_CONTROL_DIST_PUBLIC_ROOT);
       }
@@ -131,16 +118,11 @@ if (environment === "prototype") {
 
     if (!shouldServeSpaShell(req.path)) {
       res.setHeader('Cache-Control', CACHE_CONTROL_NO_STORE);
-      const cfCountry = req.headers['cf-ipcountry'];
-      const preferredLang = typeof cfCountry === 'string'
-        ? COUNTRY_DEFAULT_LANGUAGE[cfCountry.toUpperCase()]
-        : undefined;
-      res.redirect(302, getSpaRedirectTarget(req.path, AVAILABLE_LANGUAGES, preferredLang));
+      res.redirect(302, getSpaRedirectTarget(req.path, AVAILABLE_LANGUAGES, preferredLangFromRequest(req)));
       return;
     }
 
-    res.setHeader('Cache-Control', CACHE_CONTROL_HTML_SHELL);
-    res.sendFile(path.join(clientDistPath, "index.html"));
+    sendSpaShell(res, spaShellTemplate, preferredLangFromRequest(req));
   });
 }
 

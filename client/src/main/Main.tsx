@@ -20,22 +20,32 @@ import MeetingSetupShell from "@newMeeting/MeetingSetupShell";
 import NewMeeting from "@newMeeting/NewMeeting";
 import Council from "@council/Council";
 import Forest from "@forest/Forest";
-import { isMeetingPath, isRootPath, stripLanguagePrefix, useRouting } from "@/routing";
+import {
+  isMeetingPath,
+  isRootPath,
+  reloadApp,
+  stripLanguagePrefix,
+  useRouting,
+} from "@/navigation";
 import RotateDevice from "./overlay/RotateDevice";
 import FullscreenButton from "./FullscreenButton";
-import MuseumModeEscapeHatch from "@/museum/MuseumModeEscapeHatch";
+import MuseumSwitchButton from "@/museum/MuseumSwitchButton";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
+import { useWakeLock } from "@/audio/wakeLock";
 import CouncilError from "./overlay/CouncilError";
+import ErrorBoundary from "./ErrorBoundary";
 import Reconnecting from "./overlay/Reconnecting";
 import { useErrorStore } from "./overlay/errorStore";
 
 import MuseumButton from "@/museum/button/MuseumButton";
 import ButtonBanner from "@/museum/button/ButtonBanner";
+import { useMuseumCursorHide } from "@/museum/useMuseumCursorHide";
 
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
+import { useAutoplayStore } from "@/autoplay/autoplayStore";
 
 import { z } from "@/zIndexLayers";
 import routes from "@/routes.json";
@@ -83,10 +93,13 @@ export default function Main(props: MainProps) {
   const { rootPath, newMeetingPath } = useRouting();
   const location = useLocation();
   const navigate = useNavigate();
+  useWakeLock(isMeetingPath(location.pathname) && !isPaused);
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const { isMuseumMode, agentMode, museumSwitchButtonEnabled } = useCouncilSettings();
+  const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
+  useMuseumCursorHide();
 
   useEffect(() => {
     if (i18n.language !== props.lang) {
@@ -133,7 +146,7 @@ export default function Main(props: MainProps) {
   function onReset(resetTopic?: Topic) {
     if (!resetTopic) {
       useMeetingSetupStore.getState().resetStore();
-      window.location.href = rootPath;
+      void reloadApp();
       return;
     }
 
@@ -191,50 +204,47 @@ export default function Main(props: MainProps) {
         />
       }
       {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
-      {isMuseumMode && <MuseumModeEscapeHatch />}
+      {museumSwitchButtonEnabled && <MuseumSwitchButton />}
       {unrecoverableError == null &&
         <Overlay
           isActive={!isMeetingPath(location.pathname)}
           isBlurred={!isRootPath(location.pathname)}
         >
-          <Routes>
-            <Route
-              element={
-                <MeetingSetupShell
-                  topicSelection={topicSelection}
-                  setTopicSelection={setTopicSelection}
-                  setMeetingliveKey={setMeetingliveKey}
-                />
-              }
-            >
-              <Route path="/" element={<Landing />} />
-              <Route path={routes.newMeeting} element={<NewMeeting />} />
-            </Route>
-            <Route
-              path={`${routes.meeting}/:meetingId`}
-              element={
-                <Council
-                  key={stripLanguagePrefix(location.pathname)}
-                  topic={topicSelection}
-                  setTopic={setTopicSelection}
-                  liveKey={meetingliveKey}
-                  setliveKey={setMeetingliveKey}
-                  currentSpeakerId={currentSpeakerId}
-                  setCurrentSpeakerId={setCurrentSpeakerId}
-                  isPaused={isPaused}
-                  setPaused={setPaused}
-                  audioContext={audioContext}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to={rootPath} replace />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route
+                element={
+                  <MeetingSetupShell
+                    topicSelection={topicSelection}
+                    setTopicSelection={setTopicSelection}
+                    setMeetingliveKey={setMeetingliveKey}
+                  />
+                }
+              >
+                <Route path="/" element={<Landing />} />
+                <Route path={routes.newMeeting} element={<NewMeeting />} />
+              </Route>
+              <Route
+                path={`${routes.meeting}/:meetingId`}
+                element={
+                  <Council
+                    key={`${stripLanguagePrefix(location.pathname)}@${meetingGeneration}`}
+                    topic={topicSelection}
+                    setTopic={setTopicSelection}
+                    liveKey={meetingliveKey}
+                    setliveKey={setMeetingliveKey}
+                    currentSpeakerId={currentSpeakerId}
+                    setCurrentSpeakerId={setCurrentSpeakerId}
+                    isPaused={isPaused}
+                    setPaused={setPaused}
+                    audioContext={audioContext}
+                  />
+                }
+              />
+              <Route path="*" element={<Navigate to={rootPath} replace />} />
+            </Routes>
+          </ErrorBoundary>
           {!isIphone && !isMuseumMode && !(agentMode === "ptt" && ledDebugOverlay) && <FullscreenButton />}
-          <MainOverlays
-            topic={topicSelection}
-            onReset={onReset}
-            onCloseOverlay={onCloseOverlay}
-          />
           {isPortrait && location.pathname !== "/" && <RotateOverlay />}
         </Overlay>
       }
@@ -252,6 +262,11 @@ export default function Main(props: MainProps) {
           <Reconnecting />
         </Overlay>
       )}
+      <MainOverlays
+        topic={topicSelection}
+        onReset={onReset}
+        onCloseOverlay={onCloseOverlay}
+      />
     </>
   );
 }

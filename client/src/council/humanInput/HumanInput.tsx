@@ -81,7 +81,7 @@ export interface TranscriptSegment {
   text: string;
 }
 
-export type TranscriptionDeltaMergeMode = "append" | "replace" | "adaptive";
+export type TranscriptionDeltaMergeMode = "replace" | "adaptive";
 
 export function transcriptSegmentKey(itemId: string, contentIndex = 0): string {
   return contentIndex === 0 ? itemId : `${itemId}:${contentIndex}`;
@@ -99,8 +99,7 @@ function deltaWordCount(delta: string): number {
 }
 
 /**
- * append — OpenAI incremental suffixes
- * replace — AssemblyAI cumulative snapshots
+ * replace — cumulative full-snapshot deltas (the default for non-Soniox models)
  * adaptive — Soniox via Inworld: suffix append or full-restatement replace
  *
  * Soniox streams two kinds of delta without any wire tag to distinguish them:
@@ -121,7 +120,6 @@ export function mergeTranscriptionDelta(
 ): string {
   if (!delta) return existing;
   if (mode === "replace") return delta;
-  if (mode === "append") return existing + delta;
 
   // Exact containment shortcuts — content-independent, always safe.
   if (!existing) return delta;
@@ -371,7 +369,7 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
     if (connectionState === "idle") {
       void connect();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [connectionState]);
 
   // Full cleanup on unmount — aborts any in-flight handshake and closes connection.
@@ -393,7 +391,7 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
     if (agentMode !== "ptt" || phase !== "active") return;
     if (!button.pressed) return;
     startRecording();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [button.pressed, agentMode, phase, connectionState, inputValue]);
 
   // PTT release → finish session and queue an auto-submit attempt.
@@ -403,7 +401,7 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
       pendingPttAutoSubmitRef.current = true;
       finishRealtimeSession();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [button.pressed, agentMode, connectionState]);
 
   // PTT auto-submit: attempt on every release once ready, and again when the
@@ -455,7 +453,6 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
   });
 
   function transcriptionDeltaMergeMode(): TranscriptionDeltaMergeMode {
-    if (realtimeProviderRef.current === "openai") return "append";
     return transcriptionDeltaMergeModeForModel(transcriptionModelRef.current);
   }
 
@@ -560,7 +557,6 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
       );
 
       const sessionForDc = bootstrap.session;
-      const providerForDc: RealtimeProvider = bootstrap.provider;
       realtimeProviderRef.current = bootstrap.provider;
       transcriptionModelRef.current = readTranscriptionModel(bootstrap.session);
       hiLog("bootstrap-ok", {
@@ -581,20 +577,17 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
           provider: bootstrap.provider,
         },
         signal: controller.signal,
-        onOpen:
-          providerForDc === "inworld"
-            ? ({ dc }) => {
-                if (controller.signal.aborted) return;
-                try {
-                  dc.send(JSON.stringify({ type: "session.update", session: sessionForDc }));
-                  hiLog("session-update-sent", readBootstrapSessionSummary(sessionForDc));
-                } catch (err) {
-                  hiLog("session-update-failed", {
-                    error: err instanceof Error ? err.message : String(err),
-                  });
-                }
-              }
-            : undefined,
+        onOpen: ({ dc }) => {
+          if (controller.signal.aborted) return;
+          try {
+            dc.send(JSON.stringify({ type: "session.update", session: sessionForDc }));
+            hiLog("session-update-sent", readBootstrapSessionSummary(sessionForDc));
+          } catch (err) {
+            hiLog("session-update-failed", {
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        },
         onRemoteTrack: () => undefined,
         onEvent: (event) => {
           if (!isHumanInputRealtimeEvent(event)) {
@@ -828,7 +821,7 @@ function HumanInput({ phase, isPanelist, currentSpeakerName, onSubmitHumanMessag
       updateCanContinue(nextValue);
     }
   // finishRealtimeSession is stable (no deps), safe to omit
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [transcriptSegments, connectionState, previousTranscript, maxInputLength]);
 
   function inputFocused(_e: React.FocusEvent) {

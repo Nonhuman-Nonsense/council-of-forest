@@ -62,7 +62,7 @@
   },
   "contact": {
     "label": "Kontakt",
-    "credits": "Projektet är ett initiativ av konst & designkollektivet <nhn>Nonhuman Nonsense</nhn> utvecklat i samarbete med <biosphere>Biosfärområdet Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, Jonas Thunberg, Johannes Rydinger, <albin>Albin Karlsson</albin>, med flera.",
+    "credits": "Projektet är ett initiativ av konst & designkollektivet <nhn>Nonhuman Nonsense</nhn> utvecklat i samarbete med <biosphere>Biosfärområdet Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, <jonas>Jonas Thunberg</jonas>, Johannes Rydinger, <albin>Albin Karlsson</albin>, med flera.",
     "interviews": "Baserat på intervjuer med Marja Skum, Göran Jonsson, Maidi Eira-Andersson, Anders Granér, Daniel Holmqvist, Erik Alnersson, Isak Landström, Tommy Sandström, Lisa Jonsson, Cecilia Wallinder, Angelika Schindler-Egl, Bertil Nygren.",
     "funding": "Skogsrådet är finansierat av <vinnova>Vinnova (ref. nr. 2025-00344)</vinnova> och är en fortsättning av projektet <cof>Council of Foods</cof> som har fått stöd av Europeiska\u00a0Unionens <horizon>Horizon Europe forsknings- och innovationsprogram under avtal 101069990</horizon>.",
     "fundingImageAlt": "Finansierat av Vinnova",
@@ -71,8 +71,8 @@
     "socialWebsite": "nonhuman-nonsense.com",
     "socialEmail": "hello@nonhuman-nonsense.com"
   },
-  "setup": {
-    "title": "INSTÄLLNINGAR",
+  "staff": {
+    "title": "PERSONAL",
     "panels": {
       "installation": "Installation",
       "agentMode": "Agentläge",
@@ -90,6 +90,7 @@
         "SOCKET": "Socket",
         "AGENT": "Agentverktyg",
         "REALTIME": "Realtime",
+        "TURN": "Turpipeline",
         "BUTTON": "Knapp",
         "META": "Metaagent",
         "AUTOPLAY": "Autouppspelning",
@@ -99,6 +100,7 @@
     },
     "web": "Webb",
     "museum": "Museum",
+    "museumSwitchButton": "Museums växlingsknapp",
     "button": {
       "title": "Knapp",
       "bridgeLabel": "Brygga",
@@ -129,11 +131,12 @@
       "usbWrongDeviceHint": "En USB-serienhet hittades, men den kör inte Skogsrådets knappfirmware. Flasha om Arduino-skissen eller kontrollera USB-kabeln/porten.",
       "debugTitle": "Knappfelsökning",
       "ledDebugOverlay": "LED-förhandsvisning",
+      "hardwareButton": "Hårdvaruknapp",
       "owners": {
         "none": "—",
-        "setup": "Inställningar",
+        "staff": "Personal",
         "autoplay": "Autouppspelning",
-        "voice-guide": "Röstguide",
+        "setup-agent": "Röstguide",
         "human-input": "Mänsklig inmatning",
         "meta-agent": "Metaagent"
       }
@@ -172,8 +175,17 @@
     "resume": "Ja, vi fortsätter!",
     "nevermind": "Nej, strunta i det."
   },
+  "meetingElsewhere": {
+    "title": "Mötet pågår någon annanstans",
+    "body": "Det här mötet pågår just nu någon annanstans,\nkom tillbaka senare för att se om det är avslutat, eller starta ett nytt möte.",
+    "goBack": "Gå tillbaka",
+    "startNew": "Starta nytt möte"
+  },
   "summary": {
-    "download": "Ladda ned PDF"
+    "download": "Ladda ned PDF",
+    "banner": {
+      "pressToRestart": "Tryck på knappen för att starta ett nytt möte."
+    }
   },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
@@ -187,9 +199,10 @@
   },
   "error": {
     "title": "FEL",
-    "message": "Något gick snett...",
+    "message": "Något gick snett...\nRådet kan inte fortsätta",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
-    "reconnecting": "Försöker återansluta..."
+    "reconnecting": "Försöker återansluta...",
+    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
   }
 }

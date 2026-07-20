@@ -12,11 +12,11 @@ import { MockFactory } from "../factories/MockFactory";
 
 const resetTopic = MockFactory.createTopic({ id: "new-topic", title: "New Topic" });
 
-vi.mock("@voice/MeetingVoiceGuide", () => ({
+vi.mock("@setupAgent/MeetingSetupAgent", () => ({
   default: () => null,
 }));
 
-vi.mock("@/routing", () => ({
+vi.mock("@/navigation", () => ({
   useRouting: () => ({
     rootPath: "/",
     newMeetingPath: `/${routes.newMeeting}`,
@@ -91,7 +91,7 @@ vi.mock("@main/FullscreenButton", () => ({
   default: () => null,
 }));
 
-vi.mock("@/museum/MuseumModeEscapeHatch", () => ({
+vi.mock("@/museum/MuseumSwitchButton", () => ({
   default: () => null,
 }));
 

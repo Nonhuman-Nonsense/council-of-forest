@@ -16,9 +16,14 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                 state: {},
             },
             environment: "test",
+            isActive: true,
+            startLoop: vi.fn(),
             socket: { emit: vi.fn(), on: vi.fn() },
             services: {
-                meetingsCollection: { updateOne: vi.fn() },
+                meetingsCollection: {
+                    updateOne: vi.fn(),
+                    findOne: vi.fn().mockResolvedValue(null),
+                },
                 getOpenAI: vi.fn().mockReturnValue({ apiKey: "mock-key" }),
             },
             serverOptions: {
@@ -40,12 +45,14 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
             },
             dialogGenerator: {
                 chairInterjection: vi.fn()
-                    .mockResolvedValueOnce({ response: "Tack för samtalet.", id: "close_1" })
+                    .mockResolvedValueOnce({ response: "Tack för samtalet.", id: "close_1" }),
+                generateDocument: vi.fn()
                     .mockResolvedValueOnce({ response: "Summary text", id: "msg_456" }),
             },
             audioSystem: {
                 generateAudio: vi.fn(),
                 queueAudioGeneration: vi.fn(),
+                waitForIdle: vi.fn().mockResolvedValue(undefined),
             },
             broadcaster: {
                 broadcastConversationUpdate: vi.fn(),
@@ -56,13 +63,18 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
         handler = new MeetingLifecycleHandler(mockManager);
     });
 
-    it("calls chairInterjection with Swedish conclude then summarize prompts", async () => {
+    it("calls chairInterjection with Swedish conclude then generateDocument with Swedish summarize prompt", async () => {
+        // handleConcludeMeeting only generates the closing line and pushes a summary_pending
+        // marker; the run loop (mocked out here via startLoop) is what drives generateSummary.
         await handler.handleConcludeMeeting({ date: "2024-01-01" });
+        await handler.generateSummary({ date: "2024-01-01" });
 
-        const calls = (mockManager.dialogGenerator.chairInterjection as ReturnType<typeof vi.fn>).mock.calls;
-        expect(calls).toHaveLength(2);
-        expect(calls[0][0]).toBe("Avslutande replik");
-        expect(calls[1][0]).toContain("Sammanfatta");
-        expect(calls[1][0]).toContain("2024-01-01");
+        const chairCalls = (mockManager.dialogGenerator.chairInterjection as ReturnType<typeof vi.fn>).mock.calls;
+        const summaryCalls = (mockManager.dialogGenerator.generateDocument as ReturnType<typeof vi.fn>).mock.calls;
+        expect(chairCalls).toHaveLength(1);
+        expect(chairCalls[0][0]).toBe("Avslutande replik");
+        expect(summaryCalls).toHaveLength(1);
+        expect(summaryCalls[0][0]).toContain("Sammanfatta");
+        expect(summaryCalls[0][0]).toContain("2024-01-01");
     });
 });

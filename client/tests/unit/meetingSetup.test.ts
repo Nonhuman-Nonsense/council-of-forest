@@ -36,6 +36,7 @@ vi.mock("@newMeeting/CharacterSetup", () => ({
 
 const topicsBundle = {
   language: "en",
+  metadata: { version: "1.0.0", last_updated: "2026-01-01" },
   system: `System intro.\n\n${TOPIC_PLACEHOLDER}\n${AGENDA_POINTS_PLACEHOLDER}\n\nSystem outro.`,
   custom_topic: {
     id: "customtopic",
@@ -141,8 +142,7 @@ describe("buildMeetingCharactersPayload", () => {
 
         const chair = result.characters[0] as Character;
         expect(chair.prompt).not.toContain("[HUMANS]");
-        expect(chair.prompt).toContain("Alice");
-        expect(chair.prompt).toContain("A thoughtful human");
+        expect(chair.prompt).toContain("Alice (A thoughtful human)");
     });
 
     it("injects a numeric random agenda point when agenda points are provided", () => {
@@ -193,8 +193,7 @@ describe("buildMeetingCharactersPayload", () => {
       "panelist0",
       "food-b",
     ]);
-    expect(result.characters[0].prompt).toContain("Alex");
-    expect(result.characters[0].prompt).not.toContain("Alex, ");
+    expect(result.characters[0].prompt).toContain("Alex (guest)");
   });
 
   it("uses plural human count label for multiple panelists", () => {
@@ -213,8 +212,8 @@ describe("buildMeetingCharactersPayload", () => {
     if (!result.ok) return;
 
     expect(result.characters[0].prompt).toContain("2 humans: ");
-    expect(result.characters[0].prompt).toContain("Alice");
-    expect(result.characters[0].prompt).toContain("Bob");
+    expect(result.characters[0].prompt).toContain("Alice (One)");
+    expect(result.characters[0].prompt).toContain("Bob (Two)");
   });
 });
 

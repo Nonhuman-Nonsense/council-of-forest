@@ -92,6 +92,14 @@ export class SocketManager {
         }
     }
 
+    private socketReportFrom(): { socketId: string } {
+        return { socketId: this.socket.id };
+    }
+
+    private sessionReportFrom(): MeetingManager | { socketId: string } {
+        return this.currentSession ?? this.socketReportFrom();
+    }
+
     /**
      * Helper to bind a socket event listener with standardized error handling.
      * Replaces the old 'respondTo' pattern.
@@ -116,17 +124,15 @@ export class SocketManager {
                 //    the server processes "Reconnect" first (creating session), then "Message" (succeeds).
                 //    This check primarily protects against "ghost" events from old sessions, buggy clients,
                 //    or rare edge cases where the session might have crashed/reset in between events.
-                Logger.warn("socket", `Ignored event ${event} - No active session`);
+                Logger.info("socket", `Ignored event ${event} - No active session`, { from: this.socketReportFrom() });
                 return;
             }
 
             try {
                 await handler(payload as Parameters<ClientToServerEvents[EventName]>[0]);
             } catch (error: unknown) {
-                // Report to external error service
-                const context = this.currentSession?.meeting
-                    ? `meeting ${this.currentSession.meeting._id}`
-                    : `socket ${this.socket.id}`;
+                const context = this.currentSession?.meeting ? "session" : "socket";
+                const from = this.sessionReportFrom();
 
                 // Route to broadcastWarning vs broadcastError by severity — same client payload today,
                 // but the method name is the policy hook (see IMeetingBroadcaster).
@@ -134,27 +140,21 @@ export class SocketManager {
                     Logger.warn(
                         context,
                         `Validation error for ${event}; notifying client (400): ${error.message}`,
-                        error,
-                        { clientImpact: 'notified' },
+                        { error, from, clientImpact: 'notified' },
                     );
                     this.socketBroadcaster.broadcastWarning(CouncilError.fromZod(error), context);
                 } else if (error instanceof CouncilError) {
-                    if (error.statusCode >= 500) {
-                        const errMessage = error instanceof Error ? error.message : String(error);
-                        Logger.error(
-                            context,
-                            `Error handling event ${event}; notifying client (${error.statusCode}): ${errMessage}`,
-                            error,
-                            { clientImpact: 'terminal' },
-                        );
+                    const isEscalated = error.severity === 'error';
+                    const detail = isEscalated ? error.message : error.clientMessage;
+                    void Logger.logCouncilError(
+                        context,
+                        `Error handling event ${event}; notifying client (${error.statusCode}): ${detail}`,
+                        error,
+                        { from, clientImpact: isEscalated ? 'terminal' : 'notified' },
+                    );
+                    if (isEscalated) {
                         this.socketBroadcaster.broadcastError(error, context);
                     } else {
-                        Logger.warn(
-                            context,
-                            `Error handling event ${event}; notifying client (${error.statusCode}): ${error.clientMessage}`,
-                            error,
-                            { clientImpact: 'notified' },
-                        );
                         this.socketBroadcaster.broadcastWarning(error, context);
                     }
                 } else {
@@ -162,8 +162,7 @@ export class SocketManager {
                     Logger.error(
                         context,
                         `Error handling event ${event}; notifying client (500): ${errMessage}`,
-                        error,
-                        { clientImpact: 'terminal' },
+                        { error, from, clientImpact: 'terminal' },
                     );
                     this.socketBroadcaster.broadcastError(CouncilError.fromUnexpected(error), context);
                 }

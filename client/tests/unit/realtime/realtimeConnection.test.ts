@@ -1,8 +1,10 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
+  acquireMicrophone,
   createRealtimeConnection,
   fetchRealtimeBootstrap,
   fetchRealtimeSessionDefaults,
+  MicrophoneUnavailableError,
   RealtimeHttpError,
   classifyRealtimeError,
   computeRealtimeRetryDelay,
@@ -159,7 +161,7 @@ describe("realtimeConnection", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await fetchRealtimeBootstrap({ feature: "voice-guide", language: "sv" });
+    const result = await fetchRealtimeBootstrap({ feature: "setup-agent", language: "sv" });
 
     expect(result.provider).toBe("inworld");
     expect(result.iceServers).toEqual([{ urls: ["stun:guide.example.com"] }]);
@@ -170,7 +172,7 @@ describe("realtimeConnection", () => {
         headers: expect.objectContaining({
           "Content-Type": "application/json",
         }),
-        body: JSON.stringify({ feature: "voice-guide", language: "sv" }),
+        body: JSON.stringify({ feature: "setup-agent", language: "sv" }),
         signal: expect.any(AbortSignal),
       })
     );
@@ -195,7 +197,7 @@ describe("realtimeConnection", () => {
       )
     );
 
-    const result = await fetchRealtimeSessionDefaults({ feature: "voice-guide", language: "en" });
+    const result = await fetchRealtimeSessionDefaults({ feature: "setup-agent", language: "en" });
 
     expect(result).toMatchObject({
       type: "realtime",
@@ -207,7 +209,7 @@ describe("realtimeConnection", () => {
   it("throws RealtimeHttpError when bootstrap returns a non-ok status", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(new Response("denied", { status: 403 })));
 
-    const err = await fetchRealtimeBootstrap({ feature: "voice-guide", language: "en" }).catch((e) => e);
+    const err = await fetchRealtimeBootstrap({ feature: "setup-agent", language: "en" }).catch((e) => e);
     expect(err).toBeInstanceOf(RealtimeHttpError);
     expect((err as RealtimeHttpError).status).toBe(403);
     expect(err.message).toBe("Realtime bootstrap failed (403): denied");
@@ -224,7 +226,7 @@ describe("realtimeConnection", () => {
       )
     );
 
-    await expect(fetchRealtimeBootstrap({ feature: "voice-guide", language: "en" })).rejects.toThrow(
+    await expect(fetchRealtimeBootstrap({ feature: "setup-agent", language: "en" })).rejects.toThrow(
       "Realtime bootstrap: response invalid"
     );
   });
@@ -347,7 +349,7 @@ describe("realtimeConnection", () => {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
-        autoGainControl: true,
+        autoGainControl: false,
       },
     });
     expect(pc.setRemoteDescription).toHaveBeenCalledWith({ type: "answer", sdp: "answer-sdp" });
@@ -424,6 +426,16 @@ describe("classifyRealtimeError", () => {
     expect(classifyRealtimeError(err, { isMuseumMode: true })).toBe("retryable");
   });
 
+  it("marks all MicrophoneUnavailableError reasons as fatal in all modes", () => {
+    const reasons = ["insecure_context", "unsupported", "not_found", "permission_denied", "in_use", "unknown"] as const;
+    for (const reason of reasons) {
+      const err = new MicrophoneUnavailableError(reason, "nope");
+      expect(classifyRealtimeError(err)).toBe("fatal");
+      expect(classifyRealtimeError(err, { isMuseumMode: false })).toBe("fatal");
+      expect(classifyRealtimeError(err, { isMuseumMode: true })).toBe("fatal");
+    }
+  });
+
   it("marks network and ICE errors as retryable", () => {
     expect(classifyRealtimeError(new Error("Failed to fetch"))).toBe("retryable");
     expect(classifyRealtimeError(new TypeError("Network request failed"))).toBe("retryable");
@@ -458,5 +470,47 @@ describe("computeRealtimeRetryDelay", () => {
     const avg = (attempt: number) =>
       Array.from({ length: samples }, () => computeRealtimeRetryDelay(attempt)).reduce((a, b) => a + b, 0) / samples;
     expect(avg(2)).toBeGreaterThan(avg(0));
+  });
+});
+
+describe("acquireMicrophone", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("throws a MicrophoneUnavailableError when mediaDevices is unavailable", async () => {
+    Object.defineProperty(globalThis, "navigator", { configurable: true, value: {} });
+    const err = await acquireMicrophone().catch((e) => e);
+    expect(err).toBeInstanceOf(MicrophoneUnavailableError);
+    expect(["insecure_context", "unsupported"]).toContain(
+      (err as MicrophoneUnavailableError).reason,
+    );
+  });
+
+  it("maps getUserMedia DOMException names to a specific reason", async () => {
+    const cases: Array<[string, string]> = [
+      ["NotAllowedError", "permission_denied"],
+      ["SecurityError", "permission_denied"],
+      ["NotFoundError", "not_found"],
+      ["OverconstrainedError", "not_found"],
+      ["NotReadableError", "in_use"],
+      ["SomethingElseError", "unknown"],
+    ];
+    for (const [name, reason] of cases) {
+      stubGetUserMedia(
+        vi.fn().mockRejectedValue(Object.assign(new Error("x"), { name })),
+      );
+      const err = await acquireMicrophone().catch((e) => e);
+      expect(err).toBeInstanceOf(MicrophoneUnavailableError);
+      expect((err as MicrophoneUnavailableError).reason).toBe(reason);
+      expect((err as MicrophoneUnavailableError).originalError).toBeInstanceOf(Error);
+    }
+  });
+
+  it("resolves with the stream on success", async () => {
+    const stream = { id: "mic" } as unknown as MediaStream;
+    stubGetUserMedia(vi.fn().mockResolvedValue(stream));
+    await expect(acquireMicrophone()).resolves.toBe(stream);
   });
 });

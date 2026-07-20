@@ -1,4 +1,5 @@
 import type { IMeetingBroadcaster } from "@interfaces/MeetingInterfaces.js";
+import type { ProvidesReportContext, ReportContext } from "@interfaces/ReportContext.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
 import { CHAIR_ID, getChairMeetingVoice } from "@logic/characterSetupBundle.js";
 import { Logger } from "@utils/Logger.js";
@@ -15,7 +16,8 @@ import {
 import {
     AudioQueue,
     mergeAudioBuffers,
-    splitText
+    splitTextForTts,
+    prepareInworldTtsChunks,
 } from "./audio/AudioUtils.js";
 import { buildEstimatedSentenceTimings } from "./audio/EstimatedSubtitles.js";
 import {
@@ -24,15 +26,19 @@ import {
     Services,
     Speaker
 } from "./audio/AudioTypes.js";
-import { validateSentenceTimingsAgainstDuration } from "./audio/SubtitleTimingValidation.js";
+import { validateSentenceTimingsAgainstDuration, DEFAULT_ALLOWED_END_GAP_SEC } from "./audio/SubtitleTimingValidation.js";
+import { config } from "@root/src/config.js";
 import type { AudioUpdatePayload } from "@shared/SocketTypes.js";
 
 // Re-export types for compatibility
 export * from "./audio/AudioTypes.js";
 export * from "./audio/AudioUtils.js";
 
-// Limit for text-to-speech requests
-const MAX_AUDIO_CHUNK_LENGTH = 2000;
+// All providers are chunked at 2000 chars even though ElevenLabs (~40k) and OpenAI (~2k tokens)
+// allow larger inputs per request. Shorter chunks parallelise better and keep per-request
+// synthesis latency down — longer messages noticeably slow down in practice.
+const TTS_CHUNK_LIMIT = 2000;
+
 const DEFAULT_SUBTITLE_TIMING_PRIORITIES: GlobalOptions["subtitleTimingPriorities"] = ['elevenlabs', 'inworld', 'estimated', 'whisper'];
 
 export class AudioSystem {
@@ -40,16 +46,32 @@ export class AudioSystem {
     services: Services;
     queue: AudioQueue;
     private generationToken = 0;
+    private readonly reportFrom?: ProvidesReportContext;
 
-    constructor(broadcaster: IMeetingBroadcaster, services: Services, concurrency: number = 3) {
+    constructor(
+        broadcaster: IMeetingBroadcaster,
+        services: Services,
+        concurrency: number = 3,
+        reportFrom?: ProvidesReportContext,
+    ) {
         this.broadcaster = broadcaster;
         this.services = services;
-        this.queue = new AudioQueue(concurrency);
+        this.reportFrom = reportFrom;
+        this.queue = new AudioQueue(concurrency, reportFrom);
     }
 
-    queueAudioGeneration(message: Message, speaker: Speaker, meeting: StoredMeeting, environment: string, serverOptions: GlobalOptions): void {
+    /**
+     * Report context for a specific audio task. The meeting being processed is the source of truth
+     * for the id (the owning session's `reportFrom` may have been torn down mid-generation), while
+     * still carrying the session's socketId for ErrorBot correlation.
+     */
+    private reportContextFor(meeting: StoredMeeting): ReportContext {
+        return { meetingId: meeting._id, socketId: this.reportFrom?.getReportContext().socketId };
+    }
+
+    queueAudioGeneration(message: Message, speaker: Speaker, meeting: StoredMeeting, environment: string, serverOptions: GlobalOptions, skipMatching: boolean = false): void {
         this.queue.add(() =>
-            this.generateAudio(message, speaker, meeting.language, serverOptions, meeting, environment, false, this.generationToken)
+            this.generateAudio(message, speaker, meeting.language, serverOptions, meeting, environment, skipMatching, this.generationToken)
         );
     }
 
@@ -78,6 +100,7 @@ export class AudioSystem {
     ): Promise<void> {
         // Merge context language into options for consistent usage internally
         const effectiveOptions: AudioSystemOptions = { ...serverOptions, language };
+        const from = this.reportContextFor(meeting);
 
         if (effectiveOptions.skipAudio) return;
 
@@ -119,24 +142,47 @@ export class AudioSystem {
                 }
             }
         } catch (error: unknown) {
-            Logger.error(`AudioSystem`, `Error retrieving existing audio (message id: ${message.id})`, error);
+            Logger.error("AudioSystem", `Error retrieving existing audio (message id: ${message.id})`, {
+                error,
+                from,
+            });
         }
 
 
         try {
-            const limit = MAX_AUDIO_CHUNK_LENGTH;
-            const textChunks = splitText(message.text, limit);
+            const provider = resolvedSpeaker.voiceProvider;
+            const chunkLimit = TTS_CHUNK_LIMIT;
+
+            // For Inworld, run pronunciation processing on the full text before splitting so that
+            // alias/IPA expansion is measured before chunk boundaries are chosen — preventing
+            // post-split overflows past the API limit.
+            // For other providers, split the raw text (no significant pre-send expansion).
+            const isInworld = provider === 'inworld';
+            let textChunks: string[];
+            let inworldReplacedWords: Map<string, string> | undefined;
+
+            if (isInworld) {
+                const prepared = prepareInworldTtsChunks(message.text, effectiveOptions.language ?? 'en', chunkLimit);
+                textChunks = prepared.chunks;
+                inworldReplacedWords = prepared.replacedWords;
+            } else {
+                textChunks = splitTextForTts(message.text, chunkLimit);
+            }
 
             if (textChunks.length > 1) {
-                Logger.info("AudioSystem", `Message ${message.id} split into ${textChunks.length} chunks for TTS.`);
+                Logger.info("AudioSystem", `Message ${message.id} split into ${textChunks.length} chunks for TTS.`, { from });
             }
 
             let providerWords: (Word[] | undefined)[] = [];
 
             if (generateNew || buffers.length === 0) {
-                Logger.info("AudioSystem", `Generating new audio for message ${message.id} (${resolvedSpeaker.voiceProvider}/${resolvedSpeaker.voice})`);
+                Logger.info("AudioSystem", `Generating new audio for message ${message.id} (${resolvedSpeaker.voiceProvider}/${resolvedSpeaker.voice})`, { from });
                 // Generate audio for all chunks in parallel
-                const results = await Promise.all(textChunks.map(chunk => this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions)));
+                const results = await Promise.all(textChunks.map(chunk =>
+                    isInworld
+                        ? this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions, true, inworldReplacedWords)
+                        : this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions)
+                ));
                 buffers = results.map(r => r.audio);
                 providerWords = results.map(r => r.words);
                 generateNew = true;
@@ -157,11 +203,17 @@ export class AudioSystem {
             if (!shouldSkipMatching) {
                 const subtitleTimingPriorities =
                     effectiveOptions.subtitleTimingPriorities ?? DEFAULT_SUBTITLE_TIMING_PRIORITIES;
+                const conversationIndex = meeting.conversation?.findIndex(entry => entry.id === message.id) ?? -1;
+                const speakerName =
+                    resolvedSpeaker.name ??
+                    meeting.characters.find(character => character.id === resolvedSpeaker.id)?.name ??
+                    resolvedSpeaker.id;
+                const meetingId = String(meeting._id);
 
                 for (const timingType of subtitleTimingPriorities) {
                     if (timingType === 'inworld' && resolvedSpeaker.voiceProvider === 'inworld') {
                         const nativeSentences = this.getProviderSentenceTimings(providerWords, buffers, durations, sentenceTexts);
-                        if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, message.id)) {
+                        if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, meetingId, conversationIndex, speakerName, message.id, resolvedSpeaker.id)) {
                             sentencesWithTimings = nativeSentences;
                             subtitleTimingType = 'inworld';
                             break;
@@ -170,7 +222,7 @@ export class AudioSystem {
 
                     if (timingType === 'elevenlabs' && resolvedSpeaker.voiceProvider === 'elevenlabs') {
                         const nativeSentences = this.getProviderSentenceTimings(providerWords, buffers, durations, sentenceTexts);
-                        if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, message.id)) {
+                        if (this.areSentenceTimingsUsable(nativeSentences, durations, timingType, meetingId, conversationIndex, speakerName, message.id, resolvedSpeaker.id)) {
                             sentencesWithTimings = nativeSentences;
                             subtitleTimingType = 'elevenlabs';
                             break;
@@ -184,7 +236,7 @@ export class AudioSystem {
                         }
 
                         const estimatedSentences = buildEstimatedSentenceTimings(message, totalDuration);
-                        if (this.areSentenceTimingsUsable(estimatedSentences, [totalDuration], timingType, message.id)) {
+                        if (this.areSentenceTimingsUsable(estimatedSentences, [totalDuration], timingType, meetingId, conversationIndex, speakerName, message.id, resolvedSpeaker.id)) {
                             sentencesWithTimings = estimatedSentences;
                             subtitleTimingType = 'estimated';
                             break;
@@ -198,13 +250,16 @@ export class AudioSystem {
                                 sentenceTexts,
                                 this.offsetChunkWords(chunkWordsWithTimings, durations)
                             );
-                            if (this.areSentenceTimingsUsable(whisperSentences, durations, timingType, message.id)) {
+                            if (this.areSentenceTimingsUsable(whisperSentences, durations, timingType, meetingId, conversationIndex, speakerName, message.id, resolvedSpeaker.id)) {
                                 sentencesWithTimings = whisperSentences;
                                 subtitleTimingType = 'whisper';
                                 break;
                             }
                         } catch (error: unknown) {
-                            Logger.warn("AudioSystem", `Whisper timings failed for message ${message.id}.`, error);
+                            Logger.warn("AudioSystem", `Whisper timings failed for message ${message.id}.`, {
+                                error,
+                                from,
+                            });
                         }
                     }
                 }
@@ -226,7 +281,7 @@ export class AudioSystem {
                 sentences: sentencesWithTimings
             };
 
-            Logger.info("AudioSystem", `Audio generated for message ${message.id}. Size: ${combinedBuffer.length} bytes.`);
+            Logger.info("AudioSystem", `Audio generated for message ${message.id}. Size: ${combinedBuffer.length} bytes.`, { from });
 
             if (generationToken !== this.generationToken) {
                 return;
@@ -263,12 +318,22 @@ export class AudioSystem {
 
         } catch (error: unknown) {
             //Crash the client and report
-            Logger.reportAndCrashClient("AudioSystem", "Error generating audio", error, this.broadcaster);
+            Logger.reportAndCrashClient("AudioSystem", "Error generating audio", {
+                error,
+                from,
+                broadcaster: this.broadcaster,
+            });
         }
     }
 
-    private async generateProviderAudio(text: string, speaker: Speaker, options: AudioSystemOptions): Promise<AudioResult> {
-        const baseParams = { text, speaker, options };
+    private async generateProviderAudio(
+        text: string,
+        speaker: Speaker,
+        options: AudioSystemOptions,
+        preprocessed?: boolean,
+        replacedWords?: Map<string, string>,
+    ): Promise<AudioResult> {
+        const baseParams = { text, speaker, options, preprocessed, replacedWords };
 
         if (speaker.voiceProvider === 'inworld') {
             return generateInworldAudio(baseParams);
@@ -305,7 +370,7 @@ export class AudioSystem {
             );
             return metadata.format.duration || 0;
         } catch (error: unknown) {
-            Logger.warn("AudioSystem", `Failed to parse audio duration`, error);
+            Logger.warn("AudioSystem", `Failed to parse audio duration`, { error, from: this.reportFrom });
             return 0;
         }
     }
@@ -370,14 +435,27 @@ export class AudioSystem {
         sentences: MappedSentence[],
         durations: number[],
         timingType: SubtitleTimingType,
-        messageId: string
+        meetingId: string,
+        conversationIndex: number,
+        speakerName: string,
+        messageId: string,
+        speakerId: string
     ): boolean {
         const totalDuration = durations.reduce((sum, duration) => sum + Math.max(duration, 0), 0);
-        const validation = validateSentenceTimingsAgainstDuration(sentences, totalDuration);
+        // "mountain" in Council of Forest always ends its lines on a nonverbal, unmapped
+        // grunt, so its whisper timings legitimately fall short of the audio duration.
+        const allowedEndGapSec =
+            config.COUNCIL_DB_PREFIX === "CouncilOfForest" && speakerId === "mountain"
+                ? 10
+                : DEFAULT_ALLOWED_END_GAP_SEC;
+        const validation = validateSentenceTimingsAgainstDuration(sentences, totalDuration, allowedEndGapSec);
         if (!validation.valid) {
             Logger.warn(
                 "AudioSystem",
-                `Rejected ${timingType ?? "unknown"} subtitle timings for message ${messageId}: ${validation.reason}.`
+                `Rejected ${timingType ?? "unknown"} subtitle timings ` +
+                `(index ${conversationIndex}, speaker ${speakerName}, message ${messageId}): ` +
+                `${validation.reason}.`,
+                { from: { meetingId: Number(meetingId) } },
             );
             return false;
         }
