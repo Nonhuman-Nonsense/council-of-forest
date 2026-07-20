@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
     buildReplayMeetingManifest,
     isCompleteReplayManifest,
@@ -6,13 +6,46 @@ import {
     orderedAudioIdsForConversation,
     stripAwaitingHumanTail,
 } from "@api/replayManifest.js";
-import { BadRequestError } from "@models/Errors.js";
 import { MockFactory } from "./factories/MockFactory.js";
 import type { Message } from "@shared/ModelTypes.js";
+import {
+    clearLiveSessionRegistryForTests,
+    tryAcquireLiveSession,
+} from "@logic/liveSessionRegistry.js";
 
 const SPEAKER_ID = "speaker1";
 
 describe("buildReplayMeetingManifest", () => {
+    beforeEach(() => {
+        clearLiveSessionRegistryForTests();
+    });
+
+    it("appends meeting_incomplete with elsewhere:true when another socket holds the live session", () => {
+        const meeting = MockFactory.createMeeting({
+            _id: 555,
+            conversation: [
+                { id: "m0", type: "message", speaker: SPEAKER_ID, text: "0" },
+            ],
+            audio: ["m0"],
+        });
+        tryAcquireLiveSession(555, "some-socket", "some-key");
+        const m = buildReplayMeetingManifest(meeting);
+        expect(m.conversation.map((c) => c.type)).toEqual(["message", "meeting_incomplete"]);
+        expect(m.conversation[1]).toMatchObject({ type: "meeting_incomplete", elsewhere: true });
+    });
+
+    it("still appends meeting_incomplete without elsewhere when no live session holds the meeting", () => {
+        const meeting = MockFactory.createMeeting({
+            _id: 556,
+            conversation: [
+                { id: "m0", type: "message", speaker: SPEAKER_ID, text: "0" },
+            ],
+            audio: ["m0"],
+        });
+        const m = buildReplayMeetingManifest(meeting);
+        expect(m.conversation.map((c) => c.type)).toEqual(["message", "meeting_incomplete"]);
+        expect(m.conversation[1]).not.toHaveProperty("elsewhere");
+    });
     it("slices by maximumPlayedIndex inclusive", () => {
         const meeting = MockFactory.createMeeting({
             maximumPlayedIndex: 1,
@@ -83,17 +116,13 @@ describe("buildReplayMeetingManifest", () => {
         expect(m.audio).toEqual(["pub-m1", "sum1"]);
     });
 
-    it("throws BadRequestError when conversation is empty", () => {
+    it("returns a meeting_incomplete manifest when conversation is empty", () => {
         const meeting = MockFactory.createMeeting({
             conversation: [],
         });
-        try {
-            buildReplayMeetingManifest(meeting);
-            expect.fail("expected BadRequestError");
-        } catch (e) {
-            expect(e).toBeInstanceOf(BadRequestError);
-            expect((e as BadRequestError).clientMessage).toBe("No messages available for replay.");
-        }
+        const m = buildReplayMeetingManifest(meeting);
+        expect(m.conversation.map((c) => c.type)).toEqual(["meeting_incomplete"]);
+        expect(m.audio).toEqual([]);
     });
 
     it("truncates summary if its audio is missing and appends incomplete marker", () => {

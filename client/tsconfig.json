@@ -40,8 +40,8 @@
             "@newMeeting/*": [
                 "./src/newMeeting/*"
             ],
-            "@voice/*": [
-                "./src/voice/*"
+            "@setupAgent/*": [
+                "./src/setupAgent/*"
             ],
             "@realtime/*": [
                 "./src/realtime/*"
@@ -53,8 +53,9 @@
                 "../shared/*"
             ]
         },
-        "allowJs": true,
-        "strict": false,
+        "types": ["vitest/globals"],
+        "allowJs": false,
+        "strict": true,
         "checkJs": false,
         "maxNodeModuleJsDepth": 0
     },

@@ -63,10 +63,6 @@ vi.mock("@logic/GlobalOptions.js", async (importOriginal) => {
     };
 });
 
-vi.mock("@services/OpenAIService.js", () => ({
-    getOpenAI: () => ({ apiKey: "test-openai-api-key" }),
-}));
-
 vi.mock("../src/config.js", () => ({
     config: {
         INWORLD_API_KEY: "test-inworld-api-key",
@@ -74,14 +70,14 @@ vi.mock("../src/config.js", () => ({
 }));
 
 import {
-    createOpenAICall,
+    createInworldCall,
     getHumanInputRealtimeBootstrap,
+    getInworldIceServers,
     getMetaAgentRealtimeBootstrap,
-    getVoiceGuideRealtimeBootstrap,
-    pickHumanInputRealtimeProvider,
-    pickMetaAgentRealtimeProvider,
-    pickVoiceGuideRealtimeProvider,
+    getSetupAgentRealtimeBootstrap,
 } from "@api/realtimeProviders.js";
+
+const SDP_ANSWER = "v=0\r\no=- 9 2 IN IP4 0.0.0.0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
 
 const SDP_OFFER = "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
 const svChairConfig = realtimeOptions.chairRealtime.languages.sv!;
@@ -96,24 +92,6 @@ describe("realtimeProviders", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-    });
-
-    it("routes meta-agent sessions to Inworld for all languages", () => {
-        expect(pickMetaAgentRealtimeProvider("sv")).toBe("inworld");
-        expect(pickMetaAgentRealtimeProvider("sv-SE")).toBe("inworld");
-        expect(pickMetaAgentRealtimeProvider("en")).toBe("inworld");
-    });
-
-    it("routes human-input transcription from config", () => {
-        expect(pickHumanInputRealtimeProvider("sv")).toBe("inworld");
-        expect(pickHumanInputRealtimeProvider("sv-SE")).toBe("inworld");
-        expect(pickHumanInputRealtimeProvider("en")).toBe("inworld");
-    });
-
-    it("routes Swedish voice-guide sessions to Inworld", () => {
-        expect(pickVoiceGuideRealtimeProvider("sv")).toBe("inworld");
-        expect(pickVoiceGuideRealtimeProvider("sv-SE")).toBe("inworld");
-        expect(pickVoiceGuideRealtimeProvider("en")).toBe("inworld");
     });
 
     it.each([
@@ -149,7 +127,7 @@ describe("realtimeProviders", () => {
         }
     );
 
-    it("passes chair STT, TTS, and agent voice into Swedish voice-guide bootstrap", async () => {
+    it("passes chair STT, TTS, and agent voice into Swedish setup-agent bootstrap", async () => {
         vi.mocked(global.fetch).mockResolvedValue(
             new Response(JSON.stringify({ ice_servers: [{ urls: ["stun:guide-sv.example.com"] }] }), {
                 status: 200,
@@ -157,7 +135,7 @@ describe("realtimeProviders", () => {
             })
         );
 
-        const result = await getVoiceGuideRealtimeBootstrap("sv");
+        const result = await getSetupAgentRealtimeBootstrap("sv");
 
         expect(result.provider).toBe("inworld");
         expect(result.iceServers).toEqual([{ urls: ["stun:guide-sv.example.com"] }]);
@@ -186,7 +164,7 @@ describe("realtimeProviders", () => {
         });
     });
 
-    it("passes chair agent voice into English voice-guide bootstrap", async () => {
+    it("passes chair agent voice into English setup-agent bootstrap", async () => {
         vi.mocked(global.fetch).mockResolvedValue(
             new Response(JSON.stringify({ ice_servers: [{ urls: ["stun:guide.example.com"] }] }), {
                 status: 200,
@@ -194,7 +172,7 @@ describe("realtimeProviders", () => {
             })
         );
 
-        const result = await getVoiceGuideRealtimeBootstrap("en");
+        const result = await getSetupAgentRealtimeBootstrap("en");
 
         expect(result.provider).toBe("inworld");
         expect(result.iceServers).toEqual([{ urls: ["stun:guide.example.com"] }]);
@@ -294,31 +272,124 @@ describe("realtimeProviders", () => {
         });
     });
 
-    it("POSTs OpenAI calls with server-side auth and FormData", async () => {
+});
+
+describe("getInworldIceServers", () => {
+    beforeEach(() => {
+        global.fetch = vi.fn();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("fetches Inworld ICE servers with Bearer auth and unwraps the response", async () => {
+        const ice = [
+            { urls: ["stun:stun.l.google.com:19302"] },
+            { urls: ["turn:turn.example.com:3478"], username: "u", credential: "c" },
+        ];
         vi.mocked(global.fetch).mockResolvedValue(
-            new Response("mock_sdp_answer", {
+            new Response(JSON.stringify({ ice_servers: ice }), {
                 status: 200,
-                headers: {
-                    Location: "call_123",
-                },
+                headers: { "Content-Type": "application/json" },
             })
         );
 
-        const result = await createOpenAICall({
+        const result = await getInworldIceServers();
+
+        expect(result).toEqual({ iceServers: ice });
+        expect(global.fetch).toHaveBeenCalledWith(
+            "https://api.inworld.ai/v1/realtime/ice-servers",
+            expect.objectContaining({
+                method: "GET",
+                headers: expect.objectContaining({
+                    Authorization: "Bearer test-inworld-api-key",
+                }),
+            })
+        );
+    });
+
+    it("returns an empty list when Inworld omits ice_servers", async () => {
+        vi.mocked(global.fetch).mockResolvedValue(
+            new Response(JSON.stringify({}), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
+
+        const result = await getInworldIceServers();
+        expect(result).toEqual({ iceServers: [] });
+    });
+
+    it("throws when Inworld returns a non-OK response", async () => {
+        vi.mocked(global.fetch).mockResolvedValue(
+            new Response("forbidden", { status: 403, statusText: "Forbidden" })
+        );
+
+        await expect(getInworldIceServers()).rejects.toThrow(
+            /Inworld \/v1\/realtime\/ice-servers failed \(403\)/
+        );
+    });
+});
+
+describe("createInworldCall", () => {
+    beforeEach(() => {
+        global.fetch = vi.fn();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("POSTs JSON {sdp, session} with Bearer auth and returns parsed response", async () => {
+        vi.mocked(global.fetch).mockResolvedValue(
+            new Response(JSON.stringify({ id: "call_abc123", sdp: SDP_ANSWER, ice_servers: [] }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
+
+        const result = await createInworldCall({
             sdp: SDP_OFFER,
-            session: { type: "transcription" },
+            session: { model: "llama-3.3-70b-versatile", instructions: "hello", output_modalities: ["audio", "text"] },
         });
 
-        expect(result).toEqual({ id: "call_123", sdp: "mock_sdp_answer" });
+        expect(result.id).toBe("call_abc123");
+        expect(result.sdp).toBe(SDP_ANSWER);
         expect(global.fetch).toHaveBeenCalledWith(
-            "https://api.openai.com/v1/realtime/calls",
+            "https://api.inworld.ai/v1/realtime/calls",
             expect.objectContaining({
                 method: "POST",
                 headers: expect.objectContaining({
-                    Authorization: "Bearer test-openai-api-key",
+                    Authorization: "Bearer test-inworld-api-key",
+                    "Content-Type": "application/json",
                 }),
-                body: expect.any(FormData),
             })
         );
+    });
+
+    it("rejects an empty SDP offer without calling Inworld", async () => {
+        await expect(createInworldCall({ sdp: "" })).rejects.toThrow(/non-empty/);
+        await expect(createInworldCall({ sdp: "   \n  " })).rejects.toThrow(/non-empty/);
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("throws when Inworld returns non-OK", async () => {
+        vi.mocked(global.fetch).mockResolvedValue(
+            new Response("bad", { status: 400, statusText: "Bad Request" })
+        );
+
+        await expect(createInworldCall({ sdp: SDP_OFFER })).rejects.toThrow(/calls failed \(400\)/);
+    });
+
+    it("throws when Inworld returns an empty SDP answer", async () => {
+        vi.mocked(global.fetch).mockResolvedValue(
+            new Response(JSON.stringify({ id: "call_x", sdp: "   " }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
+
+        await expect(createInworldCall({ sdp: SDP_OFFER })).rejects.toThrow(/empty SDP answer/);
     });
 });

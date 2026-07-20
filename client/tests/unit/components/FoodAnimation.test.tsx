@@ -4,8 +4,7 @@ import FoodAnimation from '@council/FoodAnimation';
 import type { Character } from '@newMeeting/SelectCharacters';
 import { characterSetupEn } from '../../characterSetupTestData';
 
-const [, sampleCharacter, otherCharacter] = characterSetupEn.characters;
-const otherSpeakerId = otherCharacter?.id ?? 'other-speaker';
+const [, sampleCharacter] = characterSetupEn.characters;
 
 vi.mock('../../../src/utils', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../../../src/utils')>();

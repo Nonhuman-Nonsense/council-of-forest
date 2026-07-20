@@ -203,6 +203,15 @@ export function useCouncilMachine({
         [councilState, nameOverlayOpen, isMuseumMode, agentMode],
     );
 
+    // The one thing that distinguishes the "another live session holds this meeting" case
+    // (previously its own `meeting_elsewhere` state) from an ordinary `meeting_incomplete`:
+    // read straight off the message rather than mirroring it into separate state, since the
+    // sentinel stays in `textMessages` for as long as the overlay is shown.
+    const meetingElsewhere = useMemo(
+        () => textMessages.find((m) => m.type === 'meeting_incomplete')?.elsewhere ?? false,
+        [textMessages],
+    );
+
     /* -------------------------------------------------------------------------- */
     /*                             Socket & Startup                               */
     /* -------------------------------------------------------------------------- */
@@ -293,6 +302,7 @@ export function useCouncilMachine({
 
     // Download first audio, then batch download the rest
     async function downloadAudio(audioIds: string[], ac: AbortController) {
+        if (audioIds.length === 0) return;
         try {
             const firstDecoded = await decodeReplayClip(audioIds[0], ac.signal);
             if (ac.signal.aborted) return;
@@ -421,7 +431,8 @@ export function useCouncilMachine({
             return;
         }
 
-        //If we have reached a meeting incomplete message
+        //If we have reached a meeting incomplete message (server flags `elsewhere` when
+        //another live session currently holds the meeting; see `meetingElsewhere` below)
         if (councilState !== 'meeting_incomplete' && textMessages[playNextIndex]?.type === 'meeting_incomplete') {
             setCouncilState('meeting_incomplete');
             return;
@@ -787,11 +798,14 @@ export function useCouncilMachine({
                     : err instanceof Error && err.message.trim().length > 0
                       ? err.message
                       : t("error.message");
+            const isNotFound = err instanceof ResumeMeetingError && err.status === 404;
             setUnrecoverableError({
                 message: msg,
                 source: "useCouncilMachine.resume",
                 cause: err,
                 meetingId: currentMeetingId,
+                // Temporarily 'warning' (not 'info') to watch stale meeting link volume for a while.
+                severity: isNotFound ? "warning" : undefined,
             });
         }
     }
@@ -1119,6 +1133,7 @@ export function useCouncilMachine({
             playingNowIndex,
             playNextIndex,
             visibleOverlay,
+            meetingElsewhere,
             nameOverlayOpen,
             summary,
             isRaisedHand,

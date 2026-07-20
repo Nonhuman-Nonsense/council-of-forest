@@ -11,6 +11,7 @@ import { getParticipationPhase } from "./humanInput/participationPhase";
 import { useTranslation } from "react-i18next";
 import { useCouncilMachine } from "./hooks/useCouncilMachine";
 import { getMeeting } from "@api/getMeeting.js";
+import { HttpStatusError } from "@api/http";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { z } from "@/zIndexLayers";
 import CouncilReplaySession from "./CouncilReplaySession";
@@ -95,11 +96,14 @@ function Council({
         console.error(error);
         const msg =
           error instanceof Error && error.message.trim().length > 0 ? error.message : t("error.message");
+        const isNotFound = error instanceof HttpStatusError && error.status === 404;
         setUnrecoverableError({
           message: msg,
           source: "Council.loadMeeting",
           cause: error,
           meetingId: currentMeetingId,
+          // Temporarily 'warning' (not 'info') to watch stale meeting link volume for a while.
+          severity: isNotFound ? "warning" : undefined,
         });
       }
     })();
@@ -131,6 +135,7 @@ function Council({
     playingNowIndex,
     playNextIndex,
     visibleOverlay,
+    meetingElsewhere,
     summary,
     isRaisedHand,
     canGoBack,
@@ -283,6 +288,7 @@ function Council({
           {visibleOverlay !== null && (
             <CouncilOverlays
               overlay={visibleOverlay}
+              meetingElsewhere={meetingElsewhere}
               onExtendMeeting={handleOnExtendMeeting}
               onAttemptResume={handleOnAttemptResume}
               onConcludeMeeting={handleOnConcludeMeeting}

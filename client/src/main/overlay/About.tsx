@@ -28,7 +28,7 @@ function About(): React.ReactElement {
       <p style={{ whiteSpace: "pre-wrap" }}>
         <Trans
           i18nKey="about.creditLine"
-          components={[<AboutContactLink />, <AboutContactLink />]}
+          components={[<AboutContactLink key="contact-link-0" />, <AboutContactLink key="contact-link-1" />]}
         />
       </p>
     </div>

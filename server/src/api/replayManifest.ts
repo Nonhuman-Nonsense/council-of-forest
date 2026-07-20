@@ -1,7 +1,7 @@
-import type { Meeting, Message } from "@shared/ModelTypes.js";
-import { BadRequestError } from "@models/Errors.js";
+import type { Meeting, Message, MeetingIncompleteMessage } from "@shared/ModelTypes.js";
+import { hasLiveSession } from "@logic/liveSessionRegistry.js";
 
-const MEETING_INCOMPLETE_MESSAGE: Message = { type: "meeting_incomplete" };
+const MEETING_INCOMPLETE_MESSAGE: MeetingIncompleteMessage = { type: "meeting_incomplete" };
 
 function computeCapIndex(meeting: Meeting): number {
     const conv = meeting.conversation ?? [];
@@ -112,15 +112,19 @@ export function buildReplayMeetingManifest(meeting: Meeting): Meeting {
         conversation.pop();
     }
 
-    if (conversation.length === 0) {
-        throw new BadRequestError("No messages available for replay.");
-    }
-
+    // No playable content yet — either the meeting was just created, or the only messages so
+    // far are still waiting on audio generation (see truncateToAvailableAudio above). Fall
+    // through to the same `meeting_incomplete` handling as any other in-progress replay rather
+    // than erroring: the client already offers to resume from that state (see meetingRoutes.ts,
+    // which logs a warning when this happens so it stays visible).
     const lastMessageObj = conversation.length > 0 ? conversation[conversation.length - 1] : null;
     const hasSummary = lastMessageObj?.type === "summary";
 
     if (!hasSummary) {
-        conversation = [...conversation, { ...MEETING_INCOMPLETE_MESSAGE }];
+        const marker: Message = hasLiveSession(meeting._id)
+            ? { ...MEETING_INCOMPLETE_MESSAGE, elsewhere: true }
+            : { ...MEETING_INCOMPLETE_MESSAGE };
+        conversation = [...conversation, marker];
     }
 
     const conversationForAudio = hasSummary ? conversation : conversation.slice(0, -1);

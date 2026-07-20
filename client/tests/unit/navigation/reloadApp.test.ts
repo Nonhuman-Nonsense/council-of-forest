@@ -51,10 +51,11 @@ describe("reloadApp", () => {
   });
 
   it("navigates to the current language root in web mode", async () => {
-    vi.spyOn(AvailableLanguagesModule, "AVAILABLE_LANGUAGES", "get").mockReturnValue([
-      "en",
-      "de",
-    ]);
+    // Deliberately exercises an unlisted extra language ("de"); AVAILABLE_LANGUAGES is
+    // readonly ["en", "sv"], so this intentionally overrides the type contract.
+    vi.spyOn(AvailableLanguagesModule, "AVAILABLE_LANGUAGES", "get").mockReturnValue(
+      ["en", "de"] as unknown as readonly ["en", "sv"],
+    );
 
     const hrefSetter = vi.fn();
     Object.defineProperty(window.location, "href", {

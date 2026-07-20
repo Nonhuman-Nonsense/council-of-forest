@@ -4,9 +4,15 @@ import { cyan, yellow, red } from "colorette";
 // Avoid circular dependency by not importing Logger here.
 // Instead, we use console directly for internal logging of the errorbot itself.
 
-export type ReportSeverity = 'warning' | 'error' | 'critical';
+export type ReportSeverity = 'info' | 'warning' | 'error' | 'critical';
 export type ClientImpact = 'none' | 'notified' | 'terminal' | 'process_exit';
 export type ReportSource = 'server' | 'client';
+
+/** Raw request params/query for tracing which arguments produced a given API failure. */
+export type RequestParams = {
+    params?: Record<string, unknown>;
+    query?: Record<string, unknown>;
+};
 
 export type ErrorReport = {
     context: string;
@@ -17,6 +23,7 @@ export type ErrorReport = {
     source?: ReportSource;
     meetingId?: number;
     socketId?: string;
+    requestParams?: RequestParams;
 };
 
 //We wrap this in a function to make sure that it runs after .env is loaded
@@ -50,6 +57,12 @@ function serializeError(err: unknown): unknown {
  */
 export async function sendReport(report: ErrorReport): Promise<void> {
 
+    // Expected/routine conditions (e.g. a stale meeting link) are console-only, never posted.
+    if (report.severity === 'info') {
+        console.log(`${cyan(`[${report.context}]`)} ${report.message}`);
+        return;
+    }
+
     if (!config.COUNCIL_ERRORBOT) {
         return;
     }
@@ -65,6 +78,7 @@ export async function sendReport(report: ErrorReport): Promise<void> {
         error: serializeError(report.error),
         meetingId: report.meetingId,
         socketId: report.socketId,
+        requestParams: report.requestParams,
     };
 
     const sendStr = JSON.stringify(payload);
