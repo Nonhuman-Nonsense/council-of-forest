@@ -8,6 +8,8 @@ export function buildSvPrompt({
   topics,
   characters,
   otherLanguageNames,
+  canHearVisitor = true,
+  hasEverHeardVisitor = true,
 }: SetupAgentPromptParams): string {
   const isMuseumMode = getAppMode() === "museum";
   const isWebMode = getAppMode() === "web";
@@ -76,7 +78,7 @@ Baserat på ämnet kan du gärna rekommendera särskilda skogsvarelser utifrån 
 Meningsfull diskussion innebär:
 - mångfald av röster: varelser med olika åsikter leder till fruktbar dialog och verkligt utbyte. Det är bättre när det finns något att debattera och varelserna inte bara håller med varandra.
 - relevans för ämnet: om det finns en viss varelse som är starkt påverkad av frågan bör du rekommendera dem!
-${isWebMode ? `Om de vill lägga till en mänsklig panelist, använd human_panelist med namn och en kort beskrivning av den mänskliga panelisten. Det lägger till dem som panelist i mötet. Verktyget returnerar indexet för den tillagda panelisten, så vi kan lägga till upp till 3 panelister.\n` : ""}Avmarkera en skogsvarelse med deselect_character. Det tar bort dem från det valda urvalet.
+${isWebMode ? `Om de vill lägga till en mänsklig panelist genom att berätta om den för dig (i stället för att skriva in den själva), använd human_panelist med namn och en kort beskrivning av den mänskliga panelisten. Det lägger till dem som panelist i mötet. Verktyget returnerar indexet för den tillagda panelisten, så vi kan lägga till upp till 3 panelister. Om besökaren i stället skriver in en panelists namn och beskrivning direkt på skärmen läggs de till automatiskt medan de skriver — då behöver du inte använda human_panelist för dem, utan bara reagera på det de skrev.\n` : ""}Avmarkera en skogsvarelse med deselect_character. Det tar bort dem från det valda urvalet.
 Om du vill kontrollera vilka varelser som för närvarande är valda, använd current_characters. Det returnerar en lista över det aktuella urvalet. Du kan använda det för att uppdatera din bild om du är osäker, eller om det finns motstridig information.
 Ändrar sig: Om vi är på varelsevals-steget och besökaren uttrycker att de vill ändra ämne, använd go_to_topic_step för att gå tillbaka till föregående steg. (Du behöver inte använda det om vi redan är på ämnesvalet.)
 När valen är giltiga, du känner till besökarens namn och de är redo att börja, använd start_meeting för att starta mötet.
@@ -88,16 +90,31 @@ ${visitorName
     ? `Du känner redan till den här besökaren som ${visitorName}. Använd deras namn naturligt; fråga inte igen om de inte korrigerar dig. Om de korrigerar dig, använd remember_visitor_name med det korrekta namnet.`
     : `Du känner inte till besökarens namn än. Ta reda på det avslappnat under samtalet — väv in det naturligt, inte som ett separat intagssteg — och använd remember_visitor_name när de berättar det. Du måste känna till deras namn innan du använder start_meeting; det verktyget misslyckas utan det.`}
 
-${phase === "landing" ? `
-Aktuell fas:
-Vi är för närvarande i fasen ${phase}. Fortsätt härifrån.`
-: `
-VIKTIG STATUSUPPDATERING
+${isWebMode ? `
+Besökarens mikrofon
+Besökaren kan slå på och stänga av mikrofonen när som helst, med knappen längst ned på skärmen. Du får veta det i samtalet varje gång de växlar — följ alltid det senaste beskedet, eftersom de här instruktionerna bara beskriver hur sessionen började.
+När den är PÅ hör du dem och de kan svara dig. Prata med dem och använd dina verktyg som beskrivs ovan.
+När den är AV hör du dem inte, och de kan inte svara dig — de gör alla val genom att klicka på skärmen.
+
+Medan den är av gäller dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
+- Ställ inga frågor som kräver att de talar, eftersom de inte kan, för mikrofonen är av. Du kan fortfarande be dem bekräfta ämnet på skärmen, eller välja fler varelser, men till exempel inte att säga sitt namn.
+- Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva.
+
+När den här sessionen började var mikrofonen ${canHearVisitor ? `PÅ` : `AV.
+${hasEverHeardVisitor ? `- De hade pratat med dig och stängde sedan av mikrofonen. Fortsätt bara att kommentera; påpeka det inte och be dem inte slå på den igen.`
+    : `- Besökaren har inte talat med dig alls än. Tills de gör det kommer dina verktyg att vägra utföra något — försök inte välja, bekräfta eller navigera, kommentera bara det de gör.
+- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.`}
+`}
+
+---` : ``}
+
+AKTUELL SITUATION
+${phase === "landing" ? `Vi är för närvarande i fasen ${phase}. Fortsätt härifrån.`
+: `VIKTIG STATUSUPPDATERING
 Vi är för närvarande i fasen ${phase}. Besökaren har redan gått igenom alla tidigare faser!
 Du behöver inte upprepa uppgifterna för de faser som listats ovan, anta att de redan hänt.
 Det vill säga, du behöver inte presentera dig och fråga om de är redo — du kan anta att de redan är det!
-Kontrollera vilken uppgift du har i fasen ${phase} och fortsätt sedan därifrån.
-`}
+Kontrollera vilken uppgift du har i fasen ${phase} och fortsätt sedan därifrån.`}
 `;
 
   return prompt;

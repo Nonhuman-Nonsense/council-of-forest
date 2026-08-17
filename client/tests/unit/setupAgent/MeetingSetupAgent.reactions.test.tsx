@@ -147,16 +147,21 @@ describe("MeetingSetupAgent click reactions", () => {
    * Arriving with foods already chosen (e.g. back from the topic step) must not
    * replay them as if they were just picked.
    */
-  it("treats foods already selected on arrival as known", () => {
-    mockSelectedCharacters.value = ["chair", "bean"];
+  it("treats beings already selected on arrival as known", () => {
+    // Real ids, because the baseline resolves them against the character
+    // bundle — a name the bundle doesn't know resolves to nothing and the
+    // agent is told about a pick the visitor made a step ago.
+    mockSelectedCharacters.value = ["river", "reindeer"];
 
     const { rerender } = render(<MeetingSetupAgent {...defaultProps} />);
 
-    rerender(<MeetingSetupAgent {...defaultProps} lastUserEvent={councilEvent(["Bean", "Meat"])} />);
+    rerender(
+      <MeetingSetupAgent {...defaultProps} lastUserEvent={councilEvent(["Reindeer", "Salmon"])} />,
+    );
     act(() => { vi.runAllTimers(); });
 
-    expect(lastMessage()).toContain("Meat");
-    expect(lastMessage()).not.toContain("added Bean");
+    expect(lastMessage()).toContain("Salmon");
+    expect(lastMessage()).not.toContain("added Reindeer");
   });
 
   /** The UI blocks a 7th pick, so this is the only moment to tell the agent. */

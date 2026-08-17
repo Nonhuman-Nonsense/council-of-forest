@@ -163,6 +163,20 @@
   "controls": {
     "wait": "vänta tills det är din tur att tala"
   },
+  "agent": {
+    "turnOn": "Slå på guiden",
+    "turnOff": "Stäng av guiden",
+    "micStart": "Prata med guiden",
+    "micStop": "Sluta prata"
+  },
+  "microphone": {
+    "title": "Mikrofonen är inte tillgänglig",
+    "blocked": "Tillåt mikrofonåtkomst för den här sidan i din webbläsare,\ntryck sedan på mikrofonknappen igen.",
+    "noDevice": "Ingen mikrofon hittades på den här enheten.",
+    "inUse": "Mikrofonen används av ett annat program.\nStäng det och försök igen.",
+    "unsupported": "Den här webbläsaren kan inte ge sidan tillgång till en mikrofon.",
+    "dismiss": "Okej"
+  },
   "queryExtension": {
     "title": "Var det allt?",
     "body": "Mötet börjar bli långdraget,\när det dags att komma till ett avslut?",
