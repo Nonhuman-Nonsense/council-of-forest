@@ -1,8 +1,8 @@
 import { type CSSProperties, type ReactElement } from "react";
-import Lottie from "react-lottie-player";
-import loadingAnimation from "@assets/animations/loading.json";
+import { useTranslation } from "react-i18next";
 import ConversationControlIcon from "@council/ConversationControlIcon";
 import RealtimeCaptionOverlay, {
+  type MicButtonState,
   type RealtimeSubtitleLayout,
 } from "@realtime/RealtimeCaptionOverlay";
 import { useMobile } from "@/utils";
@@ -11,6 +11,9 @@ import { z } from "@/zIndexLayers";
 
 type SetupAgentOverlayProps = {
   isConnecting: boolean;
+  /** A connection attempt is in flight — as opposed to simply not started. */
+  isStarting: boolean;
+  isReady: boolean;
   lastCaption: string | null;
   lastUserTranscript: string | null;
   muted: boolean;
@@ -19,17 +22,23 @@ type SetupAgentOverlayProps = {
   subtitleLayout?: RealtimeSubtitleLayout;
   micStream?: MediaStream | null;
   micActive?: boolean;
+  /** Web: the visitor has handed over their microphone. */
+  micOn?: boolean;
+  onToggleMic?: () => void;
   onStart: () => void;
   onStop: () => void;
 };
 
 /**
- * Setup wizard agent shell: shared realtime captions + optional web AI toggle.
- * Stopping the agent tears down WebRTC.
+ * Setup wizard agent shell: shared realtime captions, plus the two web
+ * controls — a mic toggle at the bottom centre (talk to the agent) and a volume
+ * toggle in the corner (turn the agent off entirely, tearing down the session).
  */
 export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactElement {
   const {
     isConnecting,
+    isStarting,
+    isReady,
     lastCaption,
     lastUserTranscript,
     muted,
@@ -38,17 +47,25 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
     subtitleLayout = "compact",
     micStream = null,
     micActive = false,
+    micOn = false,
+    onToggleMic,
     onStart,
     onStop,
   } = props;
   const isMobile = useMobile();
+  const { t } = useTranslation();
 
-  const sessionActive = !muted;
-  const recordingState: "idle" | "loading" | "recording" = !sessionActive
-    ? "idle"
-    : isConnecting
-      ? "loading"
-      : "recording";
+  // Spin only while a connection is genuinely in flight. An agent that is off,
+  // or still waiting for the gesture that lets it be heard, reads as "off" and
+  // is startable by clicking — a spinner there would promise a connection that
+  // nothing is coming for.
+  const micButtonState: MicButtonState = muted
+    ? "off"
+    : isStarting
+      ? "connecting"
+      : isReady && micOn
+        ? "on"
+        : "off";
 
   const controlContainerStyle: CSSProperties = {
     position: "fixed",
@@ -71,32 +88,33 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
       <RealtimeCaptionOverlay
         lastCaption={lastCaption}
         lastUserTranscript={lastUserTranscript}
-        hideCaptions={isConnecting}
+        hideCaptions={isConnecting || muted}
         subtitleLayout={subtitleLayout}
-        showPttVisualizer={agentMode === "ptt"}
+        showMicRow={agentMode === "ptt"}
         micStream={micStream}
-        micActive={micActive}
+        micActive={isMuseumMode ? micActive : micOn}
+        micButton={
+          !isMuseumMode && onToggleMic
+            ? {
+                state: micButtonState,
+                onClick: onToggleMic,
+                label: micOn ? t("agent.micStop") : t("agent.micStart"),
+              }
+            : undefined
+        }
       />
 
       {!isMuseumMode ? (
         <div style={controlContainerStyle}>
           <div style={controlSlotStyle}>
-            {recordingState === "loading" ? (
-              <Lottie
-                play
-                loop
-                animationData={loadingAnimation}
-                style={{ height: isMobile ? 35 : 40 }}
-              />
-            ) : (
-              <ConversationControlIcon
-                icon={recordingState === "recording" ? "ai_filled" : "ai"}
-                hoverIcon={recordingState === "recording" ? "ai" : "ai_filled"}
-                tooltip={recordingState === "recording" ? "Stop setup agent" : "Start setup agent"}
-                onClick={recordingState === "recording" ? onStop : onStart}
-                size={isMobile ? 30 : 40}
-              />
-            )}
+            {/* No spinner here: this is a standing intention, clickable from
+                first paint whatever the session is doing. */}
+            <ConversationControlIcon
+              icon={muted ? "volume_off" : "volume_on"}
+              tooltip={muted ? t("agent.turnOn") : t("agent.turnOff")}
+              onClick={muted ? onStart : onStop}
+              size={isMobile ? 30 : 40}
+            />
           </div>
         </div>
       ) : null}

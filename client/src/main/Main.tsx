@@ -38,7 +38,14 @@ import { useWakeLock } from "@/audio/wakeLock";
 import CouncilError from "./overlay/CouncilError";
 import ErrorBoundary from "./ErrorBoundary";
 import Reconnecting from "./overlay/Reconnecting";
+import MicrophoneBlocked from "./overlay/MicrophoneBlocked";
+import OverlayWrapper from "./overlay/OverlayWrapper";
 import { useErrorStore } from "./overlay/errorStore";
+import {
+  refreshMicAvailability,
+  useMicAvailabilityStore,
+  watchMicAvailability,
+} from "@realtime/micAvailabilityStore";
 
 import MuseumButton from "@/museum/button/MuseumButton";
 import ButtonBanner from "@/museum/button/ButtonBanner";
@@ -100,6 +107,18 @@ export default function Main(props: MainProps) {
   const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
   useMuseumCursorHide();
+
+  const micNoticeOpen = useMicAvailabilityStore((s) => s.noticeOpen);
+  const closeMicNotice = useMicAvailabilityStore((s) => s.closeNotice);
+
+  // Learn the microphone permission up front — a mic already blocked lets
+  // HumanInput skip a pre-warm that could only fail — and keep it current, so a
+  // visitor who allows the mic from browser site settings is noticed without a
+  // reload.
+  useEffect(() => {
+    void refreshMicAvailability();
+    return watchMicAvailability();
+  }, []);
 
   useEffect(() => {
     if (i18n.language !== props.lang) {
@@ -260,6 +279,13 @@ export default function Main(props: MainProps) {
           layer="system"
         >
           <Reconnecting />
+        </Overlay>
+      )}
+      {micNoticeOpen && unrecoverableError == null && (
+        <Overlay isActive={true} isBlurred={true} layer="system">
+          <OverlayWrapper showX={true} cancelOverlay={closeMicNotice}>
+            <MicrophoneBlocked onDismiss={closeMicNotice} />
+          </OverlayWrapper>
         </Overlay>
       )}
       <MainOverlays

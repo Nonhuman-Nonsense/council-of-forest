@@ -80,6 +80,19 @@ export type EventLoop = {
   sendUserMessage: (text: string) => void;
   /** Cancel any in-flight model response (sends response.cancel). */
   cancelActiveResponse: () => void;
+  /**
+   * Barge-in: cancel any in-flight response, truncate the assistant's
+   * last-spoken audio item to what was actually heard (if known), clear the
+   * server's buffered output audio (`output_audio_buffer.clear`), then send
+   * the given user message and request a new response — regardless of
+   * whether a response is currently active. Used for click-reactions that
+   * must cut off whatever the agent is currently saying, mirroring
+   * server-VAD interrupt.
+   */
+  interruptAndRespond: (
+    userText: string,
+    options?: { reason?: string; audioElapsedMs?: number }
+  ) => void;
 };
 
 type FunctionCallMeta = { name?: string; call_id?: string };
@@ -91,6 +104,23 @@ function asObj(v: unknown): Record<string, unknown> | null {
 
 function asStr(v: unknown): string | null {
   return typeof v === "string" ? v : null;
+}
+
+/**
+ * Does this `error` event reject the `response.create` we're still waiting on?
+ *
+ * The provider echoes our `event_id` back on errors it can attribute to a
+ * specific client event, which is the reliable signal. When it can't (some
+ * `server_error`s arrive without one), fall back to matching the error text so
+ * an uncorrelated rejection still recovers rather than stranding the turn.
+ */
+function isResponseCreateRejection(errRaw: unknown, pendingEventId: string): boolean {
+  const e = asObj(errRaw);
+  const eventId = asStr(e?.event_id);
+  if (eventId) return eventId === pendingEventId;
+  const code = asStr(e?.code) ?? "";
+  const message = asStr(e?.message) ?? "";
+  return code.includes("response_create") || message.includes("response.create");
 }
 
 /** Build an event loop bound to a data channel + a context lookup. */
@@ -126,15 +156,43 @@ export function createEventLoop(params: {
 
   /** Reason for the response.create we just sent; consumed by response.created. */
   let pendingCreateReason: string | null = null;
+  /**
+   * `event_id` of the response.create we're waiting on, so an `error` event can
+   * be correlated back to it. Cleared by `response.created` (accepted) or by the
+   * rejection path below.
+   */
+  let pendingCreateEventId: string | null = null;
+  let responseCreateEventCounter = 0;
+  /**
+   * Rejected-`response.create` recovery attempts for the current user turn.
+   *
+   * A rejected create never yields `response.created` *or* `response.done`, so
+   * the empty-response recovery further down never fires and the visitor's turn
+   * dies in silence. Tracked separately from `emptyResponseRetries` so the two
+   * failure modes stay distinguishable in the TURN logs.
+   */
+  let createRejectedRetries = 0;
+  const MAX_CREATE_REJECTED_RETRIES = 1;
   /** Reason the in-flight response was created ("server-auto" if we didn't send it). */
   let currentResponseReason = "server-auto";
+  /**
+   * item_id/content_index of the current (or most recently spoken) assistant
+   * audio content part. Used by `interruptAndRespond` to send
+   * `conversation.item.truncate` so the server's transcript matches what the
+   * visitor actually heard, not what the model finished generating.
+   */
+  let currentAssistantAudioItemId: string | null = null;
+  let currentAssistantAudioContentIndex: number | null = null;
   /** Most recent user transcript text (for correlating in logs). */
   let lastUserTranscript = "";
 
   const sendResponseCreate = (reason: string): void => {
+    responseCreateEventCounter += 1;
+    const eventId = `cof_response_create_${responseCreateEventCounter}`;
     pendingCreateReason = reason;
-    devLog.flat("TURN", "OUT response.create", { reason, lastUserTranscript });
-    send({ type: "response.create" });
+    pendingCreateEventId = eventId;
+    devLog.flat("TURN", "OUT response.create", { reason, eventId, lastUserTranscript });
+    send({ type: "response.create", event_id: eventId });
   };
 
   const isResponseActive = () => activeResponses > 0;
@@ -164,6 +222,52 @@ export function createEventLoop(params: {
     callbacks.onCaption(null);
   };
 
+  const interruptAndRespond = (
+    userText: string,
+    options?: { reason?: string; audioElapsedMs?: number }
+  ): void => {
+    const reason = options?.reason ?? "interrupt-request";
+    if (activeResponses > 0) {
+      devLog.flat("TURN", "OUT response.cancel (interrupt)", { reason });
+      send({ type: "response.cancel" });
+    }
+    // Trim the assistant's last-spoken item down to what was actually heard,
+    // so the model's own transcript doesn't include audio that got cut off —
+    // otherwise it may reference things it never actually said out loud.
+    if (
+      options?.audioElapsedMs != null &&
+      currentAssistantAudioItemId != null &&
+      currentAssistantAudioContentIndex != null
+    ) {
+      // Floor, never round: rounding up can put audio_end_ms a fraction of a
+      // ms past the provider's own reported duration at the boundary
+      // (observed: "audio_end_ms 20660 exceeds actual audio duration 20659"),
+      // which the provider rejects outright and crashes the session.
+      const audioEndMs = Math.max(0, Math.floor(options.audioElapsedMs));
+      devLog.flat("TURN", "OUT conversation.item.truncate (interrupt)", {
+        reason,
+        itemId: currentAssistantAudioItemId,
+        audioEndMs,
+      });
+      send({
+        type: "conversation.item.truncate",
+        item_id: currentAssistantAudioItemId,
+        content_index: currentAssistantAudioContentIndex,
+        audio_end_ms: audioEndMs,
+      });
+    }
+    devLog.flat("TURN", "OUT output_audio_buffer.clear (interrupt)", { reason });
+    send({ type: "output_audio_buffer.clear" });
+    // Leave the current caption on screen, same as real voice interruption:
+    // it's cleared naturally when the new response starts (onResponseStarted).
+    sendUserMessage(userText);
+    if (!sessionReady) {
+      pendingDeferredResponse = true;
+      return;
+    }
+    sendResponseCreate(reason);
+  };
+
   const trySendJson = (payload: unknown) => {
     try {
       send(payload);
@@ -178,6 +282,9 @@ export function createEventLoop(params: {
   ): void => {
     sessionReady = false;
     pendingDeferredResponse = false;
+    pendingCreateEventId = null;
+    pendingCreateReason = null;
+    createRejectedRetries = 0;
     if (options?.triggerGreetingOnReady) {
       pendingOpeningGreeting = options.greetingUserText ?? DEFAULT_GREETING_USER_TEXT;
     } else {
@@ -205,6 +312,22 @@ export function createEventLoop(params: {
         content: [{ type: "input_text", text }],
       },
     });
+  };
+
+  /**
+   * Re-request a response for a user turn that produced nothing.
+   *
+   * A bare `response.create` against the same context also comes back empty
+   * (confirmed via logs): the model won't act on a conversation whose last turn
+   * is the committed *audio* turn. Injecting a *text* user item makes it
+   * respond, so we echo the visitor's transcript.
+   */
+  const recoverTurn = (createReason: string): void => {
+    const recoveryText = lastUserTranscript.trim()
+      ? `The visitor said: "${lastUserTranscript.trim()}". Respond now and continue.`
+      : "The visitor responded. Respond now and continue.";
+    sendUserMessage(recoveryText);
+    sendResponseCreate(createReason);
   };
 
   const handleEvent = async (event: unknown): Promise<boolean> => {
@@ -244,6 +367,9 @@ export function createEventLoop(params: {
       sawOutputThisResponse = false;
       currentResponseReason = pendingCreateReason ?? "server-auto";
       pendingCreateReason = null;
+      pendingCreateEventId = null;
+      currentAssistantAudioItemId = null;
+      currentAssistantAudioContentIndex = null;
       devLog.event("REALTIME", "IN response.created", { activeResponses });
       devLog.flat("TURN", "IN response.created", {
         reason: currentResponseReason,
@@ -294,23 +420,14 @@ export function createEventLoop(params: {
           emptyResponseRetries < MAX_EMPTY_RESPONSE_RETRIES
         ) {
           emptyResponseRetries += 1;
-          // A bare response.create against the same context also comes back
-          // empty (confirmed via logs): the model won't act on a conversation
-          // whose last turn is the committed *audio* turn. Injecting a *text*
-          // user item makes it respond, so we echo the visitor's transcript.
-          const recoveryText = lastUserTranscript.trim()
-            ? `The visitor said: "${lastUserTranscript.trim()}". Respond now and continue.`
-            : "The visitor responded. Respond now and continue.";
           devLog.event("REALTIME", "empty response recovery — re-requesting", {
             status: r?.status,
             emptyResponseRetries,
           });
           devLog.flat("TURN", "EMPTY RESPONSE — recovering via injected text", {
             createdBy: currentResponseReason,
-            recoveryText,
           });
-          sendUserMessage(recoveryText);
-          sendResponseCreate("empty-retry");
+          recoverTurn("empty-retry");
         } else {
           devLog.flat("TURN", "EMPTY RESPONSE — no retry (cap/guards)", {
             createdBy: currentResponseReason,
@@ -337,6 +454,10 @@ export function createEventLoop(params: {
       sawOutputThisResponse = true;
       const part = asObj(obj.part);
       if (asStr(part?.type) === "audio") {
+        const itemId = asStr(obj.item_id);
+        const contentIndex = (obj as Record<string, unknown>).content_index;
+        if (itemId) currentAssistantAudioItemId = itemId;
+        if (typeof contentIndex === "number") currentAssistantAudioContentIndex = contentIndex;
         callbacks.onAudioPartReady?.();
       }
       return true;
@@ -362,9 +483,23 @@ export function createEventLoop(params: {
 
       const handler = getCtx().toolHandlers[name];
       devLog.event("AGENT", `tool ${name}`, summarizeLogPayload({ args: parsedArgs }));
-      const result: ToolResult = handler
-        ? await Promise.resolve(handler(parsedArgs))
-        : { ok: false, error: `No handler for tool: ${name}` };
+      let result: ToolResult;
+      if (!handler) {
+        result = { ok: false, error: `No handler for tool: ${name}` };
+      } else {
+        try {
+          result = await Promise.resolve(handler(parsedArgs));
+        } catch (err) {
+          // A throwing handler must still produce a function_call_output.
+          // Without one the model waits forever for a result that will never
+          // arrive and the agent goes silent mid-conversation — on a museum
+          // kiosk that reads as a hang. Hand the model the failure instead so
+          // it can acknowledge it and carry on.
+          const detail = err instanceof Error && err.message ? err.message : String(err);
+          devLog.event("ERROR", `tool ${name} threw`, summarizeLogPayload({ error: detail }));
+          result = { ok: false, error: `Tool ${name} failed: ${detail}` };
+        }
+      }
       devLog.event("AGENT", `tool ${name} result`, summarizeLogPayload(result));
 
       trySendJson({
@@ -430,8 +565,9 @@ export function createEventLoop(params: {
     }
 
     if (type === "conversation.item.input_audio_transcription.completed") {
-      // New user turn — reset the empty-response retry budget.
+      // New user turn — reset the turn-recovery retry budgets.
       emptyResponseRetries = 0;
+      createRejectedRetries = 0;
       const transcript = asStr(obj.transcript);
       lastUserTranscript = transcript ?? "";
       devLog.flat("TURN", "IN transcription.completed", {
@@ -466,6 +602,38 @@ export function createEventLoop(params: {
       } else if (typeof errRaw === "string") {
         message = errRaw;
       }
+
+      // A rejected `response.create` produces neither `response.created` nor
+      // `response.done`, so the empty-response recovery above never runs and
+      // the visitor's turn ends in silence with no retry. Correlate the error
+      // back to the create we're waiting on and re-request once per turn.
+      if (pendingCreateEventId != null && isResponseCreateRejection(errRaw, pendingCreateEventId)) {
+        const rejectedReason = pendingCreateReason;
+        pendingCreateEventId = null;
+        pendingCreateReason = null;
+        if (
+          sessionReady &&
+          activeResponses === 0 &&
+          createRejectedRetries < MAX_CREATE_REJECTED_RETRIES
+        ) {
+          createRejectedRetries += 1;
+          devLog.flat("TURN", "response.create REJECTED — recovering via injected text", {
+            rejectedReason,
+            message,
+            createRejectedRetries,
+          });
+          recoverTurn("create-rejected-retry");
+        } else {
+          devLog.flat("TURN", "response.create REJECTED — no retry (cap/guards)", {
+            rejectedReason,
+            message,
+            createRejectedRetries,
+            sessionReady,
+            activeResponses,
+          });
+        }
+      }
+
       callbacks.onError(message);
       return true;
     }
@@ -479,6 +647,11 @@ export function createEventLoop(params: {
       return true;
     }
 
+    if (type.startsWith("output_audio_buffer.")) {
+      devLog.event("REALTIME", `IN ${type}`, summarizeLogPayload(obj));
+      return true;
+    }
+
     return false;
   };
 
@@ -489,5 +662,6 @@ export function createEventLoop(params: {
     configureSession,
     sendUserMessage,
     cancelActiveResponse,
+    interruptAndRespond,
   };
 }

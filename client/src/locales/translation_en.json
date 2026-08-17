@@ -163,6 +163,20 @@
   "controls": {
     "wait": "wait for your turn to speak"
   },
+  "agent": {
+    "turnOn": "Turn on the guide",
+    "turnOff": "Turn off the guide",
+    "micStart": "Talk to the guide",
+    "micStop": "Stop talking"
+  },
+  "microphone": {
+    "title": "Microphone not available",
+    "blocked": "Allow microphone access for this site in your browser,\nthen press the microphone button again.",
+    "noDevice": "No microphone was found on this device.",
+    "inUse": "The microphone is being used by another application.\nClose it and try again.",
+    "unsupported": "This browser can't give the page a microphone.",
+    "dismiss": "Got it"
+  },
   "queryExtension": {
     "title": "Is that it?",
     "body": "This meeting is starting to get long-winded,\nis it time to come to a conclusion?",

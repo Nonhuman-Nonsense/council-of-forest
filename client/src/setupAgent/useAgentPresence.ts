@@ -11,6 +11,14 @@ const NUDGE_DELAY_MS = 10_000;
 export type UseAgentPresenceParams = {
   agent: SetupAgentState;
   phase: MeetingSetupPhase;
+  /**
+   * Opaque value that changes on visitor activity the hook can't otherwise
+   * observe — e.g. typing a panelist's details, which touches neither
+   * `agentSpeaking` nor `lastUserTranscript`. Resets both the nudge countdown
+   * and the absolute idle timeout, so the agent doesn't ask "are you there?"
+   * — or tear the session down — while the visitor is mid-sentence.
+   */
+  lastActivity?: unknown;
 };
 
 export type AgentPresenceState = {
@@ -25,7 +33,7 @@ export type AgentPresenceState = {
  * actually present: nudges on silence, tears down on tab-hidden/idle, and
  * resumes on return.
  */
-export function useAgentPresence({ agent, phase }: UseAgentPresenceParams): AgentPresenceState {
+export function useAgentPresence({ agent, phase, lastActivity }: UseAgentPresenceParams): AgentPresenceState {
   const { sendUserMessage, muted } = agent;
   const isDocumentVisible = useDocumentVisibility();
   const [nudgeFired, setNudgeFired] = useState(false);
@@ -39,8 +47,12 @@ export function useAgentPresence({ agent, phase }: UseAgentPresenceParams): Agen
     delayMs: NUDGE_DELAY_MS,
     enabled: !agent.isConnecting && !muted && isDocumentVisible,
     onNudgeFired: () => setNudgeFired(true),
-    message:
-      phase === "landing"
+    lastActivity,
+    // A visitor with no microphone isn't "quiet" — they're reading. Asking them
+    // to respond would be asking for something they can't give.
+    message: !agent.canHearVisitor
+      ? "The visitor has been still for a while. Say something brief about what is on screen, or offer a thought that might help them choose. Do not ask them anything."
+      : phase === "landing"
         ? "The visitor is quiet. Gently prompt them to respond to you."
         : "The visitor has been quiet for a while. Check in with them — ask if they need help or have a question.",
   });
@@ -70,9 +82,11 @@ export function useAgentPresence({ agent, phase }: UseAgentPresenceParams): Agen
       void agent.start();
     } else if (!muted && !agent.isConnecting && !agent.agentSpeaking) {
       sendUserMessage(
-        phase === "landing"
-          ? "The visitor has returned after a brief absence. Welcome them back and invite them to continue."
-          : "The visitor has returned after a brief absence. Check in warmly and help them pick up where they left off.",
+        !agent.canHearVisitor
+          ? "The visitor has returned after a brief absence. Welcome them back in one short sentence. Do not ask them anything."
+          : phase === "landing"
+            ? "The visitor has returned after a brief absence. Welcome them back and invite them to continue."
+            : "The visitor has returned after a brief absence. Check in warmly and help them pick up where they left off.",
       );
       agent.requestAgentResponse();
       setNudgeFired(true);
@@ -90,7 +104,7 @@ export function useAgentPresence({ agent, phase }: UseAgentPresenceParams): Agen
     }, IDLE_TIMEOUT_MS);
     return () => clearTimeout(id);
 
-  }, [agent.lastUserTranscript, muted]);
+  }, [agent.lastUserTranscript, muted, lastActivity]);
 
   // Resume on window focus if the session was torn down by the background timer.
   // This handles returning from another app without switching tabs.
