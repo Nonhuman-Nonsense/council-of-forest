@@ -457,6 +457,34 @@ describe("useButtonStore", () => {
       expect(useButtonStore.getState().pressed).toBe(false);
     });
 
+    it("web: losing window focus clears a latched-open mic — a real withdrawal, not a wait", () => {
+      // Unlike a disarm, this must not come back by itself: leaving the mic
+      // open while the visitor is on another tab or app is a privacy
+      // surprise, not a capability they'll regain.
+      localStorage.setItem("councilAppMode", "web");
+
+      pressFor(50);
+      expect(useButtonStore.getState().latched).toBe(true);
+
+      window.dispatchEvent(new Event("blur"));
+
+      expect(useButtonStore.getState().latched).toBe(false);
+
+      // And it stays withdrawn through a disarm/re-arm — it is not merely
+      // suspended the way a capability loss would be.
+      useButtonStore.getState().setButtonArmed("setup-agent", false);
+      useButtonStore.getState().setButtonArmed("setup-agent", true);
+      expect(useButtonStore.getState().latched).toBe(false);
+    });
+
+    it("does not clear an unlatched session on blur", () => {
+      localStorage.setItem("councilAppMode", "web");
+
+      window.dispatchEvent(new Event("blur"));
+
+      expect(useButtonStore.getState().latched).toBe(false);
+    });
+
     it("lets an owner end a latch it did not start", () => {
       // Human input finishes a take when the visitor turns to the textarea; the
       // state can settle back to armed in one batch, so the disarm path alone
@@ -470,13 +498,36 @@ describe("useButtonStore", () => {
       expect(useButtonStore.getState().latched).toBe(false);
     });
 
-    it("disarming clears a latch left over mid-gesture", () => {
+    it("keeps a latch through a disarm and honours it again on re-arm", () => {
+      // Arming is a capability, not consent: losing it for a moment — a
+      // reconnect, or waiting for the agent to be ready to listen — must not
+      // throw away what the visitor asked for. The mic still closes meanwhile,
+      // because `wantsMic` requires `armed`.
       localStorage.setItem("councilAppMode", "web");
 
       pressFor(50);
       expect(useButtonStore.getState().latched).toBe(true);
 
       useButtonStore.getState().setButtonArmed("setup-agent", false);
+      expect(useButtonStore.getState().latched).toBe(true);
+      expect(useButtonStore.getState().armed).toBe(false);
+
+      useButtonStore.getState().setButtonArmed("setup-agent", true);
+      expect(useButtonStore.getState().latched).toBe(true);
+      expect(useButtonStore.getState().armed).toBe(true);
+    });
+
+    it("does not read a disarm as a tap when the visitor is mid-press", () => {
+      // The disarm ends the press, but it is not a gesture — measuring it as
+      // one would toggle the latch on the visitor's behalf.
+      localStorage.setItem("councilAppMode", "web");
+
+      useButtonStore.setState({ keyboardDown: true });
+      useButtonStore.getState().syncPressed("keyboard");
+      expect(useButtonStore.getState().pressed).toBe(true);
+
+      useButtonStore.getState().setButtonArmed("setup-agent", false);
+
       expect(useButtonStore.getState().latched).toBe(false);
     });
 

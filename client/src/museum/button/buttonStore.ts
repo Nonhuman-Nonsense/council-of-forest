@@ -293,9 +293,18 @@ function bindKeyboard(
   // mid-hold and the mic would otherwise stay open with nothing holding it.
   // Treat losing focus as a release; the duration still decides tap vs hold.
   const onBlur = () => {
-    if (!get().keyboardDown) return;
-    set({ keyboardDown: false });
-    recomputePressed(set, get, "keyboard");
+    if (get().keyboardDown) {
+      set({ keyboardDown: false });
+      recomputePressed(set, get, "keyboard");
+    }
+    // A latched mic left open while the visitor is elsewhere is a privacy
+    // surprise, not a convenience — unlike a disarm, this is a real
+    // withdrawal, not a capability the owner will get back on its own.
+    // Covers switching tabs, minimising, and switching to another program
+    // (visibilitychange alone would miss that last one).
+    if (get().latched) {
+      setLatch(set, get, get().buttonOwner, false, "blur");
+    }
   };
 
   window.addEventListener("keydown", onKeyDown);
@@ -339,13 +348,21 @@ function recomputeButtonRouting(
     }
   }
 
-  // A latch belongs to the owner and the arming that produced it: the next
-  // owner starts clean, and disarming forces the mic shut rather than leaving
-  // it held open by a gesture that is no longer allowed. Clearing
-  // `pressStartedAt` too stops `recomputePressed` from reading the disarm as a
-  // fast release and latching on from a non-gesture.
+  // Neither a disarm nor a handoff is a gesture, so the "release" each one
+  // causes must not be measured as a tap or a hold — otherwise a disarm
+  // landing within the tap window would toggle the latch on its own.
   if (prevOwner !== buttonOwner || !armed) {
     pressStartedAt = null;
+  }
+
+  // A latch belongs to the owner whose gesture created it, so a handoff clears
+  // it. Disarming deliberately does not: arming is a *capability*, and losing
+  // it for a moment — reconnecting, or waiting for the agent to be ready to
+  // listen — must not throw away what the visitor asked for. `wantsMic`
+  // already requires `armed`, so the mic still closes while disarmed; it
+  // reopens by itself once the button can honour the ask again. Withdrawing
+  // the ask is a separate, explicit act (see `clearButtonLatch`).
+  if (prevOwner !== buttonOwner) {
     set({ latched: false });
   }
 
@@ -362,9 +379,9 @@ function recomputeButtonRouting(
 function setLatch(
   set: (partial: Partial<ButtonStore> | ((state: ButtonStore) => Partial<ButtonStore>)) => void,
   get: () => ButtonStore,
-  owner: ButtonOwner,
+  owner: ButtonOwner | null,
   latched: boolean,
-  source: "click" | "owner",
+  source: "click" | "owner" | "blur",
 ): void {
   log.event("BUTTON", latched ? "latch on" : "latch off", { owner, source });
   const ledMode = resolveLedMode(get().armed, get().pressed || latched);

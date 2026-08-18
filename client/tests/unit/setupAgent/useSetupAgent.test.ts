@@ -256,6 +256,145 @@ describe("useSetupAgent", () => {
     expect(attachMic).toHaveBeenCalledWith({ userInitiated: true });
   });
 
+  it("withdraws the ask when the microphone cannot be attached", async () => {
+    // Otherwise the request stays pending against a mic that is never coming,
+    // and the button spins forever instead of offering another try.
+    attachMic.mockResolvedValue(false);
+    mockUseRealtimeVoiceSession.mockReturnValue(readySession);
+    const onMicUnavailable = vi.fn();
+
+    const { rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen, onMicUnavailable }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+
+    await waitFor(() => expect(onMicUnavailable).toHaveBeenCalledOnce());
+  });
+
+  it("mutes a track that attaches after the ask was withdrawn, rather than leaving it hot", async () => {
+    // getUserMedia (the permission prompt included) cannot be cancelled once
+    // asked, so the ask can change while it is in flight — e.g. the visitor
+    // switches tabs mid-prompt and the latch clears. A fresh track defaults
+    // to enabled, so without this fix a late-arriving mic goes live
+    // regardless of what is currently wanted.
+    let resolveAttach!: (attached: boolean) => void;
+    attachMic.mockReturnValue(new Promise<boolean>((resolve) => { resolveAttach = resolve; }));
+    const setMicEnabled = vi.fn();
+    mockUseRealtimeVoiceSession.mockReturnValue({ ...readySession, setMicEnabled });
+
+    const { rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+    await waitFor(() => expect(attachMic).toHaveBeenCalledOnce());
+
+    // Withdrawn before the browser resolves the prompt.
+    rerender({ micOpen: false });
+
+    resolveAttach(true);
+    await waitFor(() => expect(setMicEnabled).toHaveBeenCalledWith(false));
+  });
+
+  it("reuses an already-attached track instead of re-requesting the microphone", async () => {
+    // The attach that resolved after being withdrawn still really happened —
+    // re-attaching on the next ask would be wasteful and could re-prompt.
+    let resolveAttach!: (attached: boolean) => void;
+    attachMic.mockReturnValue(new Promise<boolean>((resolve) => { resolveAttach = resolve; }));
+    const setMicEnabled = vi.fn();
+    mockUseRealtimeVoiceSession.mockReturnValue({ ...readySession, setMicEnabled });
+
+    const { rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+    await waitFor(() => expect(attachMic).toHaveBeenCalledOnce());
+    rerender({ micOpen: false });
+    resolveAttach(true);
+    await waitFor(() => expect(setMicEnabled).toHaveBeenCalledWith(false));
+
+    rerender({ micOpen: true });
+
+    await waitFor(() => expect(setMicEnabled).toHaveBeenLastCalledWith(true));
+    expect(attachMic).toHaveBeenCalledOnce();
+  });
+
+  it("reports micAttaching while a real attach call is outstanding", async () => {
+    let resolveAttach!: (attached: boolean) => void;
+    attachMic.mockReturnValue(new Promise<boolean>((resolve) => { resolveAttach = resolve; }));
+    mockUseRealtimeVoiceSession.mockReturnValue(readySession);
+
+    const { result, rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen }),
+      { initialProps: { micOpen: false } },
+    );
+    expect(result.current.micAttaching).toBe(false);
+
+    rerender({ micOpen: true });
+    await waitFor(() => expect(result.current.micAttaching).toBe(true));
+
+    resolveAttach(true);
+    await waitFor(() => expect(result.current.micAttaching).toBe(false));
+  });
+
+  it("keeps reporting micAttaching after the ask is withdrawn mid-flight", async () => {
+    // The spinner must not depend on the ask surviving — the permission
+    // prompt itself can blur the window and clear the latch while this call
+    // is still genuinely running.
+    let resolveAttach!: (attached: boolean) => void;
+    attachMic.mockReturnValue(new Promise<boolean>((resolve) => { resolveAttach = resolve; }));
+    mockUseRealtimeVoiceSession.mockReturnValue(readySession);
+
+    const { result, rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+    await waitFor(() => expect(result.current.micAttaching).toBe(true));
+
+    rerender({ micOpen: false });
+    expect(result.current.micAttaching).toBe(true);
+
+    resolveAttach(true);
+    await waitFor(() => expect(result.current.micAttaching).toBe(false));
+  });
+
+  it("clears micAttaching when the attach fails, alongside withdrawing the ask", async () => {
+    attachMic.mockResolvedValue(false);
+    mockUseRealtimeVoiceSession.mockReturnValue(readySession);
+
+    const { result, rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+
+    await waitFor(() => expect(result.current.micAttaching).toBe(false));
+    expect(attachMic).toHaveBeenCalledOnce();
+  });
+
+  it("leaves the ask alone when the microphone attaches", async () => {
+    mockUseRealtimeVoiceSession.mockReturnValue(readySession);
+    const onMicUnavailable = vi.fn();
+
+    const { rerender } = renderHook(
+      ({ micOpen }) => useSetupAgent({ ...defaultParams, micOpen, onMicUnavailable }),
+      { initialProps: { micOpen: false } },
+    );
+
+    rerender({ micOpen: true });
+
+    await waitFor(() => expect(attachMic).toHaveBeenCalledOnce());
+    expect(onMicUnavailable).not.toHaveBeenCalled();
+  });
+
   it("re-attaches the microphone after a reconnect without nagging", async () => {
     // The visitor never let go of the mic — a dropped session shouldn't
     // silently take it away, nor throw an overlay if it can't be recovered.

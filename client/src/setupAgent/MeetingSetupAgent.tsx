@@ -144,6 +144,7 @@ export default function MeetingSetupAgent({
     }),
     micUpFront: capabilities.micUpFront,
     micOpen: button.wantsMic,
+    onMicUnavailable: button.clearLatch,
   });
   const { interruptAndRespond, muted } = agent;
   // Any click or keystroke counts as activity — resets the idle nudge and the
@@ -230,6 +231,17 @@ export default function MeetingSetupAgent({
     button.toggleLatch();
   }, [muted, agent.start, button.toggleLatch]);
 
+  /**
+   * Switching the agent off withdraws the ask, rather than merely suspending
+   * it: the mic is not what they turned off, but turning the agent back on
+   * from the corner should not silently reopen their microphone. Only the mic
+   * button asks for the mic.
+   */
+  const handleStop = useCallback(() => {
+    button.clearLatch();
+    agent.stop();
+  }, [button.clearLatch, agent.stop]);
+
   useEffect(() => {
     if (!lastUserEvent) {
       return;
@@ -279,10 +291,11 @@ export default function MeetingSetupAgent({
       showMicRow={isMuseumMode}
       subtitleLayout={isMuseumMode ? "council" : "compact"}
       micStream={agent.micStream}
+      micAttaching={agent.micAttaching}
       micRequested={micRequested}
       onToggleMic={handleToggleMic}
       onStart={agent.start}
-      onStop={agent.stop}
+      onStop={handleStop}
     />
     </>
   );
