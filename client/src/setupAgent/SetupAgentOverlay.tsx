@@ -10,9 +10,6 @@ import { z } from "@/zIndexLayers";
 
 type SetupAgentOverlayProps = {
   isConnecting: boolean;
-  /** A connection attempt is in flight — as opposed to simply not started. */
-  isStarting: boolean;
-  isReady: boolean;
   lastCaption: string | null;
   lastUserTranscript: string | null;
   muted: boolean;
@@ -22,9 +19,15 @@ type SetupAgentOverlayProps = {
   showMicRow?: boolean;
   subtitleLayout?: RealtimeSubtitleLayout;
   micStream?: MediaStream | null;
-  micActive?: boolean;
-  /** Web: the visitor has handed over their microphone. */
-  micOn?: boolean;
+  /**
+   * The visitor has asked for the mic (gesture), whether or not audio is
+   * flowing yet. Drives the toggle label (a click cancels the request either
+   * way), museum's visualiser row (raw press — the mic is already attached
+   * there, so there is no gap to hide), and web's "connecting" state; web
+   * additionally waits for `micStream` before showing "on", since on a first
+   * press the track can lag the gesture by however long getUserMedia takes.
+   */
+  micRequested?: boolean;
   onToggleMic?: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -38,8 +41,6 @@ type SetupAgentOverlayProps = {
 export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactElement {
   const {
     isConnecting,
-    isStarting,
-    isReady,
     lastCaption,
     lastUserTranscript,
     muted,
@@ -47,8 +48,7 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
     showMicRow = false,
     subtitleLayout = "compact",
     micStream = null,
-    micActive = false,
-    micOn = false,
+    micRequested = false,
     onToggleMic,
     onStart,
     onStop,
@@ -56,15 +56,23 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
   const isMobile = useMobile();
   const { t } = useTranslation();
 
-  // Spin only while a connection is genuinely in flight. An agent that is off,
-  // or still waiting for the gesture that lets it be heard, reads as "off" and
-  // is startable by clicking — a spinner there would promise a connection that
-  // nothing is coming for.
+  // The one thing SetupAgentOverlay adds on top of what it's told: whether
+  // the track handed back with `micStream` is the one being asked for right
+  // now. Not a second signal from the caller — `micStream` was already here
+  // for the visualiser.
+  const micLive = micStream != null;
+
+  // Two separate waits, both shown as "connecting": the whole session still
+  // settling (same signal the museum spinner uses, ready-but-silent included —
+  // stops early once the page turns out not to be audible, since nothing more
+  // is coming until the visitor gives the gesture this button exists to
+  // collect), and — once the session itself is fine — the mic-specific gap on
+  // a first press, between asking for it and the track actually sending.
   const micButtonState: MicButtonState = muted
     ? "off"
-    : isStarting
+    : isConnecting || (micRequested && !micLive)
       ? "connecting"
-      : isReady && micOn
+      : micLive
         ? "on"
         : "off";
 
@@ -93,13 +101,18 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
         subtitleLayout={subtitleLayout}
         showMicRow={showMicRow}
         micStream={micStream}
-        micActive={browserUi ? micOn : micActive}
+        // Web: wait for audio to actually be flowing, not just requested —
+        // showing this on the gesture alone is what swallowed the first
+        // second of speech into an untethered track.
+        micActive={browserUi ? micLive : micRequested}
         micButton={
           browserUi && onToggleMic
             ? {
                 state: micButtonState,
                 onClick: onToggleMic,
-                label: micOn ? t("agent.micStop") : t("agent.micStart"),
+                // Tracks the request, not the live state: a click cancels the
+                // ask whether or not the track has started sending yet.
+                label: micRequested ? t("agent.micStop") : t("agent.micStart"),
               }
             : undefined
         }

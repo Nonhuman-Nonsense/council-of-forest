@@ -29,8 +29,6 @@ vi.mock('@council/ConversationControlIcon', () => ({
 describe('SetupAgentOverlay', () => {
   const baseProps = {
     isConnecting: false,
-    isStarting: false,
-    isReady: true,
     lastCaption: null,
     lastUserTranscript: null,
     muted: false,
@@ -68,44 +66,59 @@ describe('SetupAgentOverlay', () => {
   });
 
   it('shows the right mic button state for the session', () => {
+    const liveStream = {} as MediaStream;
     const cases: Array<{
       muted: boolean;
-      isStarting: boolean;
-      isReady: boolean;
-      micOn: boolean;
+      isConnecting: boolean;
+      micRequested: boolean;
+      micStream: MediaStream | null;
       expected: string;
     }> = [
       // Off is a real state, not a pending one: the click restarts everything,
       // so it stays clickable even though the session is not ready.
-      { muted: true, isStarting: false, isReady: false, micOn: false, expected: 'off' },
-      // Not started because we are still waiting for the gesture that lets the
-      // agent be heard. Spinning here would promise a connection that nothing
-      // is coming for, and hide the button that would start one.
-      { muted: false, isStarting: false, isReady: false, micOn: false, expected: 'off' },
-      // Only an attempt actually in flight waits.
-      { muted: false, isStarting: true, isReady: false, micOn: false, expected: 'connecting' },
-      { muted: false, isStarting: false, isReady: true, micOn: false, expected: 'off' },
-      { muted: false, isStarting: false, isReady: true, micOn: true, expected: 'on' },
+      { muted: true, isConnecting: false, micRequested: false, micStream: null, expected: 'off' },
+      // Not connecting because the page turned out not to be audible yet —
+      // spinning here would promise a greeting that nothing is coming for,
+      // and hide the button that supplies the gesture to unblock it.
+      { muted: false, isConnecting: false, micRequested: false, micStream: null, expected: 'off' },
+      // Ready-but-silent still spins, same signal the museum spinner uses —
+      // the greeting itself is what a visitor here is waiting to hear.
+      { muted: false, isConnecting: true, micRequested: false, micStream: null, expected: 'connecting' },
+      // Requested but not yet live: the first press, mid getUserMedia/attach —
+      // spins rather than showing "on" for a track that isn't sending yet.
+      { muted: false, isConnecting: false, micRequested: true, micStream: null, expected: 'connecting' },
+      { muted: false, isConnecting: false, micRequested: true, micStream: liveStream, expected: 'on' },
+      { muted: false, isConnecting: false, micRequested: false, micStream: null, expected: 'off' },
     ];
 
-    for (const { muted, isStarting, isReady, micOn, expected } of cases) {
+    for (const { muted, isConnecting, micRequested, micStream, expected } of cases) {
       const { unmount } = render(
         <SetupAgentOverlay
           {...baseProps}
           browserUi
           muted={muted}
-          isStarting={isStarting}
-          isReady={isReady}
-          micOn={micOn}
+          isConnecting={isConnecting}
+          micRequested={micRequested}
+          micStream={micStream}
         />,
       );
 
       expect(
         screen.getByTestId('realtime-mic-button'),
-        `muted=${muted} starting=${isStarting} ready=${isReady} micOn=${micOn}`,
+        `muted=${muted} connecting=${isConnecting} requested=${micRequested} live=${micStream != null}`,
       ).toHaveAttribute('data-mic-state', expected);
       unmount();
     }
+  });
+
+  it('shows the visualiser only once the mic is actually live, not on the request alone', () => {
+    const { rerender } = render(
+      <SetupAgentOverlay {...baseProps} browserUi micRequested />,
+    );
+    expect(screen.queryByTestId('live-audio-viz')).not.toBeInTheDocument();
+
+    rerender(<SetupAgentOverlay {...baseProps} browserUi micRequested micStream={{} as MediaStream} />);
+    expect(screen.getByTestId('live-audio-viz')).toBeInTheDocument();
   });
 
   it('does not render a clickable mic button without a pointer', () => {
