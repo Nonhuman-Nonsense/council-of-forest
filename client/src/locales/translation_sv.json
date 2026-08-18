@@ -35,10 +35,6 @@
     "placeholder": "Skriv din fråga eller börja inspelning...",
     "panelist": "Vad har {{name}} att säga om det här?"
   },
-  "agentMode": {
-    "alwaysOn": "Alltid på",
-    "pushToTalk": "Tryck för att tala"
-  },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
     "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka"
@@ -75,7 +71,6 @@
     "title": "PERSONAL",
     "panels": {
       "installation": "Installation",
-      "agentMode": "Agentläge",
       "details": "Detaljer & tips",
       "logging": "Loggning"
     },

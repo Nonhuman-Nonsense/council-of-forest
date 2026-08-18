@@ -6,7 +6,6 @@ import RealtimeCaptionOverlay, {
   type RealtimeSubtitleLayout,
 } from "@realtime/RealtimeCaptionOverlay";
 import { useMobile } from "@/utils";
-import type { AgentMode } from "@/settings/councilSettings";
 import { z } from "@/zIndexLayers";
 
 type SetupAgentOverlayProps = {
@@ -17,8 +16,10 @@ type SetupAgentOverlayProps = {
   lastCaption: string | null;
   lastUserTranscript: string | null;
   muted: boolean;
-  isMuseumMode?: boolean;
-  agentMode?: AgentMode;
+  /** The visitor has a pointer: show the mic button and the volume control. */
+  browserUi?: boolean;
+  /** Museum: show the visualiser row with no on-screen button. */
+  showMicRow?: boolean;
   subtitleLayout?: RealtimeSubtitleLayout;
   micStream?: MediaStream | null;
   micActive?: boolean;
@@ -42,8 +43,8 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
     lastCaption,
     lastUserTranscript,
     muted,
-    isMuseumMode = false,
-    agentMode = "always-on",
+    browserUi = false,
+    showMicRow = false,
     subtitleLayout = "compact",
     micStream = null,
     micActive = false,
@@ -90,11 +91,11 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
         lastUserTranscript={lastUserTranscript}
         hideCaptions={isConnecting || muted}
         subtitleLayout={subtitleLayout}
-        showMicRow={agentMode === "ptt"}
+        showMicRow={showMicRow}
         micStream={micStream}
-        micActive={isMuseumMode ? micActive : micOn}
+        micActive={browserUi ? micOn : micActive}
         micButton={
-          !isMuseumMode && onToggleMic
+          browserUi && onToggleMic
             ? {
                 state: micButtonState,
                 onClick: onToggleMic,
@@ -104,7 +105,7 @@ export default function SetupAgentOverlay(props: SetupAgentOverlayProps): ReactE
         }
       />
 
-      {!isMuseumMode ? (
+      {browserUi ? (
         <div style={controlContainerStyle}>
           <div style={controlSlotStyle}>
             {/* No spinner here: this is a standing intention, clickable from

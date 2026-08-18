@@ -16,7 +16,7 @@ import {
   type MeetingSetupUserEvent,
 } from "@newMeeting/meetingSetup";
 import { useMeetingSetupStore } from "@newMeeting/meetingSetupStore";
-import { useButton, type ButtonLedMode } from "@/museum/button/useButton";
+import { useButton } from "@/museum/button/useButton";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { buildSetupAgentPrompt } from "./setupAgentPrompt";
 import { createSetupAgentToolHandlers, createSetupAgentTools } from "./setupAgentTools";
@@ -44,7 +44,7 @@ export default function MeetingSetupAgent({
   onStartMeeting,
 }: MeetingSetupAgentProps) {
   const { i18n, t } = useTranslation();
-  const { isMuseumMode, agentMode } = useCouncilSettings();
+  const { isMuseumMode, capabilities } = useCouncilSettings();
   const { switchLanguage, otherLanguages } = useSwitchLanguage();
   const button = useButton("setup-agent");
   const connectionError = useErrorStore((s) => s.connectionError);
@@ -87,22 +87,20 @@ export default function MeetingSetupAgent({
     [otherLanguages],
   );
 
-  // Builders, not values: the agent's job changes depending on whether it can
-  // hear the visitor, and that state lives inside useSetupAgent.
+  // A builder, not a value: the agent's job changes once the visitor has been
+  // audible, and that latch lives inside useSetupAgent.
   const instructions = useCallback(
-    ({ canHearVisitor, hasEverHeardVisitor }: SetupAgentContext) =>
+    ({ hasEverHeardVisitor }: SetupAgentContext) =>
       buildSetupAgentPrompt({
         language: agentLanguage,
         topics: setupTopics,
         characters: setupCharacters,
         phase,
-        agentMode,
         visitorName,
         otherLanguageNames,
-        canHearVisitor,
         hasEverHeardVisitor,
       }),
-    [setupCharacters, setupTopics, phase, agentLanguage, agentMode, visitorName, otherLanguageNames],
+    [setupCharacters, setupTopics, phase, agentLanguage, visitorName, otherLanguageNames],
   );
 
   // Static: the agent holds every tool from the start, and useSetupAgent
@@ -113,16 +111,15 @@ export default function MeetingSetupAgent({
         otherLanguages,
         topics: setupTopics,
         characters: setupCharacters,
-        agentMode,
         isWebMode: !isMuseumMode,
       }),
-    [otherLanguages, setupTopics, setupCharacters, agentMode, isMuseumMode],
+    [otherLanguages, setupTopics, setupCharacters, isMuseumMode],
   );
 
   const agent = useSetupAgent({
     language: agentLanguage,
     instructions,
-    isMuseumMode,
+    unattended: capabilities.unattended,
     tools,
     toolHandlers: createSetupAgentToolHandlers({
       topics: setupTopics,
@@ -145,8 +142,8 @@ export default function MeetingSetupAgent({
       otherLanguages,
       switchLanguage,
     }),
-    agentMode,
-    micOpen: button.pressed,
+    micUpFront: capabilities.micUpFront,
+    micOpen: button.wantsMic,
   });
   const { interruptAndRespond, muted } = agent;
   // Any click or keystroke counts as activity — resets the idle nudge and the
@@ -174,14 +171,14 @@ export default function MeetingSetupAgent({
     );
   }, [phase, setupCharacters]);
 
-  const showMuseumReconnecting =
-    isMuseumMode && !muted && agent.isConnecting && !connectionError;
+  const showBlockingReconnect =
+    capabilities.unattended && !muted && agent.isConnecting && !connectionError;
 
   const { bumpBannerActivity } = useButtonBanner({
     owner: "setup-agent",
-    sessionActive: agentMode === "ptt" && !muted,
+    sessionActive: isMuseumMode && !muted,
     isConnecting: agent.isConnecting,
-    micOpen: button.pressed,
+    micOpen: button.wantsMic,
     agentSpeaking: agent.agentSpeaking && !nudgeFired,
   });
 
@@ -206,22 +203,32 @@ export default function MeetingSetupAgent({
     bumpBannerActivity();
   }, [button.pressed, clearNudge, bumpBannerActivity]);
 
-  const ledMode = useMemo((): ButtonLedMode => {
-    if (agentMode !== "ptt" || muted || agent.isConnecting) return "off";
-    if (button.pressed) return "on";
-    return "pulse";
-  }, [agentMode, muted, agent.isConnecting, button.pressed]);
+  // Armed in both modes now — arming is what makes `pressed`/`wantsMic` live
+  // at all, and space is the web mic gesture from here on. An agent that is
+  // off or still connecting cannot take a voice, so it disarms.
+  const canTakeVoice = !muted && !agent.isConnecting;
 
   useEffect(() => {
-    if (agentMode !== "ptt") return;
     button.claim();
     return () => button.release();
-  }, [button.claim, button.release, agentMode]);
+  }, [button.claim, button.release]);
 
   useEffect(() => {
-    if (agentMode !== "ptt") return;
-    button.setLed(ledMode);
-  }, [button.setLed, agentMode, ledMode]);
+    button.setArmed(canTakeVoice);
+  }, [button.setArmed, canTakeVoice]);
+
+  /**
+   * The on-screen mic button is the same gesture as a tap, by another input
+   * device — so it toggles the same latch rather than keeping its own state.
+   * Wanting to talk implies wanting to hear the reply, so it also brings the
+   * agent back if it was switched off, or starts it for the first time on a
+   * page still waiting for a gesture. The latch survives the arming that
+   * follows, so setting it here while still disarmed is safe.
+   */
+  const handleToggleMic = useCallback(() => {
+    if (muted) void agent.start();
+    button.toggleLatch();
+  }, [muted, agent.start, button.toggleLatch]);
 
   useEffect(() => {
     if (!lastUserEvent) {
@@ -256,7 +263,7 @@ export default function MeetingSetupAgent({
 
   return (
     <>
-      {showMuseumReconnecting && <Loading />}
+      {showBlockingReconnect && <Loading />}
     <SetupAgentOverlay
       isConnecting={agent.isConnecting}
       isStarting={agent.isStarting}
@@ -264,13 +271,13 @@ export default function MeetingSetupAgent({
       lastCaption={agent.lastCaption}
       lastUserTranscript={agent.lastUserTranscript}
       muted={agent.muted}
-      isMuseumMode={isMuseumMode}
-      agentMode={agentMode}
+      browserUi={capabilities.browserUi}
+      showMicRow={isMuseumMode}
       subtitleLayout={isMuseumMode ? "council" : "compact"}
       micStream={agent.micStream}
-      micActive={agentMode === "ptt" && !muted && button.pressed}
-      micOn={agent.micOn}
-      onToggleMic={agent.toggleMic}
+      micActive={!muted && button.wantsMic}
+      micOn={!muted && button.wantsMic}
+      onToggleMic={handleToggleMic}
       onStart={agent.start}
       onStop={agent.stop}
     />

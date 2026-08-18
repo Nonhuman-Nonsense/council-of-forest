@@ -83,20 +83,15 @@ describe("getMetaAgentBundle", () => {
 
 describe("buildMetaAgentPrompt", () => {
   it("includes chair identity, project, and council vocabulary", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "ptt" });
+    const prompt = buildMetaAgentPrompt({ bundle: testBundle });
     expect(prompt).toContain("You are Water");
     expect(prompt).toContain("Council of Foods");
     expect(prompt).toContain("foods debate");
   });
 
-  it("includes ptt note when push-to-talk mode is on", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "ptt" });
+  it("explains the talk button", () => {
+    const prompt = buildMetaAgentPrompt({ bundle: testBundle });
     expect(prompt).toContain("hold to talk");
-  });
-
-  it("omits ptt note when push-to-talk mode is off", () => {
-    const prompt = buildMetaAgentPrompt({ bundle: testBundle, agentMode: "always-on" });
-    expect(prompt).not.toContain("hold to talk");
   });
 
   it("mentions resume_meeting and restart_meeting tools", () => {
@@ -150,7 +145,6 @@ describe("buildMetaAgentPrompt", () => {
   it("uses the shipped beings bundle without errors", () => {
     const prompt = buildMetaAgentPrompt({
       bundle: getMetaAgentBundle("en"),
-      agentMode: "ptt",
     });
     expect(prompt.length).toBeGreaterThan(100);
     expect(prompt.length).toBeLessThan(4000);

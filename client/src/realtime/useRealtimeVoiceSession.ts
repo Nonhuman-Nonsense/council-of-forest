@@ -29,15 +29,10 @@ import {
 import { log, summarizeLogPayload } from "@/logger";
 
 function realtimeDebugLog(...args: unknown[]): void {
-  const message = args.map((arg) => {
-    if (typeof arg === "string") return arg;
-    try {
-      return JSON.stringify(arg);
-    } catch {
-      return String(arg);
-    }
-  }).join(" ");
-  log.event("REALTIME", message, args.length > 1 ? summarizeLogPayload({ detail: args.slice(1) }) : undefined);
+  const [first, ...rest] = args;
+  const message = typeof first === "string" ? first : String(first);
+  const data = rest.length === 0 ? undefined : rest.length === 1 ? summarizeLogPayload(rest[0]) : summarizeLogPayload(rest);
+  log.event("REALTIME", message, data);
 }
 
 export type RealtimeVoiceFeature = "meta-agent" | "setup-agent";
@@ -125,10 +120,11 @@ export type UseRealtimeVoiceSessionParams = {
   /** Fired after the provider acks `session.updated` (safe point for activation). */
   onSessionReady?: () => void;
   /**
-   * Whether to treat this agent as museum-mode (affects mic permission classification
-   * and is used by policy helpers via `getRealtimeRetryPolicy`).
+   * Nobody is present to fix a failure (capabilities.unattended). Makes a
+   * missing microphone fatal rather than something the visitor could go and
+   * permit; pair it with an unlimited `retryPolicy`.
    */
-  isMuseumMode?: boolean;
+  unattended?: boolean;
   /** Retry behaviour. Omit to disable automatic retries (error state only). */
   retryPolicy?: RealtimeRetryPolicy;
   /** Called when a fatal, non-recoverable error occurs. Goes through the main error pipeline. */
@@ -184,11 +180,14 @@ export type UseRealtimeVoiceSessionResult = {
 function attachRemoteAudio(
   track: MediaStreamTrack,
   audioElement: HTMLAudioElement | null,
+  muted: boolean,
 ): HTMLAudioElement {
   const el = audioElement ?? document.createElement("audio");
   el.autoplay = true;
   el.setAttribute("playsinline", "true");
-  el.muted = false;
+  // Carried across reconnects: a retry builds a fresh element, and defaulting
+  // it to unmuted would make a deliberately muted agent audible again.
+  el.muted = muted;
   el.volume = 1.0;
   el.srcObject = new MediaStream([track]);
   el.style.display = "none";
@@ -232,7 +231,7 @@ export function useRealtimeVoiceSession(
     sessionActive = true,
     autoConnect = true,
     onSessionReady,
-    isMuseumMode = false,
+    unattended = false,
     retryPolicy,
     onFatalError,
     onUnavailable,
@@ -269,6 +268,8 @@ export function useRealtimeVoiceSession(
   const pendingResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const alignmentRafRef = useRef<number | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  /** Agent-output mute state, kept outside the element so reconnects preserve it. */
+  const agentOutputMutedRef = useRef(false);
   const remoteAudioAnchorRef = useRef<RemoteAudioAnchor | null>(null);
   const userTranscriptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -288,7 +289,7 @@ export function useRealtimeVoiceSession(
   const onConnectionLostRef = useRef(onConnectionLost);
   const onConnectionRestoredRef = useRef(onConnectionRestored);
   const onExhaustedRef = useRef(onExhausted);
-  const isMuseumModeRef = useRef(isMuseumMode);
+  const unattendedRef = useRef(unattended);
   useEffect(() => {
     handlersRef.current = toolHandlers;
     instructionsRef.current = instructions;
@@ -300,7 +301,7 @@ export function useRealtimeVoiceSession(
     onConnectionLostRef.current = onConnectionLost;
     onConnectionRestoredRef.current = onConnectionRestored;
     onExhaustedRef.current = onExhausted;
-    isMuseumModeRef.current = isMuseumMode;
+    unattendedRef.current = unattended;
   });
 
   useEffect(() => {
@@ -434,7 +435,6 @@ export function useRealtimeVoiceSession(
       // bootstrap network round-trip (up to 15 s) before surfacing the error.
       const bootstrapPromise = fetchRealtimeBootstrap(
         { feature, language },
-        realtimeDebugLog,
         controller.signal,
         authHeaders,
       );
@@ -448,9 +448,10 @@ export function useRealtimeVoiceSession(
       // prompt: an empty audio sender is negotiated and the visitor can hand
       // over their mic later via attachMic().
       const micStreamValue: MediaStream | null = deferMic ? null : await acquireMicrophone();
+      const releaseMic = () => micStreamValue?.getTracks().forEach((t) => t.stop());
 
       if (isStale()) {
-        micStreamValue?.getTracks().forEach((t) => t.stop());
+        releaseMic();
         return;
       }
 
@@ -458,12 +459,12 @@ export function useRealtimeVoiceSession(
       try {
         bootstrapValue = await bootstrapPromise;
       } catch (bootErr) {
-        micStreamValue?.getTracks().forEach((t) => t.stop());
+        releaseMic();
         throw bootErr;
       }
 
       if (isStale()) {
-        micStreamValue?.getTracks().forEach((t) => t.stop());
+        releaseMic();
         return;
       }
 
@@ -545,20 +546,10 @@ export function useRealtimeVoiceSession(
 
       // RAF loop: drive caption from alignment + AudioContext clock.
       let lastDisplayedText: string | null | undefined = undefined;
-      let lastTickLogMs = 0;
       const tickAlignment = () => {
         if (!isStale()) {
           const anchor = remoteAudioAnchorRef.current;
           const anchorCtxSec = responseAudioAnchorCtxSecRef.current;
-          const nowMs = performance.now();
-          if (nowMs - lastTickLogMs >= 1000) {
-            lastTickLogMs = nowMs;
-            const sentences = subtitleTrack.getSentences();
-            const playbackSec = anchor != null && anchorCtxSec != null
-              ? anchor.getCtxTime() - anchorCtxSec
-              : null;
-            realtimeDebugLog(`[SUBS] TICK anchor=${anchor != null ? "ok" : "null"} anchorCtxSec=${anchorCtxSec != null ? anchorCtxSec.toFixed(3) : "null"} sentences=${sentences.length} playbackSec=${playbackSec != null ? playbackSec.toFixed(3) : "null"} ctxTime=${anchor?.getCtxTime().toFixed(3) ?? "n/a"}`);
-          }
           if (anchor != null && anchorCtxSec != null) {
             const sentences = subtitleTrack.getSentences();
             const playbackSec = anchor.getCtxTime() - anchorCtxSec;
@@ -691,7 +682,6 @@ export function useRealtimeVoiceSession(
           onAudioPartReady: () => {
             if (!isStale()) setHasReceivedAudioPart(true);
           },
-          log: realtimeDebugLog,
         },
       });
       eventLoopRef.current = loop;
@@ -710,7 +700,7 @@ export function useRealtimeVoiceSession(
         signal: controller.signal,
         onRemoteTrack: (track) => {
           if (isStale()) { try { track.stop(); } catch { /* ignore */ } return; }
-          const el = attachRemoteAudio(track, audioElementRef.current ?? null);
+          const el = attachRemoteAudio(track, audioElementRef.current ?? null, agentOutputMutedRef.current);
           remoteAudioRef.current = el;
           try {
             remoteAudioAnchorRef.current?.dispose();
@@ -795,7 +785,7 @@ export function useRealtimeVoiceSession(
 
       conn?.close();
 
-      const kind = classifyRealtimeError(e, { isMuseumMode: isMuseumModeRef.current });
+      const kind = classifyRealtimeError(e, { unattended: unattendedRef.current });
       const msg = e instanceof Error ? e.message : FEATURE_MESSAGES[feature].startFailed;
       log.event("ERROR", "realtime session start failed", { feature, kind, message: msg });
 
@@ -887,7 +877,7 @@ export function useRealtimeVoiceSession(
       log.event("REALTIME", "mic attached", { feature });
       return true;
     } catch (e) {
-      const kind = classifyRealtimeError(e, { isMuseumMode: isMuseumModeRef.current });
+      const kind = classifyRealtimeError(e, { unattended: unattendedRef.current });
       const message = e instanceof Error ? e.message : "The microphone could not be accessed.";
       log.event("ERROR", "mic attach failed", { feature, kind, message });
 
@@ -910,6 +900,7 @@ export function useRealtimeVoiceSession(
   }, [feature]);
 
   const setAgentOutputMuted = useCallback((muted: boolean) => {
+    agentOutputMutedRef.current = muted;
     const el = remoteAudioRef.current;
     if (el) {
       el.muted = muted;

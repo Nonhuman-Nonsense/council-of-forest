@@ -3,7 +3,6 @@ import {
   acquireMicrophone,
   createRealtimeConnection,
   fetchRealtimeBootstrap,
-  fetchRealtimeSessionDefaults,
   MicrophoneUnavailableError,
   RealtimeHttpError,
   classifyRealtimeError,
@@ -237,9 +236,11 @@ describe("realtimeConnection", () => {
       )
     );
 
-    const result = await fetchRealtimeSessionDefaults({ feature: "setup-agent", language: "en" });
+    const result = await fetchRealtimeBootstrap({ feature: "setup-agent", language: "en" });
 
-    expect(result).toMatchObject({
+    expect(result.provider).toBe("inworld");
+    expect(result.iceServers).toEqual([]);
+    expect(result.session).toMatchObject({
       type: "realtime",
       model: "m",
       output_modalities: ["text"],
@@ -540,8 +541,8 @@ describe("classifyRealtimeError", () => {
   it("marks a legacy mic NotAllowedError as unavailable on web, fatal in museum", () => {
     const err = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
     expect(classifyRealtimeError(err)).toBe("unavailable");
-    expect(classifyRealtimeError(err, { isMuseumMode: false })).toBe("unavailable");
-    expect(classifyRealtimeError(err, { isMuseumMode: true })).toBe("fatal");
+    expect(classifyRealtimeError(err, { unattended: false })).toBe("unavailable");
+    expect(classifyRealtimeError(err, { unattended: true })).toBe("fatal");
   });
 
   it("marks every mic failure as unavailable on web and fatal in museum", () => {
@@ -551,8 +552,8 @@ describe("classifyRealtimeError", () => {
     for (const reason of reasons) {
       const err = new MicrophoneUnavailableError(reason, "nope");
       expect(classifyRealtimeError(err), reason).toBe("unavailable");
-      expect(classifyRealtimeError(err, { isMuseumMode: false }), reason).toBe("unavailable");
-      expect(classifyRealtimeError(err, { isMuseumMode: true }), reason).toBe("fatal");
+      expect(classifyRealtimeError(err, { unattended: false }), reason).toBe("unavailable");
+      expect(classifyRealtimeError(err, { unattended: true }), reason).toBe("fatal");
     }
   });
 
@@ -623,7 +624,6 @@ describe("realtime request timeouts", () => {
     const controller = new AbortController();
     const pending = fetchRealtimeBootstrap(
       { feature: "setup-agent", language: "en" },
-      undefined,
       controller.signal
     ).catch((e) => e);
     controller.abort();

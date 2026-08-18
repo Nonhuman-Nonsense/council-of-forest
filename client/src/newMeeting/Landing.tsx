@@ -24,7 +24,7 @@ const Landing: React.FC = () => {
   const { setLastUserEvent } = useOutletContext<MeetingSetupOutletContext>();
   const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
   const isMobile = useMobile();
-  const { isMuseumMode } = useCouncilSettings();
+  const { capabilities, isMuseumMode } = useCouncilSettings();
   const { t } = useTranslation();
 
   const wrapper: React.CSSProperties = {
@@ -95,7 +95,7 @@ const Landing: React.FC = () => {
         {isPortrait ?
           <RotateDevice />
           :
-          !isMuseumMode && (
+          capabilities.browserUi && (
             <div style={{ maxWidth: "380px" }}>
               <p style={{ marginBottom: "30px" }}>{t('landing.description')}</p>
               <div>

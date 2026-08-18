@@ -3,17 +3,14 @@ import type { SetupAgentPromptParams } from "./setupAgentPrompt";
 
 export function buildEnPrompt({
   phase,
-  agentMode = "always-on",
   visitorName,
   topics,
   characters,
   otherLanguageNames,
-  canHearVisitor = true,
   hasEverHeardVisitor = true,
 }: SetupAgentPromptParams): string {
   const isMuseumMode = getAppMode() === "museum";
   const isWebMode = getAppMode() === "web";
-  const isPtt = agentMode === "ptt";
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
   const otherlangs = otherLanguageNames?.join(' or ');
 
@@ -46,7 +43,7 @@ You have different jobs on different phases:
 
 Welcome (A short welcome and to check that the visitor can communicate properly):
 Open with a brief welcome to the Council of Forest, and mention that you are River, and you will guide them.
-${isPtt ? "Explain that the visitor must use the talk button to speak: hold while talking, release when finished." : ""}
+${isMuseumMode ? "Explain that the visitor must use the talk button to speak: hold while talking, release when finished." : ""}
 ${otherlangs ? `Mention that if they prefer ${otherlangs}, they can just let you know. (e.g. "If you prefer ${otherlangs}, just let me know.") Say this aside in English regardless of your current language. Then continue immediately with your main job in your current language. Do not pause for an answer. If they ask to switch (at any point in the setup), call switch_language with the target language code.` : ""}
 Ask if they are ready to begin.
 When the visitor responds positively (yes, okay, thanks, or anything similar), do TWO things in the same turn: say a short warm acknowledgment out loud (e.g. "Wonderful, let's begin") AND call begin_setup. Always speak and call the tool together — never end a turn silently.
@@ -95,19 +92,16 @@ ${visitorName ? `You already know this visitor as ${visitorName}. Use their name
 
 ${isWebMode ? `
 Visitor Microphone
-The visitor can turn the microphone ON and OFF at any time, with the button at the bottom of the screen. You are told in the conversation each time they switch it — always follow the most recent notice, since these instructions only describe how the session started.
-When it is ON, you can hear them and they can answer you. Talk with them and use your tools as described above.
-When it is OFF, you cannot hear them, and they cannot answer you — they are making every choice by clicking on screen.
+The visitor talks to you by holding the space bar, or by clicking the microphone button at the bottom of the screen to keep it on. The microphone is therefore closed most of the time, even mid-conversation — that is normal and means nothing. Never remark on it, and never ask them to turn it on or off.
+${hasEverHeardVisitor ? `They have a working microphone and can answer you. Talk with them and use your tools as described above.`
+: `They have not spoken to you at all yet, and are making every choice by clicking on screen.
 
-While it is off, follow these additional rules (that override descriptions above if contradictory):
-- Do not ask a question that requires them to speak, since they cannot, because the mic is off. You can still ask them to confirm the topic on the screen, or select more characters, etc. but not to say their name, for example.
-- Do not select, confirm or navigate anything for them, and do not offer to. They are doing it themselves.
+While that is true, follow these additional rules (that override descriptions above if contradictory):
+- Do not ask a question that requires them to speak. You can still ask them to confirm the topic on the screen, or select more characters, etc. but not to say their name, for example.
+- Do not select, confirm or navigate anything for them, and do not offer to. They are doing it themselves. Your tools will refuse to act until they have spoken.
+- Early on — in your first or second turn — mention once, briefly and lightly, that they can hold the space bar or press the microphone button at the bottom of the screen if they would like to talk with you. Say it only once, and never nag.
 
-When this session started the mic was ${canHearVisitor ? `ON` : `OFF.
-${hasEverHeardVisitor ? `- They had been talking with you and then switched the microphone off. Simply carry on commenting; do not remark on it or ask them to turn it back on.`
-: `- The visitor has not spoken to you at all yet. Until they do, your tools will refuse to act — do not try to select, confirm or navigate anything, just comment on what they do.
-- Early on — in your first or second turn — mention once, briefly and lightly, that they can press the microphone button at the bottom of the screen if they would like to talk with you. Say it only once, and never nag.`}
-`}
+If you are later told that the visitor can talk to you, drop these rules from that point on and converse with them normally.`}
 
 ---`:``}
 

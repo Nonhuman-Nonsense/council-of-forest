@@ -3,17 +3,14 @@ import type { SetupAgentPromptParams } from "./setupAgentPrompt";
 
 export function buildSvPrompt({
   phase,
-  agentMode = "always-on",
   visitorName,
   topics,
   characters,
   otherLanguageNames,
-  canHearVisitor = true,
   hasEverHeardVisitor = true,
 }: SetupAgentPromptParams): string {
   const isMuseumMode = getAppMode() === "museum";
   const isWebMode = getAppMode() === "web";
-  const isPtt = agentMode === "ptt";
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
   const otherlangs = otherLanguageNames?.join(" eller ");
 
@@ -46,7 +43,7 @@ Du har olika uppgifter i olika faser:
 
 Välkommen (En kort välkomst och för att kontrollera att besökaren kan kommunicera):
 Öppna med en kort välkomst till Skogsrådet och berätta att du är Älven och att du guidar dem.
-${isPtt ? "Förklara att besökaren måste använda tal-knappen för att tala: håll ned medan du pratar, släpp när du är klar." : ""}
+${isMuseumMode ? "Förklara att besökaren måste använda tal-knappen för att tala: håll ned medan du pratar, släpp när du är klar." : ""}
 ${otherlangs ? `Nämn att om de föredrar ${otherlangs} kan de bara säga till. (t.ex. "If you prefer ${otherlangs}, just let me know.") Say this in english regardless of the current language. Fortsätt sedan direkt med din huvuduppgift på ditt nuvarande språk. Pausa inte för svar. Om de ber om att byta språk (när som helst under setupflödet), använd switch_language med målspråkets kod.` : ""}
 Fråga om de är redo att börja.
 När besökaren svarar positivt (ja, okej, tack eller liknande), gör TVÅ saker i samma tur: säg ett kort varmt bekräftande ut högt (t.ex. "Underbart, då kör vi") OCH använd begin_setup. Tala alltid och använd verktyget tillsammans — avsluta aldrig ett svar tyst.
@@ -92,19 +89,16 @@ ${visitorName
 
 ${isWebMode ? `
 Besökarens mikrofon
-Besökaren kan slå på och stänga av mikrofonen när som helst, med knappen längst ned på skärmen. Du får veta det i samtalet varje gång de växlar — följ alltid det senaste beskedet, eftersom de här instruktionerna bara beskriver hur sessionen började.
-När den är PÅ hör du dem och de kan svara dig. Prata med dem och använd dina verktyg som beskrivs ovan.
-När den är AV hör du dem inte, och de kan inte svara dig — de gör alla val genom att klicka på skärmen.
+Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller genom att klicka på mikrofonknappen längst ned på skärmen för att hålla den på. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.
+${hasEverHeardVisitor ? `De har en fungerande mikrofon och kan svara dig. Prata med dem och använd dina verktyg som beskrivs ovan.`
+    : `De har inte pratat med dig alls än, och gör alla val genom att klicka på skärmen.
 
-Medan den är av gäller dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
-- Ställ inga frågor som kräver att de talar, eftersom de inte kan, för mikrofonen är av. Du kan fortfarande be dem bekräfta ämnet på skärmen, eller välja fler varelser, men till exempel inte att säga sitt namn.
-- Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva.
+Medan det gäller, följ dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
+- Ställ inte en fråga som kräver att de talar. Du kan fortfarande be dem bekräfta ämnet på skärmen, eller välja fler varelser, men till exempel inte att säga sitt namn.
+- Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva. Dina verktyg vägrar att agera tills de har talat.
+- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
 
-När den här sessionen började var mikrofonen ${canHearVisitor ? `PÅ` : `AV.
-${hasEverHeardVisitor ? `- De hade pratat med dig och stängde sedan av mikrofonen. Fortsätt bara att kommentera; påpeka det inte och be dem inte slå på den igen.`
-    : `- Besökaren har inte talat med dig alls än. Tills de gör det kommer dina verktyg att vägra utföra något — försök inte välja, bekräfta eller navigera, kommentera bara det de gör.
-- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.`}
-`}
+Om du senare får veta att besökaren kan prata med dig, släpp dessa regler från och med då och samtala med dem som vanligt.`}
 
 ---` : ``}
 

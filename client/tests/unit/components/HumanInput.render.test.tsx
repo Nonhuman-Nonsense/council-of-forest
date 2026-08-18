@@ -14,7 +14,8 @@ import {
     useMicAvailabilityStore,
 } from '@realtime/micAvailabilityStore';
 import { BUTTON_BANNER_IDLE_MS } from '@museum/button/useButtonBanner';
-import type { AgentMode } from '@/settings/councilSettings';
+import type { AppMode } from '@/settings/councilSettings';
+import { capabilitiesFor } from '@/settings/capabilities';
 import type { ButtonOwner } from '@museum/button/buttonStore';
 import type { RealtimeConnection } from '@/realtime/realtimeConnection';
 
@@ -24,11 +25,16 @@ const mockCreateRealtimeConnection = vi.mocked(createRealtimeConnection);
 
 const mockClaim = vi.hoisted(() => vi.fn());
 const mockRelease = vi.hoisted(() => vi.fn());
-const mockSetLed = vi.hoisted(() => vi.fn());
-const mockAgentMode = vi.hoisted<{ value: AgentMode }>(() => ({ value: "always-on" }));
+const mockSetArmed = vi.hoisted(() => vi.fn());
+const mockAppMode = vi.hoisted<{ value: AppMode }>(() => ({ value: "web" }));
 
-const mockButtonState = vi.hoisted<{ pressed: boolean; buttonOwner: string | null }>(() => ({
+const mockButtonState = vi.hoisted<{
+    pressed: boolean;
+    latched: boolean;
+    buttonOwner: string | null;
+}>(() => ({
     pressed: false,
+    latched: false,
     buttonOwner: null,
 }));
 
@@ -59,11 +65,10 @@ vi.mock('@/utils', () => ({
 
 vi.mock('@/settings/councilSettings', () => ({
     useCouncilSettings: () => ({
-        agentMode: mockAgentMode.value,
-        isMuseumMode: false,
-        mode: 'web',
+        isMuseumMode: mockAppMode.value === "museum",
+        mode: mockAppMode.value,
         setAppMode: vi.fn(),
-        setAgentMode: vi.fn(),
+        capabilities: capabilitiesFor(mockAppMode.value),
     }),
     getDevLogEnabled: () => false,
     isDevLogCategoryEnabled: () => false,
@@ -116,19 +121,66 @@ vi.mock('@/museum/button/useButton', async () => {
     const React = await import('react');
     return {
         useButton: (owner: ButtonOwner) => {
+            const subscribe = (onStoreChange: () => void) => {
+                mockButtonListeners.add(onStoreChange);
+                return () => mockButtonListeners.delete(onStoreChange);
+            };
+            const isOwner = mockButtonState.buttonOwner === owner;
             const pressed = React.useSyncExternalStore(
-                (onStoreChange) => {
-                    mockButtonListeners.add(onStoreChange);
-                    return () => mockButtonListeners.delete(onStoreChange);
-                },
+                subscribe,
                 () => mockButtonState.buttonOwner === owner && mockButtonState.pressed,
             );
+            const wantsMic = React.useSyncExternalStore(
+                subscribe,
+                () =>
+                    mockButtonState.buttonOwner === owner &&
+                    (mockButtonState.pressed || mockButtonState.latched),
+            );
+            // Stable identities, as the real hook's useCallbacks are: the claim
+            // effect depends on them, and a fresh identity each render would
+            // release and re-claim continuously — wiping the latch every time.
+            const claim = React.useCallback(() => {
+                mockClaim();
+                mockButtonState.buttonOwner = owner;
+                notifyMockButtonListeners();
+            }, [owner]);
+            const release = React.useCallback(() => {
+                mockRelease();
+                if (mockButtonState.buttonOwner === owner) {
+                    mockButtonState.buttonOwner = null;
+                    mockButtonState.latched = false;
+                    notifyMockButtonListeners();
+                }
+            }, [owner]);
+            // Mirrors the store: disarming clears the latch, which is what makes
+            // finishing a take (e.g. on textarea focus) actually stop it.
+            const setArmed = React.useCallback((armed: boolean) => {
+                mockSetArmed(armed);
+                if (!armed && mockButtonState.latched) {
+                    mockButtonState.latched = false;
+                    notifyMockButtonListeners();
+                }
+            }, []);
+            // Mirrors the store: the on-screen button is the same latch.
+            const toggleLatch = React.useCallback(() => {
+                mockButtonState.latched = !mockButtonState.latched;
+                notifyMockButtonListeners();
+            }, []);
+            const clearLatch = React.useCallback(() => {
+                if (!mockButtonState.latched) return;
+                mockButtonState.latched = false;
+                notifyMockButtonListeners();
+            }, []);
+
             return {
-                claim: mockClaim,
-                release: mockRelease,
-                setLed: mockSetLed,
+                claim,
+                release,
+                setArmed,
+                toggleLatch,
+                clearLatch,
                 pressed,
-                isOwner: mockButtonState.buttonOwner === owner,
+                wantsMic,
+                isOwner,
             };
         },
     };
@@ -195,6 +247,7 @@ describe('HumanInput Component', () => {
 
     beforeEach(() => {
         mockOnSubmit = vi.fn();
+        mockButtonState.latched = false;
         useMicAvailabilityStore.getState().resetForTests();
         mockUseMobile.mockReturnValue(false);
         mockBootstrapHumanInputRealtimeSession.mockResolvedValue({
@@ -648,6 +701,45 @@ describe('HumanInput Component', () => {
         unmount();
     });
 
+    // ── Web push-to-talk ───────────────────────────────────────────────────────
+
+    it('records while space is held and stops on release, without auto-submitting', async () => {
+        const onSubmit = vi.fn();
+        await renderAndWaitReady({ onSubmitHumanMessage: onSubmit });
+
+        act(() => setMockPressed(true));
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_on')).toBeInTheDocument();
+        });
+
+        act(() => setMockPressed(false));
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_off')).toBeInTheDocument();
+        });
+
+        // Web leaves the transcript in the textarea for the visitor to send.
+        expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('does not restart a take that was ended some other way', async () => {
+        // The no-speech path settles recording → finishing → ready inside one
+        // batch, so nothing ever renders as disarmed; without clearing the latch
+        // the mic would re-open the instant it landed back on ready.
+        await renderAndWaitReady();
+
+        fireEvent.click(screen.getByTestId('icon-record_voice_off'));
+        await waitFor(() => {
+            expect(screen.getByTestId('icon-record_voice_on')).toBeInTheDocument();
+        });
+
+        fireEvent.focus(screen.getByPlaceholderText('human.placeholder'));
+
+        expect(screen.getByTestId('icon-record_voice_off')).toBeInTheDocument();
+        // Still settled a moment later — a surviving latch would show up here.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(screen.getByTestId('icon-record_voice_off')).toBeInTheDocument();
+    });
+
     // ── Misc ───────────────────────────────────────────────────────────────────
 
     it('should show panelist-specific placeholder when isPanelist is true', async () => {
@@ -663,12 +755,13 @@ describe('HumanInput PTT museum mode', () => {
 
     beforeEach(() => {
         mockOnSubmit = vi.fn();
-        mockAgentMode.value = "ptt";
+        mockAppMode.value = "museum";
         mockUseMobile.mockReturnValue(false);
         mockClaim.mockClear();
         mockRelease.mockClear();
-        mockSetLed.mockClear();
+        mockSetArmed.mockClear();
         mockButtonState.pressed = false;
+        mockButtonState.latched = false;
         setMockPressed(false);
         mockBootstrapHumanInputRealtimeSession.mockResolvedValue({
             provider: 'inworld',
@@ -680,7 +773,7 @@ describe('HumanInput PTT museum mode', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
-        mockAgentMode.value = "always-on";
+        mockAppMode.value = "web";
         setMockPressed(false);
     });
 
@@ -774,17 +867,17 @@ describe('HumanInput PTT museum mode', () => {
 
     // ── LED management ────────────────────────────────────────────────────────
 
-    it('does not claim the button when agentMode is not ptt', async () => {
-        mockAgentMode.value = "always-on";
+    it('claims the button in web mode too — space drives the mic there now', async () => {
+        mockAppMode.value = "web";
         mockClaim.mockClear();
         await renderAndWaitReady({ onSubmitHumanMessage: mockOnSubmit });
-        expect(mockClaim).not.toHaveBeenCalled();
+        expect(mockClaim).toHaveBeenCalled();
     });
 
-    it('claims human-input and sets pulse LED when active with agentMode ptt', async () => {
+    it('claims and arms human-input when active in museum mode', async () => {
         await renderPttReady();
         expect(mockClaim).toHaveBeenCalled();
-        expect(mockSetLed).toHaveBeenCalledWith('pulse');
+        expect(mockSetArmed).toHaveBeenCalledWith(true);
     });
 
     // ── Press → record, release → finish + auto-submit ────────────────────────
@@ -1164,12 +1257,13 @@ describe('HumanInput PTT abandonment', () => {
     beforeEach(() => {
         vi.useFakeTimers({ shouldAdvanceTime: true });
         mockOnAbandon = vi.fn();
-        mockAgentMode.value = "ptt";
+        mockAppMode.value = "museum";
         mockUseMobile.mockReturnValue(false);
         mockClaim.mockClear();
         mockRelease.mockClear();
-        mockSetLed.mockClear();
+        mockSetArmed.mockClear();
         mockButtonState.pressed = false;
+        mockButtonState.latched = false;
         setMockPressed(false);
         mockBootstrapHumanInputRealtimeSession.mockResolvedValue({
             provider: 'inworld',
@@ -1182,7 +1276,7 @@ describe('HumanInput PTT abandonment', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
-        mockAgentMode.value = "always-on";
+        mockAppMode.value = "web";
         setMockPressed(false);
     });
 
@@ -1297,8 +1391,8 @@ describe('HumanInput PTT abandonment', () => {
         expect(mockOnAbandon).toHaveBeenCalledTimes(1);
     });
 
-    it('does not run when agent mode is not ptt', async () => {
-        mockAgentMode.value = "always-on";
+    it('does not run in web mode', async () => {
+        mockAppMode.value = "web";
         vi.useRealTimers();
 
         render(

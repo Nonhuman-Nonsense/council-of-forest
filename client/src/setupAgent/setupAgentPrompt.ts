@@ -1,6 +1,5 @@
 import type { Topic, Character } from "@shared/ModelTypes";
 import type { MeetingSetupPhase } from "@newMeeting/meetingSetup";
-import type { AgentMode } from "@/settings/councilSettings";
 import { buildEnPrompt } from "./setupAgentPromptEn";
 import { buildSvPrompt } from "./setupAgentPromptSv";
 
@@ -11,19 +10,13 @@ export type SetupAgentPromptParams = {
   topics: SetupAgentTopic[];
   characters: SetupAgentCharacter[];
   phase: MeetingSetupPhase;
-  agentMode?: AgentMode;
   visitorName?: string;
   otherLanguageNames?: string[];
   /**
-   * Whether the visitor's microphone is live right now. False on web until they
-   * press the mic button, which suspends the conversational job: the agent
-   * comments on what is being clicked instead. Defaults to true so museum
-   * (mic always present) is unaffected.
-   */
-  canHearVisitor?: boolean;
-  /**
-   * Whether the visitor has spoken at all this session. Only decides whether to
-   * invite them to use the microphone — pointless once they already have.
+   * Whether the visitor has had a working microphone at all this session. While
+   * false the conversational job is suspended: the agent comments on what is
+   * being clicked instead, and its tools refuse to act. Defaults to true so
+   * museum (mic always present) is unaffected.
    */
   hasEverHeardVisitor?: boolean;
 };

@@ -151,14 +151,14 @@ export type RealtimeErrorKind = "fatal" | "retryable" | "unavailable";
 /**
  * Classify a realtime connection error.
  *
- * `isMuseumMode` decides how microphone failures land. A kiosk with no working
- * mic is genuinely broken and should surface as a terminal error; a web visitor
- * who declines the prompt has simply chosen not to talk, and the setup flow
- * still works entirely by clicking.
+ * `unattended` decides how microphone failures land. A kiosk with no working
+ * mic is genuinely broken and should surface as a terminal error, since nobody
+ * is there to grant a permission; a web visitor who declines the prompt has
+ * simply chosen not to talk, and the setup flow still works by clicking.
  */
 export function classifyRealtimeError(
   err: unknown,
-  opts?: { isMuseumMode?: boolean },
+  opts?: { unattended?: boolean },
 ): RealtimeErrorKind {
   if (err instanceof RealtimeHttpError) {
     // 4xx = configuration/auth error — retrying won't help
@@ -171,11 +171,11 @@ export function classifyRealtimeError(
   // Microphone failures never resolve by retrying — a blocked permission,
   // missing hardware or busy device all need the user (or a technician) to act.
   if (err instanceof MicrophoneUnavailableError) {
-    return opts?.isMuseumMode ? "fatal" : "unavailable";
+    return opts?.unattended ? "fatal" : "unavailable";
   }
   // Legacy path (should now be wrapped by MicrophoneUnavailableError).
   if (err instanceof Error && err.name === "NotAllowedError") {
-    return opts?.isMuseumMode ? "fatal" : "unavailable";
+    return opts?.unattended ? "fatal" : "unavailable";
   }
   // Everything else (network, timeout, ICE, pc_failed, dc_error, etc.) = retryable
   return "retryable";
@@ -341,6 +341,9 @@ export type CreateConnectionParams = {
 const ICE_GATHER_TIMEOUT_MS = 2_500;
 const FETCH_TIMEOUT_MS = 15_000;
 
+/** Peer/ICE states worth logging — the happy-path progression is just noise. */
+const PROBLEM_CONNECTION_STATES = new Set(["disconnected", "failed", "closed"]);
+
 async function fetchWithTimeout(
   input: RequestInfo | URL,
   init: RequestInit,
@@ -438,11 +441,9 @@ function parseRealtimeSessionServerDefaults(
  */
 export async function fetchRealtimeBootstrap(
   requestBody: Record<string, unknown>,
-  log: ConnectionLogger = () => undefined,
   signal?: AbortSignal,
   extraHeaders?: HeadersInit
 ): Promise<RealtimeBootstrapResponse & { session: RealtimeSessionServerDefaults }> {
-  log("POST /api/realtime/bootstrap");
   const resp = await fetchWithTimeout(
     "/api/realtime/bootstrap",
     {
@@ -460,18 +461,7 @@ export async function fetchRealtimeBootstrap(
   const data = (await resp.json()) as RealtimeBootstrapResponse;
   const session = parseRealtimeSessionServerDefaults(data?.session, "Realtime bootstrap");
   const iceServers = Array.isArray(data?.iceServers) ? (data.iceServers as IceServer[]) : [];
-  log("bootstrap ok", { ice: iceServers.length, model: session.model });
   return { provider: data.provider ?? "inworld", iceServers, session };
-}
-
-/** Loads model / audio / VAD defaults from the server. Instructions/tools are merged client-side. */
-export async function fetchRealtimeSessionDefaults(
-  requestBody: Record<string, unknown>,
-  log: ConnectionLogger = () => undefined,
-  signal?: AbortSignal
-): Promise<RealtimeSessionServerDefaults> {
-  const { session } = await fetchRealtimeBootstrap(requestBody, log, signal);
-  return session;
 }
 
 async function exchangeSdp(
@@ -480,10 +470,8 @@ async function exchangeSdp(
   callPath: string,
   callHeaders: HeadersInit | undefined,
   callBodyExtras: Record<string, unknown> | undefined,
-  log: ConnectionLogger,
   signal?: AbortSignal
 ): Promise<string> {
-  log(`POST ${callPath}`);
   const resp = await fetchWithTimeout(
     callPath,
     {
@@ -552,27 +540,27 @@ export async function createRealtimeConnection(params: CreateConnectionParams): 
   try {
     throwIfAborted(signal);
 
-    if (deferMic) {
-      log("deferred mic — connecting without getUserMedia");
-    } else if (micStreamParam) {
+    // Deferred-mic sessions connect without getUserMedia, so they never prompt.
+    if (!deferMic) {
+      if (!micStreamParam) {
+        throw new Error("createRealtimeConnection needs a micStream unless deferMic is set");
+      }
       micStream = micStreamParam;
-    } else {
-      throw new Error("createRealtimeConnection needs a micStream unless deferMic is set");
     }
     throwIfAborted(signal);
 
     pc = new RTCPeerConnection({ iceServers, iceCandidatePoolSize: 10 });
-    log("peer connection created");
 
     pc.onconnectionstatechange = () => {
-      log("pc connectionState", pc!.connectionState);
+      if (PROBLEM_CONNECTION_STATES.has(pc!.connectionState)) log("pc connectionState", pc!.connectionState);
       if (pc!.connectionState === "failed") onClose?.("pc_failed");
     };
-    pc.oniceconnectionstatechange = () => log("pc iceConnectionState", pc!.iceConnectionState);
+    pc.oniceconnectionstatechange = () => {
+      if (PROBLEM_CONNECTION_STATES.has(pc!.iceConnectionState)) log("pc iceConnectionState", pc!.iceConnectionState);
+    };
 
     dc = pc.createDataChannel("oai-events", { ordered: true });
     dc.onopen = () => {
-      log("data channel open");
       const openDc = dc!;
       onOpen?.({ dc: openDc });
     };
@@ -595,7 +583,6 @@ export async function createRealtimeConnection(params: CreateConnectionParams): 
     };
 
     pc.ontrack = (e) => {
-      log("remote track", e.track.kind, e.track.readyState);
       if (e.track.kind === "audio") onRemoteTrack(e.track);
     };
 
@@ -610,7 +597,6 @@ export async function createRealtimeConnection(params: CreateConnectionParams): 
       audioSender = pc.addTransceiver("audio", { direction: "sendrecv" }).sender;
     }
 
-    log("createOffer");
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await waitForIceGatheringComplete(pc, ICE_GATHER_TIMEOUT_MS);
@@ -619,10 +605,9 @@ export async function createRealtimeConnection(params: CreateConnectionParams): 
     const sdpOffer = pc.localDescription?.sdp;
     if (!sdpOffer) throw new Error("Missing SDP offer");
 
-    const sdpAnswer = await exchangeSdp(sdpOffer, session, callPath, callHeaders, callBodyExtras, log, signal);
+    const sdpAnswer = await exchangeSdp(sdpOffer, session, callPath, callHeaders, callBodyExtras, signal);
     throwIfAborted(signal);
     await pc.setRemoteDescription({ type: "answer", sdp: sdpAnswer });
-    log("setRemoteDescription ok");
 
     let closed = false;
     const finalPc = pc;

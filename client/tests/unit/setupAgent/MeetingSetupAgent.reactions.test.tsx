@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { act } from "react";
 import MeetingSetupAgent from "@setupAgent/MeetingSetupAgent";
 import type { MeetingSetupUserEvent } from "@newMeeting/meetingSetup";
+import { capabilitiesFor } from "@/settings/capabilities";
 
 const mockInterruptAndRespond = vi.hoisted(() => vi.fn());
 const mockSelectedCharacters = vi.hoisted(() => ({ value: ["chair"] as string[] }));
@@ -20,14 +21,13 @@ vi.mock("@/settings/councilSettings", () => ({
     isMuseumMode: false,
     mode: "web",
     setAppMode: vi.fn(),
-    agentMode: "always-on",
-    setAgentMode: vi.fn(),
+    capabilities: capabilitiesFor("web"),
   }),
   getAppMode: () => "web",
 }));
 
 vi.mock("@/museum/button/useButton", () => ({
-  useButton: () => ({ claim: vi.fn(), release: vi.fn(), setLed: vi.fn(), pressed: false, isOwner: true }),
+  useButton: () => ({ claim: vi.fn(), release: vi.fn(), setArmed: vi.fn(), pressed: false, wantsMic: false, isOwner: true }),
 }));
 
 vi.mock("@setupAgent/useSetupAgent", () => ({
