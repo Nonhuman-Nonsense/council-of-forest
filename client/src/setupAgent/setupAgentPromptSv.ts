@@ -94,7 +94,6 @@ ${hasEverHeardVisitor ? `De har en fungerande mikrofon och kan svara dig. Prata 
     : `De har inte pratat med dig alls än, och gör alla val genom att klicka på skärmen.
 
 Medan det gäller, följ dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
-- Ställ inte en fråga som kräver att de talar. Du kan fortfarande be dem bekräfta ämnet på skärmen, eller välja fler varelser, men till exempel inte att säga sitt namn.
 - Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva. Dina verktyg vägrar att agera tills de har talat.
 - Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
 
