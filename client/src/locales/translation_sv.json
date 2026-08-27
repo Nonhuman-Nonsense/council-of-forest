@@ -35,10 +35,6 @@
     "placeholder": "Skriv din fråga eller börja inspelning...",
     "panelist": "Vad har {{name}} att säga om det här?"
   },
-  "agentMode": {
-    "alwaysOn": "Alltid på",
-    "pushToTalk": "Tryck för att tala"
-  },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
     "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka"
@@ -75,7 +71,6 @@
     "title": "PERSONAL",
     "panels": {
       "installation": "Installation",
-      "agentMode": "Agentläge",
       "details": "Detaljer & tips",
       "logging": "Loggning"
     },
@@ -162,6 +157,20 @@
   },
   "controls": {
     "wait": "vänta tills det är din tur att tala"
+  },
+  "agent": {
+    "turnOn": "Slå på guiden",
+    "turnOff": "Stäng av guiden",
+    "micStart": "Prata med guiden",
+    "micStop": "Sluta prata"
+  },
+  "microphone": {
+    "title": "Mikrofonen är inte tillgänglig",
+    "blocked": "Tillåt mikrofonåtkomst för den här sidan i din webbläsare,\ntryck sedan på mikrofonknappen igen.",
+    "noDevice": "Ingen mikrofon hittades på den här enheten.",
+    "inUse": "Mikrofonen används av ett annat program.\nStäng det och försök igen.",
+    "unsupported": "Den här webbläsaren kan inte ge sidan tillgång till en mikrofon.",
+    "dismiss": "Okej"
   },
   "queryExtension": {
     "title": "Var det allt?",

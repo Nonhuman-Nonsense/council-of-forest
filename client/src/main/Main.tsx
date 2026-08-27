@@ -30,7 +30,7 @@ import {
 import RotateDevice from "./overlay/RotateDevice";
 import FullscreenButton from "./FullscreenButton";
 import MuseumSwitchButton from "@/museum/MuseumSwitchButton";
-import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
+import ButtonLedDebugOverlay, { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
@@ -38,9 +38,17 @@ import { useWakeLock } from "@/audio/wakeLock";
 import CouncilError from "./overlay/CouncilError";
 import ErrorBoundary from "./ErrorBoundary";
 import Reconnecting from "./overlay/Reconnecting";
+import MicrophoneBlocked from "./overlay/MicrophoneBlocked";
+import OverlayWrapper from "./overlay/OverlayWrapper";
 import { useErrorStore } from "./overlay/errorStore";
+import {
+  refreshMicAvailability,
+  useMicAvailabilityStore,
+  watchMicAvailability,
+} from "@realtime/micAvailabilityStore";
 
-import MuseumButton from "@/museum/button/MuseumButton";
+import HardwareButton from "@/museum/button/HardwareButton";
+import { useButtonStore } from "@/museum/button/buttonStore";
 import ButtonBanner from "@/museum/button/ButtonBanner";
 import { useMuseumCursorHide } from "@/museum/useMuseumCursorHide";
 
@@ -96,10 +104,29 @@ export default function Main(props: MainProps) {
   useWakeLock(isMeetingPath(location.pathname) && !isPaused);
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { isMuseumMode, agentMode, museumSwitchButtonEnabled } = useCouncilSettings();
+  const { capabilities, pttHardwareEnabled, museumSwitchButtonEnabled } = useCouncilSettings();
   const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
   useMuseumCursorHide();
+
+  // Bind the talk key (Space) for the lifetime of the app, in both modes.
+  // Whether a press counts is decided by whether an owner has armed the button
+  // (see recomputePressed), so binding unconditionally is safe.
+  useEffect(() => {
+    useButtonStore.getState().init();
+  }, []);
+
+  const micNoticeOpen = useMicAvailabilityStore((s) => s.noticeOpen);
+  const closeMicNotice = useMicAvailabilityStore((s) => s.closeNotice);
+
+  // Learn the microphone permission up front — a mic already blocked lets
+  // HumanInput skip a pre-warm that could only fail — and keep it current, so a
+  // visitor who allows the mic from browser site settings is noticed without a
+  // reload.
+  useEffect(() => {
+    void refreshMicAvailability();
+    return watchMicAvailability();
+  }, []);
 
   useEffect(() => {
     if (i18n.language !== props.lang) {
@@ -180,7 +207,7 @@ export default function Main(props: MainProps) {
 
   return (
     <>
-      {isMuseumMode && (
+      {capabilities.autoplay && (
         <Suspense fallback={null}>
           <AutoplayCoordinator
             meetingliveKey={meetingliveKey}
@@ -188,7 +215,8 @@ export default function Main(props: MainProps) {
           />
         </Suspense>
       )}
-      {agentMode === "ptt" && <MuseumButton />}
+      {pttHardwareEnabled && <HardwareButton />}
+      {ledDebugOverlay && <ButtonLedDebugOverlay />}
       {!isMeetingPath(location.pathname) && <ButtonBanner />}
       <Forest
         currentSpeakerId={currentSpeakerId}
@@ -196,14 +224,14 @@ export default function Main(props: MainProps) {
         audioContext={audioContext}
       />
       <div style={{ width: "100%", height: "7%", minHeight: 300 * 0.07 + "px", position: "absolute", bottom: 0, background: "linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%)", zIndex: z.gradientFooter }} />
-      {!(unrecoverableError != null || connectionError) && !isMuseumMode &&
+      {!(unrecoverableError != null || connectionError) && capabilities.browserUi &&
         <Navbar
           topicTitle={topicSelection?.title || ""}
           hamburgerOpen={hamburgerOpen}
           setHamburgerOpen={setHamburgerOpen}
         />
       }
-      {hamburgerOpen && !isMuseumMode && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
+      {hamburgerOpen && capabilities.browserUi && <div style={hamburgerCloserStyle} onClick={() => setHamburgerOpen(false)}></div>}
       {museumSwitchButtonEnabled && <MuseumSwitchButton />}
       {unrecoverableError == null &&
         <Overlay
@@ -244,7 +272,7 @@ export default function Main(props: MainProps) {
               <Route path="*" element={<Navigate to={rootPath} replace />} />
             </Routes>
           </ErrorBoundary>
-          {!isIphone && !isMuseumMode && !(agentMode === "ptt" && ledDebugOverlay) && <FullscreenButton />}
+          {!isIphone && capabilities.browserUi && !ledDebugOverlay && <FullscreenButton />}
           {isPortrait && location.pathname !== "/" && <RotateOverlay />}
         </Overlay>
       }
@@ -260,6 +288,13 @@ export default function Main(props: MainProps) {
           layer="system"
         >
           <Reconnecting />
+        </Overlay>
+      )}
+      {micNoticeOpen && unrecoverableError == null && (
+        <Overlay isActive={true} isBlurred={true} layer="system">
+          <OverlayWrapper showX={true} cancelOverlay={closeMicNotice}>
+            <MicrophoneBlocked onDismiss={closeMicNotice} />
+          </OverlayWrapper>
         </Overlay>
       )}
       <MainOverlays

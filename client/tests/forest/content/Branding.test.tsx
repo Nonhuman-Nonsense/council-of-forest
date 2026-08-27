@@ -4,7 +4,7 @@ import Landing from '@newMeeting/Landing';
 import Forest from '@forest/Forest';
 
 // Mock router
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
 
 // Mock utils
 vi.mock('@/utils', () => ({
@@ -28,9 +28,15 @@ vi.mock('react-responsive', () => ({
 describe('Forest Content & Branding', () => {
 
     it('Landing page shows Council branding', () => {
+        // Landing lives in MeetingSetupShell's outlet, and reports the visitor
+        // leaving the welcome screen through its context.
         render(
             <MemoryRouter>
-                <Landing />
+                <Routes>
+                    <Route element={<Outlet context={{ setLastUserEvent: vi.fn() }} />}>
+                        <Route path="/" element={<Landing />} />
+                    </Route>
+                </Routes>
             </MemoryRouter>
         );
         expect(screen.getByText('COUNCIL OF FOREST')).toBeInTheDocument();

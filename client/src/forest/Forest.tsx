@@ -45,6 +45,10 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     const [translate, setTranslate] = useState<(string | number)[]>([0, 0]);
     const [animateTransformOrigin, setAnimateTransformOrigin] = useState(false);
     const [disableAnimations, setDisableAnimations] = useState(false);
+    const isResizeRecalc = useRef(false);
+    // How much of the viewport width a zoomed-in character may fill before the
+    // zoom gets capped by width instead of height (portrait screens + wide characters).
+    const maxZoomWidthPercent = 90;
 
     const characterRefs = useMemo(() => {
         const map: Record<string, RefObject<HTMLDivElement | HTMLImageElement | null>> = {};
@@ -67,6 +71,10 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     useEffect(() => {
         const handleResize = () => {
             setDisableAnimations(true);
+            // Viewport aspect ratio changed (e.g. rotation) — recompute so the zoom
+            // stays capped correctly instead of reusing a stale scale value.
+            isResizeRecalc.current = true;
+            setZoomInOnBeing((prev) => (prev ? { ...prev } : prev));
         };
         window.addEventListener('resize', handleResize);
         // Cleanup function to remove the event listener
@@ -106,8 +114,14 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
     useEffect(() => {
         if (zoomInOnBeing) {
-            //Zoom in so that character is 70% of height, or custom
-            const zoom = (zoomInOnBeing.zoom ?? 70) / zoomInOnBeing.height;
+            //Zoom in so that character is `zoom`% of viewport height, or `zoom`% of
+            //viewport width, whichever is reached first — keeps very wide/tall
+            //characters (e.g. salmon, mountain) from overflowing on portrait screens.
+            const target = zoomInOnBeing.zoom ?? 70;
+            const viewportAspect = window.innerWidth / window.innerHeight;
+            const zoomByHeight = target / zoomInOnBeing.height;
+            const zoomByWidth = (maxZoomWidthPercent * viewportAspect) / (zoomInOnBeing.height * zoomInOnBeing.ratio);
+            const zoom = Math.min(zoomByHeight, zoomByWidth);
 
             //Pixel calculations would be
             // const container = containerRef.current.getBoundingClientRect();
@@ -148,7 +162,13 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
         } else {
             setAnimateTransformOrigin(false);
         }
-        setDisableAnimations(false);
+        // A resize-triggered recalculation should keep animations disabled — only a
+        // real speaker change should animate the transform.
+        if (isResizeRecalc.current) {
+            isResizeRecalc.current = false;
+        } else {
+            setDisableAnimations(false);
+        }
     }, [zoomInOnBeing]);
 
     function l(amount: number) {
