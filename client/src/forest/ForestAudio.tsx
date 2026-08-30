@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, type RefObject } from "react";
 import { log } from "@/logger";
 import {
     characterAmbienceUrl,
-    characterMp3Url,
+    characterAudioUrl,
 } from "@assets/characters/characterData";
 
 type AudioLoopOptions = {
@@ -78,7 +78,7 @@ type BeingAudioProps = {
 };
 
 export function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
-    const gainNode = useAudioLoop({ url: characterMp3Url(id), audioContext });
+    const gainNode = useAudioLoop({ url: characterAudioUrl(id), audioContext });
 
     const [play, setPlay] = useState(false);
 

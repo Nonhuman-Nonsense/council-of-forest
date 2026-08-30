@@ -64,7 +64,7 @@ describe('Forest audio loops', () => {
 
         expect(mockGainNode.connect).toHaveBeenCalledWith(mockAudioContext.destination);
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('ambience.mp3'),
+            expect.stringContaining('ambience.opus'),
             expect.objectContaining({ signal: expect.any(AbortSignal) }),
         );
         expect(mockBufferSource.loop).toBe(true);
@@ -77,7 +77,7 @@ describe('Forest audio loops', () => {
 
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith(
-                expect.stringContaining('river.mp3'),
+                expect.stringContaining('river.opus'),
                 expect.objectContaining({ signal: expect.any(AbortSignal) }),
             );
         });
