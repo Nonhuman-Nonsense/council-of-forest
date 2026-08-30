@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import Forest from '@forest/Forest';
+import { log } from '@/logger';
 
 // Mock utils to avoid layout issues
 vi.mock('@/utils', () => ({
@@ -12,11 +13,10 @@ vi.mock('@/utils', () => ({
 }));
 
 // Mock fetch for audio files
-global.fetch = vi.fn(() =>
-    Promise.resolve({
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
-    })
-) as unknown as typeof fetch;
+global.fetch = vi.fn() as unknown as typeof fetch;
+
+const resolvesToAudio = () =>
+    Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) });
 
 describe('Forest Audio Logic', () => {
     // Loose Web Audio API mocks; typed `any` per this repo's test-mock convention.
@@ -26,6 +26,7 @@ describe('Forest Audio Logic', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(global.fetch).mockImplementation(resolvesToAudio as never);
 
         // Fix: Mock HTMLMediaElement methods (play/pause) to support FoodAnimation
         window.HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());
@@ -34,6 +35,7 @@ describe('Forest Audio Logic', () => {
         // Setup AudioContext Mocks
         mockGainNode = {
             connect: vi.fn(),
+            disconnect: vi.fn(),
             gain: {
                 setValueAtTime: vi.fn(),
                 linearRampToValueAtTime: vi.fn(),
@@ -45,6 +47,7 @@ describe('Forest Audio Logic', () => {
             buffer: null,
             loop: false,
             connect: vi.fn(),
+            disconnect: vi.fn(),
             start: vi.fn(),
             stop: vi.fn()
         };
@@ -68,6 +71,10 @@ describe('Forest Audio Logic', () => {
         // So yes, we pass a ref object { current: mockCtx }
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('AmbientAudio initializes and loads ambience on mount', async () => {
         const audioContextRef = { current: mockAudioContext };
 
@@ -83,7 +90,10 @@ describe('Forest Audio Logic', () => {
         expect(mockGainNode.connect).toHaveBeenCalledWith(mockAudioContext.destination);
 
         // Verify fetch of ambience
-        expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('ambience.mp3'));
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('ambience.mp3'),
+            expect.objectContaining({ signal: expect.any(AbortSignal) }),
+        );
 
         // Verify start
         await waitFor(() => {
@@ -100,7 +110,10 @@ describe('Forest Audio Logic', () => {
 
         // Wait for connection
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining(`${speakerId}.mp3`));
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining(`${speakerId}.mp3`),
+                expect.objectContaining({ signal: expect.any(AbortSignal) }),
+            );
         });
 
         // Check gain ramp up
@@ -137,5 +150,57 @@ describe('Forest Audio Logic', () => {
                 expect.any(Number)
             );
         });
+    });
+
+    it('reports a failed loop load instead of leaving the rejection unhandled', async () => {
+        const logSpy = vi.spyOn(log, 'event').mockImplementation(() => undefined);
+        vi.mocked(global.fetch).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+        render(<Forest currentSpeakerId="" isPaused={false} audioContext={{ current: mockAudioContext }} />);
+
+        await waitFor(() => {
+            expect(logSpy).toHaveBeenCalledWith('ERROR', expect.any(String), expect.any(TypeError));
+        });
+    });
+
+    it('aborts an in-flight loop load when unmounted', async () => {
+        const signals: AbortSignal[] = [];
+        vi.mocked(global.fetch).mockImplementation(((_url: string, init: RequestInit) => {
+            signals.push(init.signal as AbortSignal);
+            return new Promise(() => undefined);
+        }) as never);
+
+        const { unmount } = render(
+            <Forest currentSpeakerId="" isPaused={false} audioContext={{ current: mockAudioContext }} />,
+        );
+
+        await waitFor(() => expect(signals.length).toBeGreaterThan(0));
+        expect(signals.some((s) => s.aborted)).toBe(false);
+
+        unmount();
+
+        expect(signals.every((s) => s.aborted)).toBe(true);
+    });
+
+    it('does not report a load aborted by unmount as a failure', async () => {
+        const logSpy = vi.spyOn(log, 'event').mockImplementation(() => undefined);
+        const signals: AbortSignal[] = [];
+        vi.mocked(global.fetch).mockImplementation(((_url: string, init: RequestInit) =>
+            new Promise((_resolve, reject) => {
+                const signal = init.signal as AbortSignal;
+                signals.push(signal);
+                signal.addEventListener('abort', () =>
+                    reject(new DOMException('Aborted', 'AbortError')));
+            })) as never);
+
+        const { unmount } = render(
+            <Forest currentSpeakerId="" isPaused={false} audioContext={{ current: mockAudioContext }} />,
+        );
+        await waitFor(() => expect(signals.length).toBeGreaterThan(0));
+
+        unmount();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(logSpy).not.toHaveBeenCalledWith('ERROR', expect.any(String), expect.anything());
     });
 });

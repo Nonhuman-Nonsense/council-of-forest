@@ -25,10 +25,10 @@ describe('Forest Visual Logic', () => {
         current: {
             createGain: vi.fn(() => ({
                 gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-                connect: vi.fn()
+                connect: vi.fn(), disconnect: vi.fn()
             })),
             createBufferSource: vi.fn(() => ({
-                buffer: null, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+                buffer: null, loop: false, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn()
             })),
             destination: {},
             currentTime: 0,

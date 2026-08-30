@@ -126,7 +126,7 @@ class MockAudioContext {
     currentTime = 0;
     createGain() {
         return {
-            connect: vi.fn(),
+            connect: vi.fn(), disconnect: vi.fn(),
             gain: {
                 value: 1,
                 linearRampToValueAtTime: vi.fn(),
@@ -136,7 +136,7 @@ class MockAudioContext {
     }
     createOscillator() {
         return {
-            connect: vi.fn(),
+            connect: vi.fn(), disconnect: vi.fn(),
             start: vi.fn(),
             stop: vi.fn(),
             frequency: { value: 0 }
@@ -144,7 +144,7 @@ class MockAudioContext {
     }
     createBufferSource() {
         return {
-            connect: vi.fn(),
+            connect: vi.fn(), disconnect: vi.fn(),
             start: vi.fn(),
             stop: vi.fn(),
             buffer: null,
