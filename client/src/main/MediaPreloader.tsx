@@ -1,21 +1,25 @@
 import React from 'react';
 import { useMobile } from "@/utils";
-import { characterTransparentVideoUrls } from "@assets/characters/characterData";
+import {
+    characterAudioSources,
+    characterTransparentVideoUrls,
+} from "@assets/characters/characterData";
 
-interface VideoPreloaderProps {
+interface MediaPreloaderProps {
     foodIds: string[];
 }
 
 /**
- * VideoPreloader
+ * MediaPreloader
  * 
- * Renders hidden video elements to force the browser to buffer video assets
- * before they are needed in the main Council view.
+ * Renders hidden video and audio elements to force the browser to buffer character
+ * media before it is needed in the main Council view.
  * 
  * It mirrors the source logic of FoodAnimation.tsx to ensure the correct codec 
- * (HEVC vs VP9) is preloaded based on browser support.
+ * (HEVC vs VP9) is preloaded based on browser support. Audio comes from
+ * `characterAudioSources`, which is empty in projects that ship no character loops.
  */
-function VideoPreloader({ foodIds }: VideoPreloaderProps): React.ReactElement {
+function MediaPreloader({ foodIds }: MediaPreloaderProps): React.ReactElement {
     const isMobile = useMobile();
     return (
         <div style={{ display: 'none', width: 0, height: 0, overflow: 'hidden' }}>
@@ -39,8 +43,19 @@ function VideoPreloader({ foodIds }: VideoPreloaderProps): React.ReactElement {
                     </video>
                 );
             })}
+            {foodIds.map((id) => {
+                const sources = characterAudioSources(id);
+                if (sources.length === 0) return null;
+                return (
+                    <audio key={id} preload="auto" muted>
+                        {sources.map((source) => (
+                            <source key={source.src} src={source.src} type={source.type} />
+                        ))}
+                    </audio>
+                );
+            })}
         </div>
     );
 }
 
-export default VideoPreloader;
+export default MediaPreloader;
