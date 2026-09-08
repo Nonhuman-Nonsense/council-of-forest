@@ -39,9 +39,17 @@ so the next pass stays fast and consistent.
 **`topics_<lang>.json`**
 
 - `system` — council framing; contains `[TOPIC]` and `[AGENDA_POINTS]`.
-- `custom_topic` — `id`, `title`, `prompt` (with `[VISITOR_INPUT]`).
-- `topics[]` — each topic: `id`, `title`, `description`, `prompt` (context +
-  framing only), `agendaPoints[]` (numbered items injected at `[AGENDA_POINTS]`).
+- `custom_topic` — `id`, `title`, `agentBrief`, `prompt` (with `[VISITOR_INPUT]`).
+- `topics[]` — each topic: `id`, `title`, `description`, `agentBrief`, `prompt`
+  (context + framing only), `agendaPoints[]` (numbered items injected at
+  `[AGENDA_POINTS]`).
+- `description` is read on screen; `agentBrief` is what Älven speaks from, so
+  the two must say different things — a brief that paraphrases the description
+  gives the visitor the same sentence twice, and the data test rejects it.
+  Briefs are written as instructions to Älven ("Fråga…", "Pressa på…"), not as
+  lines to read aloud.
+- Every topic and the custom topic must carry a non-empty `agentBrief` in every
+  language (`ValidateTopicsData`).
 - Topic `id`s must match across languages.
 
 **`beings_<lang>.json`**
@@ -76,6 +84,8 @@ Format: **English** → **Swedish** — *notes*.
 | chair / moderator | ordförande / moderator | |
 | stand-up | stand-up | kept |
 | Add Human / Human | Människa | character/option label |
+| presenter (app mode) | Presentation | staff label, alongside Webb / Museum |
+| mode switch button | Lägesbytarknapp | staff label |
 
 ### 2.2 Character names
 

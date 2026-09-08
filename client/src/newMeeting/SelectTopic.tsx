@@ -150,7 +150,8 @@ function SelectTopic({
   const isSingleColumn = standardTopics.length <= 6;
 
 
-  const detailSlotHeight = isMobile ? (isMobileXs ? "36px" : "40px") : "55px";
+  const detailSlotHeight = isMobile ? (isMobileXs ? "45px" : "56px") : "75px";
+  const customTopicHeight = isMobile ? (isMobileXs ? "36px" : "39px") : "44px";
 
   const containerStyle: React.CSSProperties = {
     width: "96vw",
@@ -201,9 +202,15 @@ function SelectTopic({
     resize: "none",
     padding: "0",
     margin: "0",
-    height: detailSlotHeight,
+    height: customTopicHeight,
     overflowY: "auto",
-    display: showTextBox() ? "" : "none",
+  };
+  const textBoxSlotStyle: React.CSSProperties = {
+    height: detailSlotHeight,
+    width: "100%",
+    display: showTextBox() ? "flex" : "none",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   /* -------------------------------------------------------------------------- */
@@ -287,15 +294,17 @@ function SelectTopic({
           </div>
 
           {/* Custom Topic Input */}
-          <textarea
-            ref={topicTextareaRef}
-            className="unfocused topic-textarea"
-            rows={2}
-            value={customTopic}
-            placeholder={t('meeting.customTopicPlaceholder')}
-            onChange={handleInputTopic}
-            style={textBoxStyle}
-          />
+          <div style={textBoxSlotStyle}>
+            <textarea
+              ref={topicTextareaRef}
+              className="unfocused topic-textarea"
+              rows={2}
+              value={customTopic}
+              placeholder={t('meeting.customTopicPlaceholder')}
+              onChange={handleInputTopic}
+              style={textBoxStyle}
+            />
+          </div>
 
           {capabilities.browserUi ? (
             <button

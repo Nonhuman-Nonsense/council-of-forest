@@ -95,8 +95,8 @@
     },
     "web": "Webb",
     "museum": "Museum",
-    "presenter": "Presentatör",
-    "modeSwitchButton": "Knapp för lägesbyte",
+    "presenter": "Presentation",
+    "modeSwitchButton": "Lägesbytarknapp",
     "button": {
       "title": "Knapp",
       "bridgeLabel": "Brygga",
