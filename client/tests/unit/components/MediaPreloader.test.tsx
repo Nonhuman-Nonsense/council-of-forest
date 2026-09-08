@@ -49,11 +49,28 @@ describe('MediaPreloader', () => {
         expect(sources[1]).toHaveAttribute('type', 'video/webm');
     });
 
-    it('renders no audio elements when the project ships no character loops', () => {
+    it('renders a hidden audio element per being with an ambient loop', () => {
         const { container } = render(
             <MediaPreloader foodIds={[firstCharacter.id, secondCharacter.id]} />,
         );
         const div = container.firstChild as HTMLElement;
+
+        const audios = div.querySelectorAll('audio');
+        expect(audios).toHaveLength(2);
+        expect(audios[0]).toHaveAttribute('preload', 'auto');
+
+        const sources = audios[0].querySelectorAll('source');
+        expect(sources).toHaveLength(1);
+        expect(sources[0].getAttribute('src')).toContain(`${firstCharacter.id}`);
+        expect(sources[0]).toHaveAttribute('type', 'audio/ogg; codecs="opus"');
+    });
+
+    it('renders no audio element for a being that has no loop', () => {
+        // `bird` is in the forest scene but ships no ambient loop.
+        const { container } = render(<MediaPreloader foodIds={['bird']} />);
+        const div = container.firstChild as HTMLElement;
+
+        expect(div.querySelectorAll('video')).toHaveLength(1);
         expect(div.querySelectorAll('audio')).toHaveLength(0);
     });
 });

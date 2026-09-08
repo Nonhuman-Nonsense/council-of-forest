@@ -1,13 +1,26 @@
 import { useState, useEffect, useRef, type RefObject } from "react";
+import { useLocation } from "react-router";
 import { log } from "@/logger";
+import forestCharacters from "@shared/prompts/forest_characters.json";
+import { CHAIR_ID } from "@/prompts/characterSetupBundles";
+import { isMeetingPath } from "@/navigation";
 import {
     characterAmbienceUrl,
+    characterAudioSources,
     characterAudioUrl,
 } from "@assets/characters/characterData";
+
+//Beings whose loop can ever play: the chair, plus everyone given a volume in the manifest.
+const loopedBeingIds = [
+    CHAIR_ID,
+    ...forestCharacters.filter((character) => character.audio).map((character) => character.id),
+];
 
 type AudioLoopOptions = {
     url: string;
     audioContext: RefObject<AudioContext | null>;
+    /** Nothing is fetched until this turns true; it never goes back to false. */
+    enabled?: boolean;
     /** Called once the loop is audible, for callers that want to fade it in. */
     onStarted?: (gain: GainNode, ctx: AudioContext) => void;
 };
@@ -20,7 +33,7 @@ type AudioLoopOptions = {
  * surface as an unhandled `TypeError: Failed to fetch`. Returns the gain node so callers
  * can fade the loop up and down.
  */
-function useAudioLoop({ url, audioContext, onStarted }: AudioLoopOptions): RefObject<GainNode | null> {
+function useAudioLoop({ url, audioContext, enabled = true, onStarted }: AudioLoopOptions): RefObject<GainNode | null> {
     const gainNode = useRef<GainNode | null>(null);
 
     //Held in a ref so a caller's inline callback doesn't re-trigger the load.
@@ -31,7 +44,7 @@ function useAudioLoop({ url, audioContext, onStarted }: AudioLoopOptions): RefOb
 
     useEffect(() => {
         const ctx = audioContext.current;
-        if (!ctx) return;
+        if (!ctx || !enabled) return;
 
         const controller = new AbortController();
         const gain = ctx.createGain();
@@ -65,7 +78,7 @@ function useAudioLoop({ url, audioContext, onStarted }: AudioLoopOptions): RefOb
             gain.disconnect();
             gainNode.current = null;
         };
-    }, [url, audioContext]);
+    }, [url, audioContext, enabled]);
 
     return gainNode;
 }
@@ -78,13 +91,25 @@ type BeingAudioProps = {
 };
 
 export function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
-    const gainNode = useAudioLoop({ url: characterAudioUrl(id), audioContext });
-
     const [play, setPlay] = useState(false);
+
+    // A being's loop is only ever audible while that being speaks, so nothing is fetched
+    // until its first turn — and off a meeting nobody speaks, which is what keeps the
+    // landing page down to the ambience bed instead of every loop in the forest.
+    const [hasSpoken, setHasSpoken] = useState(false);
 
     useEffect(() => {
         setPlay(id === currentSpeakerId);
+        if (id === currentSpeakerId) {
+            setHasSpoken(true);
+        }
     }, [id, currentSpeakerId]);
+
+    const gainNode = useAudioLoop({
+        url: characterAudioUrl(id),
+        audioContext,
+        enabled: hasSpoken,
+    });
 
     useEffect(() => {
         const gain = gainNode.current;
@@ -116,4 +141,29 @@ export function AmbientAudio({ audioContext }: AmbientAudioProps) {
     });
 
     return null;
+}
+
+/**
+ * Warms the HTTP cache for every being loop while a meeting is open, so a being's first
+ * turn doesn't wait on a cold fetch — a deep link into a running meeting never passes
+ * through the character-select page that would otherwise have preloaded them.
+ *
+ * Preload only: nothing is decoded here, so resident AudioBuffers stay limited to the
+ * beings that actually speak, and the landing page still loads the ambience bed alone.
+ */
+export function BeingAudioPreloader() {
+    const location = useLocation();
+    if (!isMeetingPath(location.pathname)) return null;
+
+    return (
+        <div style={{ display: "none", width: 0, height: 0, overflow: "hidden" }}>
+            {loopedBeingIds.map((id) => (
+                <audio key={id} preload="auto" muted>
+                    {characterAudioSources(id).map((source) => (
+                        <source key={source.src} src={source.src} type={source.type} />
+                    ))}
+                </audio>
+            ))}
+        </div>
+    );
 }

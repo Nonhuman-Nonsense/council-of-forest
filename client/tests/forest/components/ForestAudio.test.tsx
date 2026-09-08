@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
-import { AmbientAudio, BeingAudio } from '@forest/ForestAudio';
+import { AmbientAudio, BeingAudio, BeingAudioPreloader } from '@forest/ForestAudio';
+import { MemoryRouter } from 'react-router';
 import { log } from '@/logger';
 
 global.fetch = vi.fn() as unknown as typeof fetch;
@@ -155,5 +156,75 @@ describe('Forest audio loops', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(logSpy).not.toHaveBeenCalledWith('ERROR', expect.any(String), expect.anything());
+    });
+
+    it('BeingAudio loads nothing until the being has spoken', () => {
+        render(
+            <BeingAudio id="river" volume={0.15} currentSpeakerId="" audioContext={audioContext} />,
+        );
+
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(mockAudioContext.createGain).not.toHaveBeenCalled();
+    });
+
+    it('BeingAudio loads its loop on the being\'s first turn', async () => {
+        const { rerender } = render(
+            <BeingAudio id="river" volume={0.15} currentSpeakerId="" audioContext={audioContext} />,
+        );
+        expect(global.fetch).not.toHaveBeenCalled();
+
+        rerender(
+            <BeingAudio id="river" volume={0.15} currentSpeakerId="river" audioContext={audioContext} />,
+        );
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining('river.opus'),
+                expect.objectContaining({ signal: expect.any(AbortSignal) }),
+            );
+        });
+    });
+
+    it('BeingAudio keeps its loop loaded after the being stops speaking', async () => {
+        const { rerender } = render(
+            <BeingAudio id="river" volume={0.15} currentSpeakerId="river" audioContext={audioContext} />,
+        );
+        await waitFor(() => expect(mockBufferSource.start).toHaveBeenCalled());
+
+        rerender(
+            <BeingAudio id="river" volume={0.15} currentSpeakerId="" audioContext={audioContext} />,
+        );
+
+        //Fading out must not tear the loop down — the being may speak again.
+        expect(mockBufferSource.stop).not.toHaveBeenCalled();
+        expect(vi.mocked(global.fetch).mock.calls).toHaveLength(1);
+    });
+
+    it('BeingAudioPreloader preloads nothing away from a meeting', () => {
+        const { container } = render(
+            <MemoryRouter initialEntries={['/en/']}><BeingAudioPreloader /></MemoryRouter>,
+        );
+
+        expect(container.querySelectorAll('audio')).toHaveLength(0);
+    });
+
+    it('BeingAudioPreloader warms every being loop during a meeting', () => {
+        const { container } = render(
+            <MemoryRouter initialEntries={['/en/meeting/42']}><BeingAudioPreloader /></MemoryRouter>,
+        );
+
+        const audios = container.querySelectorAll('audio');
+        expect(audios.length).toBeGreaterThan(1);
+
+        //Preload only — decoding still waits for the being's first turn.
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(mockAudioContext.createBufferSource).not.toHaveBeenCalled();
+
+        audios.forEach((audio) => {
+            expect(audio).toHaveAttribute('preload', 'auto');
+            const sources = audio.querySelectorAll('source');
+            expect(sources).toHaveLength(1);
+            expect(sources[0]).toHaveAttribute('type', 'audio/ogg; codecs="opus"');
+        });
     });
 });

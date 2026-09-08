@@ -6,7 +6,7 @@ import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
 import { z } from "@/zIndexLayers";
 import { characterImageAvifUrl } from "@assets/characters/characterData";
-import { AmbientAudio, BeingAudio } from "@forest/ForestAudio";
+import { AmbientAudio, BeingAudio, BeingAudioPreloader } from "@forest/ForestAudio";
 
 type ForestManifestEntry = (typeof forestCharacters)[number];
 
@@ -178,6 +178,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
+            <BeingAudioPreloader />
             <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: z.forestRiver, height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import Forest from '@forest/Forest';
 
 // Mock child components
@@ -37,7 +38,7 @@ describe('Forest Visual Logic', () => {
     };
 
     it('renders Forest background', () => {
-        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />, { wrapper: MemoryRouter });
         const html = container.innerHTML;
         // Forest background + characters
         expect(html).toContain('forest');
@@ -46,7 +47,7 @@ describe('Forest Visual Logic', () => {
     it('zooms in when valid speaker is active', async () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         const forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
 
@@ -68,7 +69,7 @@ describe('Forest Visual Logic', () => {
     it('stays zoomed out when currentSpeakerId is chair or empty (meta-agent)', () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         let forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
 
@@ -82,7 +83,7 @@ describe('Forest Visual Logic', () => {
     it('does not zoom for unknown speaker', async () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         rerender(
             <Forest currentSpeakerId="unknown_blob" isPaused={false} audioContext={mockAudioContext} />
         );

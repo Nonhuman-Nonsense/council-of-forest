@@ -178,7 +178,10 @@ export function characterAudioUrl(characterId: string): string {
  * exists so `MediaPreloader` can stay shared with Forest, which does ship loops.
  */
 export function characterAudioSources(
-    _characterId: string,
+    characterId: string,
 ): Array<{ src: string; type: string }> {
-    return [];
+    const fn = toAssetBasename(characterId);
+    const url = characterAudioByBasename[fn];
+    //Not every being has a loop — those simply have nothing to preload.
+    return url ? [{ src: url, type: 'audio/ogg; codecs="opus"' }] : [];
 }
