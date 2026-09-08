@@ -34,6 +34,8 @@ function FoodAnimation({
         } catch (e) {
           console.log(e);
         }
+        //The component may have unmounted while play() was pending, nulling the ref.
+        if (!video.current) return;
         video.current.pause();
         setVidLoaded(true);
       }
