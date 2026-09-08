@@ -48,7 +48,7 @@ function Council({
 }: CouncilProps) {
   const { meetingId } = useParams<{ meetingId: string }>();
   const { t, i18n } = useTranslation();
-  const { isMuseumMode, capabilities } = useCouncilSettings();
+  const { capabilities } = useCouncilSettings();
   const connectionError = useErrorStore((s) => s.connectionError);
 
   const navigate = useNavigate();
@@ -122,7 +122,7 @@ function Council({
     audioContext,
     isPaused,
     setPaused,
-    unattended: capabilities.unattended,
+    selfHealing: capabilities.selfHealing,
     hasMetaAgent: capabilities.metaAgent,
     setMetaAgentPhase,
     metaAgentPhase,
@@ -265,7 +265,6 @@ function Council({
           currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""}
           onSubmitHumanMessage={handleOnSubmitHumanMessage}
           onAbandonHumanTurn={handleOnAbandonHumanTurn}
-          isButtonMuseumMode={isMuseumMode}
         />
       )}
       {/* council-shell: flex column owning the overlay content region + footer.
