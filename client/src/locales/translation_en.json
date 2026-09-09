@@ -212,6 +212,8 @@
     "message": "Something went wrong...\nCouncil cannot continue",
     "audioLoad": "Could not load meeting audio.",
     "connection": "Connection Lost",
+    "busy": "The council is busy",
+    "busyRetrying": "Too many people are talking at once — trying again…",
     "reconnecting": "Attempting to reconnect...",
     "restartUnavailableRetrying": "Server unavailable for restart, retrying…"
   }

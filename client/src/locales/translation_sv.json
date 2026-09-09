@@ -212,6 +212,8 @@
     "message": "Något gick snett...\nRådet kan inte fortsätta",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
+    "busy": "Rådet är upptaget",
+    "busyRetrying": "För många talar samtidigt — försöker igen…",
     "reconnecting": "Försöker återansluta...",
     "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
   }
