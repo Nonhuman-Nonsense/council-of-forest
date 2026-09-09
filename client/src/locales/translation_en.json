@@ -214,6 +214,7 @@
     "connection": "Connection Lost",
     "busy": "The council is busy",
     "busyRetrying": "Too many people are talking at once — trying again…",
+    "busyTerminal": "Too many people are talking to the council right now. Please try again in a few minutes.",
     "elsewhere": "This meeting is happening somewhere else",
     "notFound": "That meeting could not be found",
     "forbidden": "This meeting is not yours to open",
