@@ -212,6 +212,17 @@
     "message": "Något gick snett...\nRådet kan inte fortsätta",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
+    "busy": "Rådet är upptaget",
+    "busyRetrying": "För många talar samtidigt — försöker igen…",
+    "busyTerminal": "För många talar med rådet just nu. Försök igen om några minuter.",
+    "elsewhere": "Det här mötet pågår någon annanstans",
+    "notFound": "Mötet kunde inte hittas",
+    "forbidden": "Det här mötet är inte ditt att öppna",
+    "unauthorized": "Det här mötet kräver en nyckel du inte har",
+    "invalidRequest": "Något med den förfrågan blev fel",
+    "meetingComplete": "Det här mötet är redan avslutat",
+    "invalidAudioId": "Kunde inte ladda mötesljud.",
+    "realtimeUnavailable": "Rådets röst är inte tillgänglig just nu",
     "reconnecting": "Försöker återansluta...",
     "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
   }

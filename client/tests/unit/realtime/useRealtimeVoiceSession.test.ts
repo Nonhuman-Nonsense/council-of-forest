@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useRealtimeVoiceSession } from "@realtime/useRealtimeVoiceSession";
+import {
+  CAPACITY_MIN_RETRIES,
+  getRealtimeRetryPolicy,
+  retryBudgetFor,
+  useRealtimeVoiceSession,
+} from "@realtime/useRealtimeVoiceSession";
 
 const mockCreateEventLoop = vi.hoisted(() => vi.fn());
 const mockFetchRealtimeBootstrap = vi.hoisted(() => vi.fn());
@@ -15,6 +20,11 @@ let eventLoopCallbacks: {
   onResponseStarted?: () => void;
   onResponseDone?: (info?: { status?: string }) => void;
   onSessionReady?: () => void;
+  onNonFatalError?: (info: {
+    message: string;
+    code: string | null;
+    handling: "ignored" | "recovered";
+  }) => void;
 } = {};
 
 let mockCtxTime = 10;
@@ -44,6 +54,7 @@ vi.mock("@realtime/realtimeEventLoop", () => ({
 }));
 
 const mockClassifyRealtimeError = vi.hoisted(() => vi.fn((..._args: unknown[]) => "retryable"));
+const mockCapacityRetryDelay = vi.hoisted(() => vi.fn(() => 0));
 
 const MockMicrophoneUnavailableError = vi.hoisted(
   () =>
@@ -62,9 +73,16 @@ vi.mock("@realtime/realtimeConnection", () => ({
     navigator.mediaDevices.getUserMedia({ audio: true }),
   classifyRealtimeError: (...args: unknown[]) => mockClassifyRealtimeError(...args),
   computeRealtimeRetryDelay: () => 0,
+  computeRealtimeCapacityRetryDelay: () => mockCapacityRetryDelay(),
   MicrophoneUnavailableError: MockMicrophoneUnavailableError,
   REALTIME_RETRY_BASE_MS: 1000,
   REALTIME_RETRY_MAX_MS: 15000,
+}));
+
+import { reportRealtimeIssue } from "@realtime/realtimeErrorReporting";
+
+vi.mock("@realtime/realtimeErrorReporting", () => ({
+  reportRealtimeIssue: vi.fn(),
 }));
 
 vi.mock("@realtime/micAvailabilityStore", () => ({
@@ -448,6 +466,101 @@ describe("useRealtimeVoiceSession", () => {
   });
 
   /**
+   * ErrorBot is read by people. A cancel that raced the end of a response is
+   * routine and costs the visitor nothing; a turn the loop had to rescue is a
+   * near-miss worth watching.
+   */
+  it.each([
+    { handling: "ignored" as const, reported: false },
+    { handling: "recovered" as const, reported: true },
+  ])("reports an absorbed $handling error to ErrorBot: $reported", async ({ handling, reported }) => {
+    renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => {
+      expect(eventLoopCallbacks.onNonFatalError).toBeTypeOf("function");
+    });
+
+    act(() => {
+      eventLoopCallbacks.onNonFatalError?.({
+        message: "no active response",
+        code: "response_cancel_not_active",
+        handling,
+      });
+    });
+
+    expect(reportRealtimeIssue).toHaveBeenCalledTimes(reported ? 1 : 0);
+  });
+
+  /**
+   * The offset is an estimate: the playback clock includes lead-in before
+   * audio flowed, alignment can describe speech TTS never synthesised, and the
+   * cancel sent alongside is what decides the real duration. Near the tail a
+   * clamped estimate still lands past the end (observed: 762 ms against 599 ms
+   * of audio), and truncating there buys nothing anyway.
+   */
+  it("omits the truncation offset near the end of the audio", async () => {
+    mockConnectionWithRemoteTrack();
+
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => {
+      expect(mockOnAudioStart).toBeTypeOf("function");
+    });
+
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+      mockOnArmed?.();
+      mockCtxTime = 0;
+      mockOnAudioStart?.(performance.now(), 0);
+      eventLoopCallbacks.onWordAlignment?.(1, [{ w: "Hello", s: 0.1, e: 0.5 }]);
+      eventLoopCallbacks.onWordAlignment?.(1, []);
+      // Inside the alignment's 0.5s, but well within the safety margin of it.
+      mockCtxTime = 0.45;
+    });
+
+    // The response is still open — this is the barge-in case, not the
+    // already-finished one handled above.
+    eventLoopMocks.isResponseActive.mockReturnValue(true);
+    act(() => {
+      result.current.interruptAndRespond("(reaction)", "click-reaction");
+    });
+    eventLoopMocks.isResponseActive.mockReturnValue(false);
+
+    expect(eventLoopMocks.interruptAndRespond).toHaveBeenCalledWith(
+      "(reaction)",
+      expect.objectContaining({ audioElapsedMs: undefined }),
+    );
+  });
+
+  /**
+   * With no alignment there is nothing to bound the playback clock against, so
+   * the offset would be an unchecked guess — this used to send it unclamped.
+   */
+  it("omits the truncation offset when no alignment data has arrived", async () => {
+    mockConnectionWithRemoteTrack();
+
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => {
+      expect(mockOnAudioStart).toBeTypeOf("function");
+    });
+
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+      mockOnArmed?.();
+      mockCtxTime = 0;
+      mockOnAudioStart?.(performance.now(), 0);
+      mockCtxTime = 0.762;
+    });
+
+    act(() => {
+      result.current.interruptAndRespond("(reaction)", "click-reaction");
+    });
+
+    expect(eventLoopMocks.interruptAndRespond).toHaveBeenCalledWith(
+      "(reaction)",
+      expect.objectContaining({ audioElapsedMs: undefined }),
+    );
+  });
+
+  /**
    * Between response.created and the confirmed-silence reset, the anchor and
    * subtitle track still describe the previous response while the event loop
    * has already advanced to the new one — an offset from that timeline would
@@ -691,6 +804,32 @@ describe("useRealtimeVoiceSession", () => {
     expect(mockFetchRealtimeBootstrap).toHaveBeenCalledTimes(2);
   });
 
+  it("stays connecting while waiting out a capacity refusal", async () => {
+    // The mic button's spinner reads `connectionState`, and a capacity wait is
+    // now minutes rather than seconds — so the session must read as connecting
+    // for the whole wait rather than settling into idle between attempts.
+    mockClassifyRealtimeError.mockReturnValue("capacity");
+    mockCapacityRetryDelay.mockReturnValue(10_000);
+    mockFetchRealtimeBootstrap.mockRejectedValue(
+      Object.assign(new Error("Realtime bootstrap failed (503)"), { name: "RealtimeHttpError" })
+    );
+
+    const { result } = renderHook(() =>
+      useRealtimeVoiceSession({
+        ...defaultParams,
+        retryPolicy: { maxRetries: 3, giveUpSilently: true },
+      })
+    );
+
+    await waitFor(() => {
+      expect(mockFetchRealtimeBootstrap).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(result.current.connectionState).toBe("connecting");
+    });
+    expect(result.current.error).toBeNull();
+  });
+
   it("forwards onSessionReady from the event loop", async () => {
     const onSessionReady = vi.fn();
     renderHook(() => useRealtimeVoiceSession({ ...defaultParams, onSessionReady }));
@@ -804,5 +943,23 @@ describe("useRealtimeVoiceSession", () => {
       expect.any(Object),
       { triggerGreetingOnReady: false },
     );
+  });
+});
+
+describe("retryBudgetFor", () => {
+  const web = getRealtimeRetryPolicy(false);
+  const installation = getRealtimeRetryPolicy(true);
+
+  // Web's three tries are sized for a network blip: on the capacity clock they
+  // would give up inside half a minute, before a busy account has plausibly
+  // freed a slot. An installation retries forever either way.
+  it.each([
+    { label: "web, blip", policy: web, capacity: false, expected: 3 },
+    { label: "web, capacity", policy: web, capacity: true, expected: CAPACITY_MIN_RETRIES },
+    { label: "installation, blip", policy: installation, capacity: false, expected: Infinity },
+    { label: "installation, capacity", policy: installation, capacity: true, expected: Infinity },
+    { label: "no policy", policy: undefined, capacity: true, expected: 0 },
+  ])("$label allows $expected attempts", ({ policy, capacity, expected }) => {
+    expect(retryBudgetFor(policy, capacity)).toBe(expected);
   });
 });
