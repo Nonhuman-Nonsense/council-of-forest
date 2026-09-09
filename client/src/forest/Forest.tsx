@@ -5,11 +5,8 @@ import forestCharacters from "@shared/prompts/forest_characters.json";
 import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
 import { z } from "@/zIndexLayers";
-import {
-    characterAmbienceUrl,
-    characterImageAvifUrl,
-    characterMp3Url,
-} from "@assets/characters/characterData";
+import { characterImageAvifUrl } from "@assets/characters/characterData";
+import { AmbientAudio, BeingAudio, BeingAudioPreloader } from "@forest/ForestAudio";
 
 type ForestManifestEntry = (typeof forestCharacters)[number];
 
@@ -181,6 +178,7 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
+            <BeingAudioPreloader />
             <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: z.forestRiver, height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
@@ -230,114 +228,6 @@ function Being({ id, ref, type, height, left, bottom, always_on, isPaused, curre
         {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={characterImageAvifUrl(id)} alt="" />}
     </>
     );
-}
-
-type BeingAudioProps = {
-    id: string;
-    currentSpeakerId: string;
-    volume: number;
-    audioContext: RefObject<AudioContext | null>;
-};
-
-function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
-    const gainNode = useRef<GainNode | null>(null); //The general volume control node
-    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
-
-    const [play, setPlay] = useState(false);
-
-    useEffect(() => {
-        if (id === currentSpeakerId) {
-            setPlay(true);
-        } else {
-            setPlay(false);
-        }
-    }, [currentSpeakerId]);
-
-    useEffect(() => {
-        if (!gainNode.current || !audioContext.current) return;
-        const gain = gainNode.current;
-        const ctx = audioContext.current;
-        if (play) {
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 2);
-        } else {
-            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-        }
-    }, [play]);
-
-    if (audioContext.current && gainNode.current === null) {
-        const ctx = audioContext.current;
-        const gain = ctx.createGain();
-        gain.connect(ctx.destination);
-        gainNode.current = gain;
-        sourceNode.current = ctx.createBufferSource();
-
-        loadBeingAudio();
-    }
-
-    async function loadBeingAudio() {
-        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
-        const ctx = audioContext.current;
-        const source = sourceNode.current;
-        const gain = gainNode.current;
-
-        const audioBuffer = await fetch(characterMp3Url(id))
-            .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
-
-        source.buffer = audioBuffer;
-        source.loop = true;
-        source.connect(gain);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        source.start();
-    }
-
-    return null;
-}
-
-type AmbientAudioProps = {
-    audioContext: RefObject<AudioContext | null>;
-};
-
-function AmbientAudio({ audioContext }: AmbientAudioProps) {
-    const gainNode = useRef<GainNode | null>(null); //The general volume control node
-    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
-
-    //Global ambience volume
-    const onVolume = 0.05;
-
-    if (audioContext.current && gainNode.current === null) {
-        const ctx = audioContext.current;
-        const gain = ctx.createGain();
-        gain.connect(ctx.destination);
-
-        //Set ambience volume
-        gain.gain.setValueAtTime(onVolume, ctx.currentTime);
-
-        gainNode.current = gain;
-        sourceNode.current = ctx.createBufferSource();
-        loadAmbience();
-    }
-
-    async function loadAmbience() {
-        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
-        const ctx = audioContext.current;
-        const source = sourceNode.current;
-        const gain = gainNode.current;
-
-        const audioBuffer = await fetch(characterAmbienceUrl)
-            .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
-
-        source.buffer = audioBuffer;
-        source.loop = true;
-        source.connect(gain);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(onVolume, ctx.currentTime + 5);
-        source.start();
-    }
-
-    return null;
 }
 
 export default Forest;

@@ -107,7 +107,7 @@ function Summary({
   }, [button.pressed, isButtonSummaryMode, navigate, rootPath]);
 
   useEffect(() => {
-    if (!isButtonSummaryMode || autoplayPhase === "active") {
+    if (!capabilities.autoReturnToLanding || autoplayPhase === "active") {
       return;
     }
     if (connectionError) {
@@ -124,8 +124,8 @@ function Summary({
     return () => window.clearTimeout(timerId);
   }, [
     autoplayPhase,
+    capabilities.autoReturnToLanding,
     connectionError,
-    isButtonSummaryMode,
     navigate,
     rootPath,
     summaryProtocolFinished,

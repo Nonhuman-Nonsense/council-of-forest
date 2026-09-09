@@ -24,7 +24,7 @@ const Landing: React.FC = () => {
   const { setLastUserEvent } = useOutletContext<MeetingSetupOutletContext>();
   const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
   const isMobile = useMobile();
-  const { capabilities, isMuseumMode } = useCouncilSettings();
+  const { capabilities } = useCouncilSettings();
   const { t } = useTranslation();
 
   const wrapper: React.CSSProperties = {
@@ -41,7 +41,7 @@ const Landing: React.FC = () => {
     flexDirection: "column",
     height: "77%",
     alignItems: "center",
-    justifyContent: isMuseumMode ? "center" : "space-between",
+    justifyContent: capabilities.browserUi ? "space-between" : "center",
     paddingBottom: "7%"
   };
 
@@ -80,7 +80,7 @@ const Landing: React.FC = () => {
             <h1 style={{ margin: isMobile ? "5px 0 0 0" : "" }}>{t("app.council").toUpperCase()}</h1>
           </div>
 
-          {!isMuseumMode && (
+          {capabilities.browserUi && (
             <div style={logosRowStyle}>
               <Link to={{ hash: "contact" }}>
                 <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />

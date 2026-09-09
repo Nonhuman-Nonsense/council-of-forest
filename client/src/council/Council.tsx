@@ -48,7 +48,7 @@ function Council({
 }: CouncilProps) {
   const { meetingId } = useParams<{ meetingId: string }>();
   const { t, i18n } = useTranslation();
-  const { isMuseumMode, capabilities } = useCouncilSettings();
+  const { capabilities } = useCouncilSettings();
   const connectionError = useErrorStore((s) => s.connectionError);
 
   const navigate = useNavigate();
@@ -122,7 +122,7 @@ function Council({
     audioContext,
     isPaused,
     setPaused,
-    unattended: capabilities.unattended,
+    selfHealing: capabilities.selfHealing,
     hasMetaAgent: capabilities.metaAgent,
     setMetaAgentPhase,
     metaAgentPhase,
@@ -219,6 +219,9 @@ function Council({
 
   // Derived UI State
   const participationPhase = getParticipationPhase(councilState, textMessages, playingNowIndex);
+  // The chair's invitation to a human turn is playing. The button belongs to the
+  // imminent human turn during this window, not the meta-agent — see MeetingMetaAgent.
+  const invitationPlaying = textMessages[playingNowIndex]?.type === "invitation";
   const isWaitingToInterject = isRaisedHand && councilState !== 'human_input';
   const controlsVisible = (
     councilState === "playing" ||
@@ -240,6 +243,7 @@ function Council({
           liveKey={liveKey}
           language={i18n.language}
           participationPhase={participationPhase}
+          invitationPlaying={invitationPlaying}
           metaAgentPhase={metaAgentPhase}
           setMetaAgentPhase={setMetaAgentPhase}
           setAgentSpeaking={setAgentSpeaking}
@@ -261,7 +265,6 @@ function Council({
           currentSpeakerName={participants.find(p => p.id === currentSpeakerId)?.name || ""}
           onSubmitHumanMessage={handleOnSubmitHumanMessage}
           onAbandonHumanTurn={handleOnAbandonHumanTurn}
-          isButtonMuseumMode={isMuseumMode}
         />
       )}
       {/* council-shell: flex column owning the overlay content region + footer.

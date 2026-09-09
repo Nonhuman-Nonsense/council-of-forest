@@ -48,10 +48,10 @@ describe('Forest Content & Branding', () => {
             current: {
                 createGain: vi.fn(() => ({
                     gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-                    connect: vi.fn()
+                    connect: vi.fn(), disconnect: vi.fn()
                 })),
                 createBufferSource: vi.fn(() => ({
-                    buffer: null, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+                    buffer: null, loop: false, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn()
                 })),
                 destination: {},
                 currentTime: 0,
@@ -59,7 +59,7 @@ describe('Forest Content & Branding', () => {
             }
         };
 
-        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />, { wrapper: MemoryRouter });
 
         // Characters might be images or videos depending on the type/browser support mocked.
         // Easiest is to check that their source files are present in the DOM.

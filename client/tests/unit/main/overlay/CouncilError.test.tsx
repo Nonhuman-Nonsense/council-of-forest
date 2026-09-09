@@ -25,6 +25,7 @@ vi.mock("@/settings/councilSettings", async (importOriginal) => {
     ...actual,
     useCouncilSettings: () => mockUseCouncilSettings(),
     getAppMode: () => (mockUseCouncilSettings().isMuseumMode ? "museum" : "web"),
+    getCapabilities: () => capabilitiesFor(mockUseCouncilSettings().isMuseumMode ? "museum" : "web"),
   };
 });
 
