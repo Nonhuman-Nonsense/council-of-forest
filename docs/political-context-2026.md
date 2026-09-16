@@ -219,8 +219,7 @@ that the commission is due to report, as a dated fact.
 
 ## 5. Change log for this pass
 
-English only. Swedish (`topics_sv.json`, `beings_sv.json`) follows in a later pass, with
-party names restored per §2.
+English first, Swedish second — both now done.
 
 - [x] `topics_en.json` (v1.2.0) — `system` now states the Council meets in autumn 2026 and
       instructs the model to trust the dated facts over its own priors. Every topic gained a
@@ -243,7 +242,17 @@ party names restored per §2.
 - [x] Verified: `cd server && npm test` (481 passed) and `cd client && npm test`
       (1088 passed), type-checks included, after the edits.
 - [ ] After 30 Sept: Truth Commission findings.
-- [ ] Swedish translation pass.
+- [x] Swedish pass — `topics_sv.json` and `beings_sv.json` mirror the English changes with
+      party names restored per §2: KD (Busch, Kullgren) named as proposers, M/SD backing,
+      C/S wanting the system reviewed, L/V/MP opposed; MP named as the reserving party on
+      the forestry act; Per Geijer and Gabna sameby named; Ran sameby named as the local
+      post-Girjas case. Swedish `system` gained `[CURRENT_DATE]`. Structural parity verified:
+      identical topic ids and agenda-point counts, every topic carrying its dated block.
+      Terms locked into `shared/prompts/translation_guide_sv.md` (riksintresse, avverkningsanmälan,
+      mark- och miljödomstolarna, naturrestaureringsförordningen, koncessionsmineral,
+      mineralersättning, flyttled, omprövning …), together with the EN-structural/SV-named rule
+      so the divergence is not "corrected" by a later pass.
+- [x] Verified after the Swedish pass: server 505 passed, client 1138 passed, both lints clean.
 
 ## 6. Sources
 

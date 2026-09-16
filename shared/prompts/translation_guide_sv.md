@@ -21,8 +21,22 @@ so the next pass stays fast and consistent.
   instructions themselves may keep their structure.
 - **Leave mechanics intact.** Do not translate placeholders (`[TOPIC]`,
   `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
-  `[VISITOR_INPUT]`), JSON keys, ids, law numbers (`1971:437`), Latin species
+  `[VISITOR_INPUT]`, `[CURRENT_DATE]`), JSON keys, ids, law numbers (`1971:437`), Latin species
   names (`Pinus contorta`, `Cladina spp.`), or numeric data.
+- **Name the parties in Swedish.** The English prompts stay structural ("the
+  government proposed", "a majority of parliamentary parties") for an
+  international audience that cannot place KD, M or SD. Swedish is for a local
+  audience who would find that evasive: name KD, M, SD, L, C, S, V, MP, and
+  ministers, as factual record. This is a deliberate divergence, not a
+  translation error — do not "correct" it in either direction.
+- **Characters never campaign.** Party politics belongs in `topics_sv.json`,
+  which is swappable per meeting. A being may react to a policy; it may not
+  endorse a party or tell anyone how to vote.
+- **Dated fact blocks.** Each topic prompt ends with a block headed
+  `AKTUELL UTVECKLING (kontrollerad i <månad år>)` mirroring the English
+  `RECENT DEVELOPMENTS (verified <month year>)`. Absolute dates only — the model
+  has no idea when now is. Never write the present date into a prompt;
+  `[CURRENT_DATE]` is injected at meeting setup.
 
 ### Global conventions
 
@@ -191,6 +205,13 @@ Format: **English** → **Swedish** — *notes*.
 | Truth Commission | Sanningskommissionen | |
 | lateral violence | lateralt våld | |
 | settler-colonial | bosättarkolonial | |
+| national interest (status) | riksintresse | the status reindeer herding holds and may lose |
+| Renmarkskommittén | Renmarkskommittén | scrapped late 2024 |
+| UN Cttee on Elimination of Racial Discrimination | FN:s rasdiskrimineringskommitté (CERD) | |
+| Council of Europe | Europarådet | |
+| cultivation boundary | odlingsgränsen | |
+| small game hunting | småviltsjakt | |
+| migration route (the last one) | flyttled | "sista flyttleden" — the 50-metre corridor |
 
 ### 2.7 Law, policy & institutions
 
@@ -209,6 +230,13 @@ Format: **English** → **Swedish** — *notes*.
 | concession (exploitation) | bearbetningskoncession | |
 | fast-tracking (permits) | snabbspår / att snabba på tillståndsprocesser | |
 | FSC/PEFC certification | FSC/PEFC-certifiering | |
+| Ett tydligt regelverk för aktivt skogsbruk | (keep Swedish title) | the June 2026 forestry act |
+| felling notification | avverkningsanmälan | |
+| land and environment courts | mark- och miljödomstolarna | appeals moved here 2026 |
+| species protection | artskyddet | compensation right, prop. 2025/26:230 |
+| EU Nature Restoration Regulation | EU:s naturrestaureringsförordning | |
+| EU Deforestation Regulation (EUDR) | EU:s avskogningsförordning | |
+| land-sector carbon sink (LULUCF) | markanvändningssektorns kolsänka | |
 
 ### 2.8 Green transition, energy & climate
 
@@ -233,6 +261,10 @@ Format: **English** → **Swedish** — *notes*.
 | fish ladder | fisktrappa / fiskväg | |
 | minimum ecological flow | minimitappning | |
 | dry river bed | torrfåra | |
+| review of environmental conditions | omprövning (av miljövillkor) | the national hydropower review |
+| municipal veto / refusal | kommunalt veto / kommunalt nej | 93% of wind projects, 2025 |
+| spawning grounds | lekbottnar | |
+| incentive package (wind) | incitamentspaket | 340/370 MSEK to host municipalities |
 
 ### 2.9 Mining
 
@@ -246,6 +278,10 @@ Format: **English** → **Swedish** — *notes*.
 | waste rock | gråberg | |
 | acid mine drainage | surt gruvvatten | |
 | sacrifice zone | offerzon | |
+| concession mineral | koncessionsmineral | uranium became one, Jan 2026 |
+| mineral compensation ("gruvpeng") | mineralersättning | 2026 inquiry, municipalities only |
+| strategic project (CRMA) | strategiskt projekt | Per Geijer, March 2026 |
+| exploration permit | undersökningstillstånd | |
 
 ### 2.10 General framing concepts
 
