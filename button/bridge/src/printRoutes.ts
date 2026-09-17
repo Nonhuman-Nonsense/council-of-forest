@@ -1,6 +1,7 @@
 import type http from "node:http";
 import { isAllowedOrigin } from "./cors.js";
-import type { MockPrinter } from "./printer.js";
+import type { AlertMonitor } from "./alertMonitor.js";
+import { MOCK_PRINTER_MODES, type MockPrinter, type MockPrinterMode } from "./printer.js";
 import { InvalidPrintJobError, type PrintSpool } from "./printSpool.js";
 import { readJsonBody } from "./testApi.js";
 
@@ -11,6 +12,7 @@ export type PrintRuntime = {
   spool: PrintSpool;
   /** Set when the bridge runs the mock printer; enables the test endpoint. */
   mockPrinter: MockPrinter | null;
+  alerts: AlertMonitor | null;
 };
 
 class BodyTooLargeError extends Error {}
@@ -51,8 +53,15 @@ export function printJobKey(origin: string | undefined, meetingId: string): stri
   return `${host}_${meetingId}`;
 }
 
+/** A staff test page is never a duplicate: each press prints. */
+export function testPageJobKey(origin: string | undefined, now = new Date()): string {
+  const stamp = now.toISOString().replace(/[:.]/g, "-");
+  return printJobKey(origin, `test-${stamp}`);
+}
+
 /**
- * `POST /v1/print?meetingId=<n>` with the PDF as the raw body.
+ * `POST /v1/print?meetingId=<n>` with the PDF as the raw body, or
+ * `POST /v1/print?test=1` for a staff test page.
  * 202 queued · 200 duplicate · 400 invalid · 403 origin · 413 too large · 503 printing off.
  */
 export async function handlePrint(
@@ -83,15 +92,18 @@ export async function handlePrint(
     return;
   }
 
-  const meetingId = new URL(req.url ?? "", "http://bridge").searchParams.get("meetingId") ?? "";
-  if (!/^\d{1,12}$/.test(meetingId)) {
+  const params = new URL(req.url ?? "", "http://bridge").searchParams;
+  const isTestPage = params.get("test") === "1";
+  const meetingId = params.get("meetingId") ?? "";
+  if (!isTestPage && !/^\d{1,12}$/.test(meetingId)) {
     sendJson(res, 400, { ok: false, error: "expected numeric meetingId" }, cors);
     return;
   }
 
   try {
     const pdf = await readBody(req, maxBytes);
-    const status = await print.spool.enqueue(printJobKey(origin, meetingId), pdf);
+    const key = isTestPage ? testPageJobKey(origin) : printJobKey(origin, meetingId);
+    const status = await print.spool.enqueue(key, pdf);
     sendJson(res, status === "queued" ? 202 : 200, { ok: true, status }, cors);
   } catch (error) {
     if (error instanceof BodyTooLargeError) {
@@ -105,7 +117,7 @@ export async function handlePrint(
   }
 }
 
-/** Mock printer only: `POST /v1/test/printer {"mode":"ok"|"fail"}`. */
+/** Mock printer only: `POST /v1/test/printer {"mode":"ok"|"fail"|"paper-out"|"stuck"}`. */
 export async function handleTestPrinter(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -123,11 +135,11 @@ export async function handleTestPrinter(
     return;
   }
   const body = (await readJsonBody(req).catch(() => ({}))) as { mode?: unknown };
-  if (body.mode !== "ok" && body.mode !== "fail") {
-    sendJson(res, 400, { ok: false, error: 'expected { mode: "ok" | "fail" }' }, cors);
+  if (!(MOCK_PRINTER_MODES as readonly unknown[]).includes(body.mode)) {
+    sendJson(res, 400, { ok: false, error: `expected { mode: ${MOCK_PRINTER_MODES.join(" | ")} }` }, cors);
     return;
   }
-  mockPrinter.setMode(body.mode);
+  await mockPrinter.setMode(body.mode as MockPrinterMode);
   print.spool.retryNow();
   sendJson(res, 200, { ok: true }, cors);
 }

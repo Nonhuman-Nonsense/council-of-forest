@@ -25,9 +25,9 @@ staff setup are the same pattern.
 ```
 Visitor browser (Chrome, fullscreen/kiosk)
     ├── Council client (museum or presenter mode)
-    └── ws://127.0.0.1:8765  ← button bridge (on the Mac)
+    └── 127.0.0.1:8765  ← bridge (on the Mac): button socket + protocol printing
 
-Arduino button ──USB──► button bridge daemon (launchd on install Mac)
+Arduino button ──USB──► bridge daemon (launchd on install Mac) ──lp──► printer
 ```
 
 | Piece | Doc |
@@ -103,6 +103,110 @@ Install and service the bridge daemon per
 [button/bridge/README.md](button/bridge/README.md) (GitHub release install or
 `install/macos/install.sh` from a checkout).
 
+### Printing protocols
+
+With **Print summaries** on, museum mode prints the protocol of every **live**
+meeting on the Mac's printer as soon as the summary is ready. That includes
+resumed meetings and meetings the visitor walked away from. Replays and
+idle-autoplay never print, and neither do presenter or web mode. Nothing appears
+on screen.
+
+The browser sends the PDF to the bridge. The bridge keeps it in a folder queue and
+prints it with macOS's own printing, so a crash, a reboot or a printer that is
+off only delays a protocol, never loses it. Each meeting prints once.
+
+The **Bridge** panel on `#staff` shows the printer, how many protocols are
+waiting, and **Needs attention** with the reason when something is wrong: out of
+paper, a jam, a paused queue, or protocols that haven't printed for 10 minutes
+even though the printer reports nothing. The printer's own message is under
+**Details**.
+**Print test page** sends a sample protocol along the same path.
+
+The folder is **`/usr/local/lib/council-button-bridge/print`**, with a **Council Print**
+shortcut on the Desktop:
+
+| Folder | Contents |
+|---|---|
+| `pending/` | Waiting to print. Empties by itself once the printer works. |
+| `done/` | Every protocol printed, kept indefinitely. |
+
+- **Reprint** a protocol: copy it from `done/` into `pending/`.
+- **Stop** a protocol from printing: move it out of `pending/`.
+- **Printer stuck** after paper out or a jam: fix the printer. The installer sets
+  it to retry on its own. If the panel still says **Stopped**, resume it in
+  System Settings → Printers & Scanners, or run `sudo cupsenable <printer name>`.
+- Printing goes to the Mac's **default printer**. Set a fixed default in System
+  Settings → Printers & Scanners, not "Last printer used", then re-run the bridge
+  installer so the retry setting is applied to it.
+
+### Printer alert emails
+
+When the printer needs attention, museum staff get an email from
+`council@council-of-foods.com` (or `council-of-forest.com`), plus a copy to our
+errorbot on Telegram:
+
+- **Needs attention**, once a problem has lasted 2 minutes: out of paper, a jam, an
+  open cover, a paused queue, a protocol that hasn't printed for 10 minutes, or no
+  printer. A different problem sends a new email.
+- **Reminder** every 4 hours while it lasts, only during the venue's opening hours,
+  plus one when the venue opens.
+- **Working again** once it has stayed fixed for 2 minutes.
+
+**Who gets them:** the **venue** chosen on `#staff` (Bridge panel → Venue).
+Venues and their addresses are set on the council server, so staff can only choose
+among them, never type an address. The panel shows the masked addresses,
+**Alert emails: On / Choose a venue / Failing / Not set up on bridge**, and a
+**Send test alert** button (once a minute).
+
+**Adding or changing a venue** is a server config change: edit `COUNCIL_VENUES`
+in the server's environment and redeploy. Each venue has an id, name, alert
+addresses, timezone and one weekly opening window:
+
+```json
+[{"id":"example-museum","name":"Example Museum","alertEmails":["staff@example.org"],
+  "timezone":"Europe/Stockholm","openingHours":{"days":["wed","thu","fri","sat","sun"],"from":"12:00","to":"16:00"}}]
+```
+
+Holidays and closed weeks aren't modelled. The worst case is a reminder on a closed day.
+
+**Nothing is sent if the Mac, the bridge or the internet is down.** That needs a
+watchdog outside the Mac (see section 7).
+
+### Installation ID and footprint meter
+
+**Installation ID** (Installation panel) names this computer's installation, e.g.
+`museum-oslo`. It tags the AI usage of meetings run here, so a second screen can
+show what this installation costs:
+
+- **Meter:** `https://<host>/meter?installation=<id>`, full screen on the second
+  display. `?rotate=90` or `?rotate=-90` if the OS cannot rotate that display.
+- **Methodology:** `/meter/methodology`, linked by the QR code on the meter.
+
+Design and estimation method: [docs/ai-footprint-meter.md](docs/ai-footprint-meter.md).
+
+### Room power plugs
+
+Shelly smart plugs (Plug S Gen3, Plug M Gen3, Plug PM Gen3 or any Gen2+ plug with
+power metering) measure the room's electricity for the meter's **In this room**
+section. Use one plug per group of devices, e.g. projector / computer and meter
+screen / sound; any number works.
+
+1. Plug in, add it to the museum Wi-Fi with the Shelly app or its own access point.
+   A Shelly cloud account is not needed. The Wi-Fi must reach the internet without a
+   login page.
+2. In the plug's settings, set it to **turn on after power loss** and never switch it
+   off: a lamp projector must be able to cool down.
+3. Open the plug's web page (`http://<plug-ip>/`) → **Scripts** → create a script,
+   paste [scripts/shelly/room-power.js](scripts/shelly/room-power.js), and fill in
+   the server URL, `COUNCIL_ROOM_POWER_KEY`, the installation ID and a label
+   ("Projector"). Save, **Start**, and enable **Run on startup**.
+4. Within a few seconds the plug appears on the meter. The script's console on the
+   plug's web page shows any failed request.
+
+The server needs `COUNCIL_ROOM_POWER_KEY` (16+ characters) in its environment;
+without it, plug reports are refused. A plug that stops reporting shows **no signal**
+after a minute, and its energy so far is kept.
+
 ### Mode switch button (staff escape)
 
 Enable **Mode switch button** on the staff page to show a red-bordered preview
@@ -134,6 +238,16 @@ Optional category toggles on `#staff` for field debugging (`localStorage`-backed
 
 During a live meeting, the button also drives human input and the meta-agent
 (chair) when those phases are active.
+
+### Printed protocols
+
+1. Connect the A4 printer and make it the Mac's default printer
+2. Install (or re-install) the bridge. It sets up the print folder, the Desktop
+   shortcut and the printer's retry setting
+   and, for alert emails, asks for the bridge key (`COUNCIL_BRIDGE_KEY` on the council server)
+3. `#staff` → **Museum** + **Print summaries**. The Bridge panel shows the printer as **Ready**
+4. **Print test page**, and check a page comes out
+5. Bridge panel → **Venue** → choose the museum, then **Send test alert** and check the inbox
 
 ### Screening (presenter)
 
@@ -183,7 +297,9 @@ cd button/bridge && npm i && npm run dev:mock   # or npm run dev
 ```
 
 Open the dev URL at `/#staff`, set **Museum** (or **Presenter**) +
-**Hardware button**. Playwright e2e: `cd client && npm run e2e` (starts mock bridge).
+**Hardware button**. With **Print summaries** on, the mock bridge "prints" into
+`button/bridge/.print-spool/mock-printed/`. See
+[button/bridge/README.md](button/bridge/README.md#printing). Playwright e2e: `cd client && npm run e2e` (starts mock bridge).
 
 ---
 

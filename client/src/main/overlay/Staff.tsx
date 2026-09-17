@@ -1,9 +1,11 @@
-import { useEffect, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   APP_MODES,
   DEV_LOG_CATEGORIES,
   useCouncilSettings,
+  getInstallationId,
+  setInstallationId,
 } from "@/settings/councilSettings";
 import type { LogCategory } from "@/logger";
 import {
@@ -12,12 +14,24 @@ import {
   useButtonBridgeHealth,
 } from "@/museum/button/useButton";
 import type {
+  BridgeAlertsHealth,
+  BridgePrintHealth,
   ButtonBridgeHealthState,
   ButtonTransportStatus,
   UsbPortInfo,
 } from "@/museum/button/buttonBridge";
 import { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { modeSwitchButtonToggleStyle } from "@/museum/ModeSwitchButton";
+import ProtocolDocument from "@council/protocol/ProtocolDocument";
+import { createProtocolPdf } from "@council/protocol/protocolPdf";
+import { sendTestPage, type TestPageOutcome } from "@/museum/print/printClient";
+import { describePrinterReason } from "@shared/printerReasons";
+import {
+  chooseAlertVenue,
+  fetchAlertVenues,
+  sendTestAlert,
+  type AlertVenue,
+} from "@/museum/print/alertsClient";
 
 type StatusTone = "ok" | "warn" | "error" | "idle";
 
@@ -51,6 +65,7 @@ const LOG_CATEGORY_COLOR: Record<LogCategory, string> = {
   BUTTON: "#10b981",
   META: "#ec4899",
   AUTOPLAY: "#f59e0b",
+  PRINT: "#94a3b8",
   SYSTEM: "#6b7280",
   ERROR: "#ef4444",
 };
@@ -142,6 +157,76 @@ function getStaffBridgeDetailLines(health: ButtonBridgeHealthState): string[] {
     lines.push(`USB path ${health.path}`);
   }
 
+  return lines;
+}
+
+type PrinterStatus =
+  | "unavailable"
+  | "outdated"
+  | "disabled"
+  | "checking"
+  | "noDefault"
+  | "idle"
+  | "printing"
+  | "stopped"
+  | "unknown";
+
+type EnabledPrintHealth = Extract<BridgePrintHealth, { enabled: true }>;
+
+function getPrintHealth(health: ButtonBridgeHealthState): EnabledPrintHealth | null {
+  return health.status === "running" && health.print?.enabled ? health.print : null;
+}
+
+function getPrinterStatus(health: ButtonBridgeHealthState): PrinterStatus {
+  if (health.status !== "running") return "unavailable";
+  if (!health.print) return "outdated";
+  if (!health.print.enabled) return "disabled";
+  if (!health.print.printer) return "checking";
+  if (!health.print.printer.name) return "noDefault";
+  return health.print.printer.state;
+}
+
+function printerStatusTone(status: PrinterStatus): StatusTone {
+  if (status === "idle" || status === "printing") return "ok";
+  if (status === "checking" || status === "unknown") return "warn";
+  if (status === "unavailable") return "idle";
+  return "error";
+}
+
+function getStaffPrintDetailLines(print: EnabledPrintHealth): string[] {
+  const lines: string[] = [];
+  if (print.printer?.message) lines.push(print.printer.message);
+  if (print.printer && print.printer.alerts.length > 0) {
+    lines.push(`Printer alerts: ${print.printer.alerts.join(", ")}`);
+  }
+  if (print.lastError) lines.push(`Last error: ${print.lastError}`);
+  if (print.lastPrintedAt) {
+    lines.push(`Last printed ${new Date(print.lastPrintedAt).toLocaleString()}`);
+  }
+  return lines;
+}
+
+type AlertsStatus = "notConfigured" | "chooseVenue" | "failing" | "on";
+
+function getAlertsStatus(alerts: BridgeAlertsHealth): AlertsStatus {
+  if (!alerts.configured) return "notConfigured";
+  if (!alerts.venue) return "chooseVenue";
+  if (alerts.lastError) return "failing";
+  return "on";
+}
+
+const ALERTS_STATUS_TONE: Record<AlertsStatus, StatusTone> = {
+  notConfigured: "idle",
+  chooseVenue: "warn",
+  failing: "error",
+  on: "ok",
+};
+
+function getStaffAlertDetailLines(alerts: BridgeAlertsHealth): string[] {
+  const lines: string[] = [];
+  if (alerts.venue) lines.push(`Alert emails go to ${alerts.venue.recipients.join(", ")}`);
+  if (alerts.lastSentAt) lines.push(`Last alert sent ${new Date(alerts.lastSentAt).toLocaleString()}`);
+  if (alerts.lastError) lines.push(`Alert error: ${alerts.lastError}`);
   return lines;
 }
 
@@ -325,6 +410,9 @@ function Staff(): ReactElement {
     setAppMode,
     pttHardwareEnabled,
     setPttHardwareEnabled,
+    printSummariesEnabled,
+    setPrintSummariesEnabled,
+    capabilities,
     modeSwitchButtonEnabled,
     setModeSwitchButtonEnabled,
     devLogEnabled,
@@ -336,8 +424,33 @@ function Staff(): ReactElement {
   const bridgeButtonActive = pttHardwareEnabled;
   const { bridgeStatus, bridgeError, bridgeAvailable } =
     useButtonConnection(bridgeButtonActive);
-  const bridgeHealth = useButtonBridgeHealth(bridgeButtonActive);
+  const bridgeHealth = useButtonBridgeHealth(bridgeButtonActive || printSummariesEnabled);
+  const alertsHealth = bridgeHealth.status === "running" ? bridgeHealth.alerts : null;
+  const alertsStatus = alertsHealth ? getAlertsStatus(alertsHealth) : null;
+  const alertsConfigured = alertsHealth?.configured === true;
   const { ledDebugOverlay, setLedDebugOverlay } = useButtonLedDebugOverlay();
+
+  const [installationId, setInstallationIdState] = useState(getInstallationId);
+
+  const testPageRef = useRef<HTMLDivElement>(null);
+  const [testPage, setTestPage] = useState<"idle" | "sending" | TestPageOutcome>("idle");
+
+  const printTestPage = async (): Promise<void> => {
+    if (!testPageRef.current) return;
+    setTestPage("sending");
+    try {
+      const pdf = await createProtocolPdf(testPageRef.current);
+      setTestPage(await sendTestPage(pdf.output("blob")));
+    } catch {
+      setTestPage("rejected");
+    }
+  };
+
+  const [alertVenues, setAlertVenues] = useState<AlertVenue[] | null>(null);
+  const [alertVenuesError, setAlertVenuesError] = useState<string | null>(null);
+  const [testAlert, setTestAlert] = useState<{ state: "idle" | "sending" | "sent" } | { state: "failed"; error: string }>({
+    state: "idle",
+  });
 
   const button = useButton("staff");
 
@@ -350,19 +463,75 @@ function Staff(): ReactElement {
     button.setArmed(true);
   }, [button.setArmed]);
 
+  // The venue list comes from the council server through the bridge, so only ask
+  // once the bridge says alerts are configured.
+  useEffect(() => {
+    if (!printSummariesEnabled || !alertsConfigured) return;
+    let cancelled = false;
+    fetchAlertVenues().then(
+      ({ venues }) => {
+        if (cancelled) return;
+        setAlertVenues(venues);
+        setAlertVenuesError(null);
+      },
+      (error: unknown) => {
+        if (!cancelled) setAlertVenuesError(error instanceof Error ? error.message : String(error));
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [printSummariesEnabled, alertsConfigured]);
+
+  const chooseVenue = async (venueId: string): Promise<void> => {
+    try {
+      await chooseAlertVenue(venueId === "" ? null : venueId);
+      setAlertVenuesError(null);
+    } catch (error) {
+      setAlertVenuesError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const sendAlertTest = async (): Promise<void> => {
+    setTestAlert({ state: "sending" });
+    try {
+      await sendTestAlert();
+      setTestAlert({ state: "sent" });
+    } catch (error) {
+      setTestAlert({ state: "failed", error: error instanceof Error ? error.message : String(error) });
+    }
+  };
+
   const daemonStatus = getBridgeDaemonStatus(bridgeHealth);
   const appStatus = getBridgeAppStatus(bridgeAvailable, bridgeHealth, bridgeStatus);
   const usbStatus = getUsbButtonStatus(bridgeHealth);
   const bridgeDetailLines =
     bridgeHealth.status === "running" ? getStaffBridgeDetailLines(bridgeHealth) : [];
 
-  const showButtonPanel = pttHardwareEnabled;
-  const showButtonDetails =
-    showButtonPanel &&
-    (bridgeDetailLines.length > 0 ||
-      daemonStatus === "notRunning" ||
-      (daemonStatus === "running" &&
-        (usbStatus === "notDetected" || usbStatus === "wrongDevice")));
+  const printerStatus = getPrinterStatus(bridgeHealth);
+  const printHealth = getPrintHealth(bridgeHealth);
+  const printDetailLines = [
+    ...(printHealth ? getStaffPrintDetailLines(printHealth) : []),
+    ...(alertsHealth ? getStaffAlertDetailLines(alertsHealth) : []),
+  ];
+  // Protocols not yet on paper: still in the bridge's folder, or accepted by the printer.
+  const printWaiting = printHealth ? printHealth.pending + (printHealth.printer?.queuedJobs ?? 0) : 0;
+
+  // One panel for everything that goes through the bridge: the hardware button
+  // and the printer each add their chips and hints when staff switch them on.
+  const showBridgePanel = pttHardwareEnabled || printSummariesEnabled;
+  const showUsbHint =
+    pttHardwareEnabled && daemonStatus === "running" && usbStatus === "notDetected";
+  const showWrongDeviceHint =
+    pttHardwareEnabled && daemonStatus === "running" && usbStatus === "wrongDevice";
+  const buttonDetailLines = pttHardwareEnabled ? bridgeDetailLines : [];
+  const printerDetailLines = printSummariesEnabled ? printDetailLines : [];
+  const showBridgeDetails =
+    buttonDetailLines.length > 0 ||
+    printerDetailLines.length > 0 ||
+    daemonStatus === "notRunning" ||
+    showUsbHint ||
+    showWrongDeviceHint;
 
   return (
     <div
@@ -433,6 +602,16 @@ function Staff(): ReactElement {
             </button>
             <button
               type="button"
+              data-testid="staff-print-summaries-toggle"
+              className={printSummariesEnabled ? "control" : ""}
+              aria-pressed={printSummariesEnabled}
+              onClick={() => setPrintSummariesEnabled(!printSummariesEnabled)}
+              style={{ ...ledPreviewToggleStyle(printSummariesEnabled), flex: 1 }}
+            >
+              {t("staff.print.toggle")}
+            </button>
+            <button
+              type="button"
               data-testid="staff-led-debug-toggle"
               className={ledDebugOverlay ? "control" : ""}
               aria-pressed={ledDebugOverlay}
@@ -442,10 +621,29 @@ function Staff(): ReactElement {
               {t("staff.button.ledDebugOverlay")}
             </button>
           </div>
+          <label
+            style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+            title={t("staff.installationId.hint")}
+          >
+            <span>{t("staff.installationId.label")}</span>
+            <input
+              type="text"
+              data-testid="staff-installation-id"
+              value={installationId}
+              maxLength={64}
+              placeholder={t("staff.installationId.placeholder")}
+              onChange={(e) => setInstallationIdState(e.target.value)}
+              onBlur={() => {
+                setInstallationId(installationId);
+                setInstallationIdState(getInstallationId());
+              }}
+              style={{ flex: 1, minWidth: 160, fontSize: 16, padding: "6px 10px" }}
+            />
+          </label>
         </StaffPanel>
 
-        {showButtonPanel ? (
-          <StaffPanel title={t("staff.button.title")} fullWidth testId="staff-button-status">
+        {showBridgePanel ? (
+          <StaffPanel title={t("staff.bridge.title")} fullWidth testId="staff-bridge-panel">
             <div
               style={{
                 display: "flex",
@@ -460,31 +658,160 @@ function Staff(): ReactElement {
                 tone={statusTone(daemonStatus)}
                 testId="staff-bridge-daemon-status"
               />
-              <StaffStatusChip
-                label={t("staff.button.appLabel")}
-                value={
-                  appStatus === "error" && bridgeError
-                    ? `${t(`staff.button.app.${appStatus}`)} — ${bridgeError}`
-                    : t(`staff.button.app.${appStatus}`)
-                }
-                tone={statusTone(appStatus)}
-                testId="staff-bridge-app-status"
-              />
-              <StaffStatusChip
-                label={t("staff.button.usbLabel")}
-                value={t(`staff.button.usb.${usbStatus}`)}
-                tone={statusTone(usbStatus)}
-                testId="staff-button-usb-status"
-              />
+              {pttHardwareEnabled ? (
+                <>
+                  <StaffStatusChip
+                    label={t("staff.button.appLabel")}
+                    value={
+                      appStatus === "error" && bridgeError
+                        ? `${t(`staff.button.app.${appStatus}`)} — ${bridgeError}`
+                        : t(`staff.button.app.${appStatus}`)
+                    }
+                    tone={statusTone(appStatus)}
+                    testId="staff-bridge-app-status"
+                  />
+                  <StaffStatusChip
+                    label={t("staff.button.usbLabel")}
+                    value={t(`staff.button.usb.${usbStatus}`)}
+                    tone={statusTone(usbStatus)}
+                    testId="staff-button-usb-status"
+                  />
+                </>
+              ) : null}
+              {printSummariesEnabled ? (
+                <>
+                  <StaffStatusChip
+                    label={t("staff.print.printerLabel")}
+                    value={
+                      printHealth?.printer?.name
+                        ? `${printHealth.printer.name} — ${t(`staff.print.printer.${printerStatus}`)}`
+                        : t(`staff.print.printer.${printerStatus}`)
+                    }
+                    tone={printerStatusTone(printerStatus)}
+                    testId="staff-print-printer-status"
+                  />
+                  {printHealth ? (
+                    <StaffStatusChip
+                      label={t("staff.print.pendingLabel")}
+                      value={String(printWaiting)}
+                      tone={printWaiting > 0 ? "warn" : "ok"}
+                      testId="staff-print-pending"
+                    />
+                  ) : null}
+                  {printHealth?.attention ? (
+                    <StaffStatusChip
+                      label={t("staff.print.attentionLabel")}
+                      value={`${describePrinterReason(printHealth.attention.reason)} (${t("staff.print.since", {
+                        time: new Date(printHealth.attention.since).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                      })})`}
+                      tone="error"
+                      testId="staff-print-attention"
+                    />
+                  ) : null}
+                  {alertsHealth && alertsStatus ? (
+                    <StaffStatusChip
+                      label={t("staff.alerts.label")}
+                      value={
+                        alertsStatus === "on" && alertsHealth.venue
+                          ? `${t("staff.alerts.status.on")} — ${alertsHealth.venue.name}`
+                          : t(`staff.alerts.status.${alertsStatus}`)
+                      }
+                      tone={ALERTS_STATUS_TONE[alertsStatus]}
+                      testId="staff-alerts-status"
+                    />
+                  ) : null}
+                </>
+              ) : null}
             </div>
 
-            {showButtonDetails ? (
+            {printSummariesEnabled ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                <button
+                  type="button"
+                  data-testid="staff-print-test-page"
+                  disabled={testPage === "sending"}
+                  onClick={() => void printTestPage()}
+                  style={staffCompactButton}
+                >
+                  {t("staff.print.testPage")}
+                </button>
+                {testPage !== "idle" ? (
+                  <span data-testid="staff-print-test-page-result">
+                    {t(`staff.print.testPageResult.${testPage}`)}
+                  </span>
+                ) : null}
+                {/* The test page is a real protocol, so it exercises the same PDF path. */}
+                <div style={{ position: "absolute", top: 0, display: "none" }}>
+                  <ProtocolDocument
+                    ref={testPageRef}
+                    summaryText={t("staff.print.testPageText")}
+                    meetingId="TEST"
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {printSummariesEnabled && alertsConfigured ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {t("staff.alerts.venueLabel")}
+                  <select
+                    data-testid="staff-alerts-venue"
+                    value={alertsHealth?.venue?.id ?? ""}
+                    disabled={alertVenues === null}
+                    onChange={(event) => void chooseVenue(event.target.value)}
+                    style={{ fontSize: "16px" }}
+                  >
+                    <option value="">{t("staff.alerts.noVenue")}</option>
+                    {(alertVenues ?? []).map((venue) => (
+                      <option key={venue.id} value={venue.id}>
+                        {venue.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  data-testid="staff-alerts-test"
+                  disabled={!alertsHealth?.venue || testAlert.state === "sending"}
+                  onClick={() => void sendAlertTest()}
+                  style={staffCompactButton}
+                >
+                  {t("staff.alerts.test")}
+                </button>
+                {testAlert.state !== "idle" ? (
+                  <span data-testid="staff-alerts-test-result">
+                    {testAlert.state === "failed"
+                      ? `${t("staff.alerts.testResult.failed")}: ${testAlert.error}`
+                      : t(`staff.alerts.testResult.${testAlert.state}`)}
+                  </span>
+                ) : null}
+                {alertVenuesError ? (
+                  <span data-testid="staff-alerts-error" style={{ fontStyle: "italic" }}>
+                    {alertVenuesError}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {printSummariesEnabled && !capabilities.printSummary ? (
+              <p data-testid="staff-print-mode-hint" style={{ margin: 0, textAlign: "center", fontStyle: "italic" }}>
+                {t("staff.print.modeHint")}
+              </p>
+            ) : null}
+
+            {showBridgeDetails ? (
               <StaffCollapsible
                 label={t("staff.panels.details")}
-                testId="staff-button-details"
+                testId="staff-bridge-details"
               >
-                {bridgeDetailLines.map((line) => (
+                {buttonDetailLines.map((line) => (
                   <p key={line} data-testid="staff-bridge-detail-line" style={{ margin: 0, textAlign: "center" }}>
+                    {line}
+                  </p>
+                ))}
+                {printerDetailLines.map((line) => (
+                  <p key={line} data-testid="staff-print-detail-line" style={{ margin: 0, textAlign: "center" }}>
                     {line}
                   </p>
                 ))}
@@ -495,12 +822,12 @@ function Staff(): ReactElement {
                     })}
                   </p>
                 ) : null}
-                {daemonStatus === "running" && usbStatus === "notDetected" ? (
+                {showUsbHint ? (
                   <p data-testid="staff-button-usb-hint" style={{ margin: 0, textAlign: "center", fontStyle: "italic" }}>
                     {t("staff.button.usbNotDetectedHint")}
                   </p>
                 ) : null}
-                {daemonStatus === "running" && usbStatus === "wrongDevice" ? (
+                {showWrongDeviceHint ? (
                   <p
                     data-testid="staff-button-wrong-device-hint"
                     style={{ margin: 0, textAlign: "center", fontStyle: "italic" }}

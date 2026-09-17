@@ -89,6 +89,7 @@
         "BUTTON": "Button",
         "META": "Meta agent",
         "AUTOPLAY": "Autoplay",
+        "PRINT": "Printing",
         "SYSTEM": "System",
         "ERROR": "Error detail"
       }
@@ -97,8 +98,59 @@
     "museum": "Museum",
     "presenter": "Presenter",
     "modeSwitchButton": "Mode switch button",
+    "bridge": {
+      "title": "Bridge"
+    },
+    "alerts": {
+      "label": "Alert emails",
+      "venueLabel": "Venue",
+      "noVenue": "No venue (no emails)",
+      "test": "Send test alert",
+      "status": {
+        "notConfigured": "Not set up on bridge",
+        "chooseVenue": "Choose a venue",
+        "failing": "Failing",
+        "on": "On"
+      },
+      "testResult": {
+        "sending": "Sending…",
+        "sent": "Sent, check the inbox",
+        "failed": "Not sent"
+      }
+    },
+    "installationId": {
+      "label": "Installation ID",
+      "placeholder": "e.g. museum-oslo",
+      "hint": "Tags the AI usage of meetings run on this computer, for the footprint meter. Leave empty outside installations."
+    },
+    "print": {
+      "toggle": "Print summaries",
+      "printerLabel": "Printer",
+      "pendingLabel": "Waiting to print",
+      "attentionLabel": "Needs attention",
+      "since": "since {{time}}",
+      "modeHint": "Protocols only print in museum mode.",
+      "testPage": "Print test page",
+      "testPageText": "## Test page\n\nIf you can read this, printing works: this browser sent the page to the bridge, and the bridge sent it to the printer.\n\nMeeting protocols print the same way, as soon as a live meeting in museum mode has its summary.",
+      "testPageResult": {
+        "sending": "Sending…",
+        "queued": "Sent to printer",
+        "rejected": "Bridge refused the page",
+        "unreachable": "Bridge not reachable"
+      },
+      "printer": {
+        "unavailable": "—",
+        "outdated": "Bridge too old — update it",
+        "disabled": "Printing off on bridge",
+        "checking": "Checking…",
+        "noDefault": "No default printer",
+        "idle": "Ready",
+        "printing": "Printing",
+        "stopped": "Stopped",
+        "unknown": "Unknown"
+      }
+    },
     "button": {
-      "title": "Button",
       "bridgeLabel": "Bridge",
       "appLabel": "App",
       "usbLabel": "USB button",

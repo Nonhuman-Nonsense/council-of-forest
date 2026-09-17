@@ -18,7 +18,7 @@ function postPdf(
   });
 }
 
-function setPrinterMode(bridge: TestBridge, mode: "ok" | "fail"): Promise<Response> {
+function setPrinterMode(bridge: TestBridge, mode: "ok" | "fail" | "paper-out" | "stuck"): Promise<Response> {
   return fetch(bridge.printUrl.replace("/v1/print", "/v1/test/printer"), {
     method: "POST",
     body: JSON.stringify({ mode }),
@@ -108,6 +108,37 @@ describe("bridge printing", () => {
       .toMatchObject({ pending: 0, lastError: null, printer: { state: "idle" } });
   });
 
+  async function printHealth() {
+    return (await (await fetch(bridge.healthUrl)).json()).print;
+  }
+
+  it("says the printer needs paper while protocols wait, and prints them once it is refilled", async () => {
+    await setPrinterMode(bridge, "paper-out");
+    await postPdf(bridge, "21", { origin: FOODS });
+
+    await expect.poll(printHealth).toMatchObject({
+      attention: { reason: "media-empty" },
+      printer: { queuedJobs: 1 },
+    });
+    expect(printed(bridge)).toEqual([]);
+
+    await setPrinterMode(bridge, "ok");
+    await waitForPrinted(bridge, 1);
+    await expect.poll(printHealth).toMatchObject({ attention: null, printer: { queuedJobs: 0 } });
+  });
+
+  it("notices a printer that silently stops printing, dated from the oldest waiting protocol", async () => {
+    await setPrinterMode(bridge, "stuck");
+    await postPdf(bridge, "22", { origin: FOODS });
+
+    // Nothing to report until a protocol has waited past the threshold (300 ms in tests).
+    expect((await printHealth()).attention).toBeNull();
+    await expect.poll(printHealth, { timeout: 3000 }).toMatchObject({ attention: { reason: "not-printing" } });
+
+    const { attention, printer } = await printHealth();
+    expect(Date.parse(attention.since)).toBeLessThanOrEqual(Date.parse(printer.oldestJobAt));
+  });
+
   it("prints whatever is waiting in pending/ when it starts", async () => {
     await writeFile(path.join(bridge.spoolDir!, "pending", "council-of-foods.com_3.pdf"), PDF);
 
@@ -115,6 +146,24 @@ describe("bridge printing", () => {
 
     await waitForPrinted(bridge, 1);
     expect(printed(bridge)).toEqual(["council-of-foods.com_3.pdf"]);
+  });
+
+  it("prints every staff test page, however often it is pressed", async () => {
+    const testPage = () =>
+      fetch(`${bridge.printUrl}?test=1`, {
+        method: "POST",
+        headers: { "Content-Type": "application/pdf", Origin: FOODS },
+        body: PDF,
+      });
+
+    expect((await testPage()).status).toBe(202);
+    await settle(5);
+    expect((await testPage()).status).toBe(202);
+
+    await waitForPrinted(bridge, 2);
+    for (const file of printed(bridge)) {
+      expect(file).toMatch(/^council-of-foods\.com_test-.+\.pdf$/);
+    }
   });
 
   it.each([
