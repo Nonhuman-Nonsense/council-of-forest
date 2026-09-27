@@ -265,6 +265,12 @@ Format: **English** → **Swedish** — *notes*.
 | municipal veto / refusal | kommunalt veto / kommunalt nej | 93% of wind projects, 2025 |
 | spawning grounds | lekbottnar | |
 | incentive package (wind) | incitamentspaket | 340/370 MSEK to host municipalities |
+| hydrogen steel / fossil-free steel | vätgasstål / fossilfritt stål | |
+| sponge iron (DRI) | järnsvamp | LKAB/HYBRIT, Gällivare |
+| steel plant (Stegra, Boden) | stålverket | "Stegra, tidigare H2 Green Steel" on first mention |
+| rescue round (financing) | räddningsrunda | Stegra, June 2026 |
+| Sweden's most powerful industrial family | Wallenbergsfären | named in Swedish, as with parties (§1) |
+| municipal loan debt | kommunal låneskuld | Boden: ~80 MSEK 2017 → ~1,8 mdr 2025 |
 
 ### 2.9 Mining
 
