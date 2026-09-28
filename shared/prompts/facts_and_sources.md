@@ -1,4 +1,4 @@
-# Political context of the prompts — research notes and change log
+# Facts and sources for the prompts — editorial rules, verified facts, change log
 
 Research, decisions and a dated change log for the political facts in
 `shared/prompts/topics_{en,sv}.json` and `shared/prompts/beings_{en,sv}.json`, the
@@ -80,6 +80,20 @@ Swedish uranium ban lifted (Jan 2026).
   conflict to stage and give the Tree Harvester an argument to make. Agreed 28 Sept 2026:
   landowner and industry cases may be stated strongly — the Boden and Västerbotten
   audience includes landowners and hunters.
+- **The printed topic is exactly what the AI sees.** The wall prints `prompt` plus every
+  agenda point, verbatim (`prototype/public/print_export.js`). Never keep a longer "app"
+  version beside a printed one.
+- **Length: about Green Transition's.** A topic's printed text (prompt + agenda points) is
+  about 11–12k characters in English. Each fact appears **once per topic**: a
+  Recent Developments item that an agenda point already covers belongs only in that
+  point. Detail that does not fit stays here in §3, not in the prompt.
+- **Beings carry stance, topics carry facts.** Every being in a meeting receives that
+  meeting's topic and all its agenda points. A being's own prompt holds its voice, its
+  position, and at most a one-line headline of the dated events that define that
+  position (it also sits in meetings on the other seven topics, where the model would
+  otherwise fall back on 2023 knowledge). No figures that a topic already carries in
+  detail. The shared `system` prompt tells every being to take figures and dates from the
+  notes and never invent a number.
 - **Balance for the venue.** Critical framings stay, but each gets its strongest counter
   (e.g. "the 2026 rescue of the Boden steel plant as proof that serious long-term capital
   still believes in the north").
@@ -439,54 +453,37 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   final report** (an earlier version of this file conflated them).
 - **Stegra timeline** due end of 2026. When it comes, update "no confirmed start date" /
   "inget bekräftat startdatum" in the Green Transition topic, both languages.
-- **Sámi agenda-point rewrite — done 28 Sept in EN and SV.** The notes below are the plan
-  it followed, kept as a map from each point to its material. Before the rewrite, in the
-  Sámi topic, AP0
-  and AP2–AP5 are single paragraphs, 640–950 chars, with the opposing side only hinted at.
-  AP1 and all of Green Transition use the two-sided format (§2). Plan, with material
-  gathered from §5 and §7:
-  - **AP0 Parallel Ownership.** Landowner side: clear title; shared use mostly works;
-    Sweden's 2007 statement that UNDRIP gives no redress for ordinary forestry. Herding
-    side: Nordmaling (2011) and Girjas (2020); the Forestry Act treats herding as a public
-    interest rather than a property right (Brännström); no reciprocal duty of
-    consideration; the JK tactic change. A full sample draft was written in the
-    28 Sept session.
-  - **AP1** is already in format. Keep it, with the election update applied 28 Sept.
-  - **AP2 Green colonization.** Take the rights angle rather than climate: the 2024
-    Natura 2000 change, EU CRMA strategic projects, the Rönnbäcken CERD opinion, no cap on
-    cumulative land take, the 50 m corridor. Industry side: climate urgency, ethical
-    sourcing, jobs, benefit-sharing.
-  - **AP3 Disappearing Library.** Ume Sámi facts (§5). Counter-side: most Sámi do not
-    herd, so language policy tied to herding land leaves most speakers out.
-  - **AP4 Consultation.** No decision power under 2022:66; Forestry Act §20 covers only
-    year-round land; Renmarkskommittén closed without consultation; Rally Sweden.
-    Counter-side: a veto for every affected group; companies' dialogue record.
-  - **AP5 Lateral violence.** Brå 2024:5; post-Girjas hate in Kiruna; the Jokkmokk
-    violence study; Sehlin MacNeil's cycle. Counter-side, without excusing hate: local
-    non-Sámi hunters feel shut out after Girjas. Replace the vague "Härjedalen" reference
-    with Nordmaling.
-  - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
-    7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
-    drift or slow, trim the context paragraphs first; keep the labelled bullets.
-- **Energy rewrite — done 28 Sept in EN and SV.** Still 5 agenda points with the same
-  titles; EN/SV parity holds in every topic.
-- **Mining rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda points
-  (new: *Who Can Say No? Uranium and the Local Veto* / *Vem får säga nej? Uranet och det
-  kommunala vetot*); EN/SV parity holds in every topic.
-- **Forestry rewrite — done 28 Sept in EN and SV.** Both languages have 8 agenda points
-  (new point 6: *The People's Forest: Sveaskog's Double Mission* / *Folkets skog: Sveaskogs
-  dubbla uppdrag*). **Numbering shifted:** Rural Economy is now point 7 and Deregulation
-  point 8, so the printed Forestry column needs updating.
-- **Tourism rewrite — done 28 Sept in EN and SV.** Both languages have 7 agenda points,
-  and EN/SV parity holds in every topic.
-- **Rights of Nature rewrite — done 28 Sept in EN and SV.** Both languages have 5 agenda
-  points, and agenda-point counts match in every topic. "guoppar" no longer appears in
-  any prompt file.
-- **Biodiversity rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda
-  points (new: *The Moose Paradox* / *Älgparadoxen*), and agenda-point counts match
-  across every topic. Agenda block: 4.5k → ~12k characters. `ValidateTopicsData` does
-  **not** check agenda-point parity between languages; check it by hand after
-  adding or removing a point.
+- **Topic pass — done 28 Sept in EN and SV.** All 8 topics rewritten to the two-sided
+  format with a core question per agenda point (details in §6), then shortened the same
+  day to print length (next item).
+- **Shortening pass — done 28 Sept in EN and SV.** Printed length (prompt + agenda points,
+  English characters), with agenda points per topic; EN/SV parity holds:
+
+  | Topic | Chars | Points | Merged |
+  |---|---|---|---|
+  | Green Transition | 11,976 | 5 | — (the yardstick) |
+  | Forestry | 12,124 | 6 | deregulation → consultation point; Sveaskog → rural economy |
+  | Energy | 10,961 | 5 | — (context halved) |
+  | Sámi | 11,912 | 5 | national interest + language/landscape |
+  | Biodiversity | 11,631 | 6 | — (forest-debate point shrunk; it overlaps Forestry) |
+  | Tourism | 11,162 | 6 | climate paradox → volume tourism |
+  | Rights of Nature | 11,109 | 5 | — |
+  | Mining | 11,584 | 5 | fast-tracking → Minerals Act |
+
+  Agenda points are unnumbered in the print ("AGENDA POINT 1" is generated), so merged
+  points renumber the later ones. Facts cut for length are still in §3 (Norra Skog's
+  membership, Sveaskog's book value and Norrbotten cut, the Arctic fox count, the moose
+  quota).
+- **Beings pass — done 28 Sept in EN and SV.** Being prompts checked against the
+  shortened topics (§6). They now carry dated facts too, so **a fact update may touch a
+  being**: Reindeer (Per Geijer, Rally Sweden, the forestry law, the riksintresse
+  proposal, CERD), Salmon (quota, Norrfors run, hydropower review), Pine (forestry law,
+  good-news list), Tree Harvester (forestry law, carbon sink, ownership), Wind Turbine
+  (refusal rate, forecast, offshore, nuclear), Bumblebee (lupine).
+- **Per Geijer decision** (Bergsstaten, expected end of Nov 2026): update the Mining topic
+  **and** Reindeer's "fifty metres" line, both languages.
+- `ValidateTopicsData` does **not** check agenda-point parity between languages; check it
+  by hand after adding or removing a point.
 - **Still to verify against primary sources:** exact salmon quota and wind-veto figures;
   whether Renmarkskommittén's replacement was appointed; Lyten's actual restart; Leif
   Johansson as Stegra chair.
@@ -563,6 +560,58 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — This file moved and renamed** (docs)
+- `docs/political-context-2026.md` → `shared/prompts/facts_and_sources.md`, next to the
+  prompts and the translation guide; `docs/` is for temporary design notes only.
+- §2 gained three rules (print = what the AI sees; length and one-fact-once; beings
+  carry stance). §4's per-topic rewrite notes were replaced by the current state.
+
+**2026-09-28 — Swedish consultation-act term; translation guide** (SV)
+- `topics_sv.json` (Sámi, 2×) and `beings_sv.json` (Reindeer): "konsultationsordningen
+  (2022:66)" throughout, as `translation_guide_sv.md` already locked it. One word changed
+  in the printed Sámi text.
+- Guide: Pine's response structure is 6 steps, not 5; links to this file.
+
+**2026-09-28 — No invented figures** (EN + SV)
+- `topics_*.json` `system`: "Take figures and dates from these notes or your own
+  briefing; never invent a number." Not printed.
+
+**2026-09-28 — Beings: 2026 news they need, repeats trimmed** (EN + SV)
+- **Salmon:** the record Norrfors run (11,000+ by early Aug 2026, day record 2,200); 2026
+  block tightened.
+- **Pine:** a dated good-news list for its "celebrate first" step (restoration plan,
+  hydropower review, salmon run, eagle and otter off the red list, Church of Sweden and
+  contorta, Sveaskog's set-asides); forestry-law recap cut to one line.
+- **Tree Harvester:** carbon sink 54 Mt (2024); ~309,000 private owners, median 11 ha;
+  instruction to argue the industry/landowner side of the agenda point with that point's
+  facts; regulatory recap cut to one line.
+- **Reindeer:** Länsstyrelsen's 25 Sept recommendation on Per Geijer ("cannot be fully
+  compensated"); Rally Sweden on Ran sameby's winter grazing; political entries dated
+  (April/September 2026) and shortened.
+- **Bumblebee:** the 15 May 2026 lupine ban and roadside meadows.
+- **Wind Turbine:** offshore rejection (Nov 2024) and the Rolls-Royce SMR choice (June
+  2026).
+
+**2026-09-28 — Beings: contradictions with the topics fixed** (EN + SV)
+- **Salmon:** the hydropower review trades ~1% at one plant and ~10% at another (was "one
+  or two percent").
+- **Tree Harvester:** "a small fraction" of felling notifications reviewed (was "one or two
+  percent", unsourced).
+- **Reindeer:** its example answer said the 1886 Act declared the Sámi could not own land,
+  and dated the tax change 1923. The 1886 Reindeer Grazing Act divided the tax lands into
+  collective lappbyar (herding right grounded in immemorial use) and began dismantling
+  the household tax lands; the Sámi tax and tax lands ended in **1928**. The example now
+  says so. Relative dates ("twelve months ago", "next winter") made absolute.
+- **Lichen:** "Sveaskog has recently decided" → present tense (no verifiable date found).
+- **Wind Turbine:** the 2,000-turbines-by-2030 vision marked "not reached"; example
+  outputs no longer promise growth.
+
+**2026-09-28 — Topics shortened to print length** (EN + SV)
+- All topics except Green Transition, one commit each. Recent Developments keep only facts
+  no agenda point covers; points merged as in §4; bullets trimmed to about three a side.
+- Verified: topic data rules (script mirroring `ValidateTopicsData`); the print export
+  parses every topic in both languages.
 
 **2026-09-28 — Green Transition core questions** (EN + SV)
 - `topics_en.json` / `topics_sv.json`, Green Transition: a `Core Question:` / `Kärnfråga:`
