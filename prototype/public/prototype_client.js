@@ -1320,6 +1320,36 @@ createApp({
       };
     },
 
+    // Zip of every topic as InDesign Tagged Text and plain text, per language (print_export.js).
+    async exportPrintFiles() {
+      const topicsByLang = {};
+      for (const lang of this.available_languages) {
+        const path = `./topics_${lang}.json`;
+        try {
+          const resp = await fetch(path);
+          if (!resp.ok) throw new Error(`${resp.status}`);
+          topicsByLang[lang] = await resp.json();
+          this.log('FILE_IN', `GET ${path} → ${resp.status}`);
+        } catch (e) {
+          this.log('ERROR', `Print export: failed to fetch ${path}`, e);
+        }
+      }
+      if (Object.keys(topicsByLang).length === 0) return;
+
+      const zip = window.PrintExport.buildZip(window.PrintExport.buildFiles(topicsByLang));
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `council-prompts-print_${stamp}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
     async exportPrompts() {
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
