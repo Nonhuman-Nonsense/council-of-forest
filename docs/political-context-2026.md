@@ -187,6 +187,46 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   protected areas is gone **within 26 years**.
 - EUDR paused/reconsidered at Sweden's urging; the Commission's LULUCF-to-2040 proposal is
   due in 2026.
+- **Ownership (Skogsstyrelsen 2025):** individuals own 49% of productive forest, private
+  companies 24%, public owners 22%. There are ~309,000 private owners (2024); median
+  holding 11 ha. Norra Skog has ~27,000 members. The old prompt's "Sveaskog and Norra Skog
+  manage most productive forest land" was wrong.
+- **Sveaskog, Annual Report 2024** (`Research/forestry/`):
+  - 14% of Sweden's forest land; 3.02M ha productive; ~800 employees; net sales 8.3 bn SEK.
+  - Book value 119.7 bn SEK; proposed dividend 1,203 MSEK.
+  - 26% of holdings excluded from forestry (+2% target by 2034).
+  - Regeneration felling fell from 27,100 ha (2020) to 14,489 ha (2024). Deliveries from
+    its own forest fell from 6.25 to 4.79 M m³sub.
+  - "Area managed with alternative methods" (clear-cut-free): 55 / 29 / **37 ha**
+    (2022/23/24).
+  - Mission: commercial, with a market-based return.
+- **Sveaskog, Norrbotten, 9 Jan 2023:** regeneration felling −45%, citing failed
+  co-planning (samplanering) with samebyar. Critics (ETC, Naturskyddsföreningen
+  Norrbotten) said the real cause was felling that had outrun growth; this was not
+  independently verified.
+- **SCA–Ohredahke:**
+  - 24 Jan 2025: Ohredahke withdrew consent to all felling in its core areas.
+  - SCA announced leaving FSC-FM from 1 June 2025, then paused after talks with Sámi
+    organisations and FSC.
+  - Natursidan: 1,000+ ha felled at 206 sites since the withdrawal, ~51% never clear-cut
+    before.
+  - SCA: consent must be exercised "in good faith".
+- **Contorta:**
+  - ~600,000 ha; 3,300 ha planted in 2024.
+  - SLU Artdatabanken (Jan 2025): "very high risk" of becoming invasive; self-seeding on 22
+    of 30 plots (SLU).
+  - SCA keeps planting for climate reasons; the Church of Sweden is stopping as part of
+    reconciliation.
+- **Clear-cut-free forestry:** 733,000 ha in 2024 (CI 618–847k), ~3% of productive forest.
+- **Scarification** (research folder):
+  - 1985: 57,000 ha in Västerbotten and Norrbotten. Harrowing disturbs 45–55% of plant
+    cover, ploughing 65–90%; ~20% still bare after 10 years.
+  - Mild scarification on a lichen site: reindeer-lichen cover 10–20% lower after 6
+    seasons, but better seedling survival.
+- **Lichen-adapted management (model study):** +22% ground-lichen habitat within 15
+  years, −11–22% net timber revenue.
+- **Carbon sink:** net LULUCF uptake 54 Mt CO₂e in 2024, +8 Mt on 2023, after a decade of
+  decline (1990–2024 average 56 Mt).
 
 ### 3.4 Mining
 
@@ -372,6 +412,10 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Forestry rewrite — done 28 Sept in EN and SV.** Both languages have 8 agenda points
+  (new point 6: *The People's Forest: Sveaskog's Double Mission* / *Folkets skog: Sveaskogs
+  dubbla uppdrag*). **Numbering shifted:** Rural Economy is now point 7 and Deregulation
+  point 8, so the printed Forestry column needs updating.
 - **Tourism rewrite — done 28 Sept in EN and SV.** Both languages have 7 agenda points,
   and EN/SV parity holds in every topic.
 - **Rights of Nature rewrite — done 28 Sept in EN and SV.** Both languages have 5 agenda
@@ -458,6 +502,50 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Forestry rewritten, Swedish** (SV)
+- `topics_sv.json`, Skogsbruk: the brief, prompt and all eight agenda points mirror the
+  English below. Existing Swedish titles kept (trailing colon dropped from point 1); new
+  point 6 is *Folkets skog: Sveaskogs dubbla uppdrag*.
+- Kept from the earlier Swedish text: MP named on the 670,000 ha warning, the law's name
+  *Ett tydligt regelverk för aktivt skogsbruk*, and prop. 2025/26:230.
+- Names per §2: Ohredahke sameby, SCA, Sveaskog, Norra Skog, SLU Artdatabanken,
+  Naturvårdsverket, Svenska kyrkan, Arjeplogs allmänning.
+- Point 8 (Deregulation) gained only "hälften av Sveriges skog ägs av familjer".
+- `translation_guide_sv.md` §2.3: föryngringsavverkning, schackrutehuggning, samplanering,
+  allmänning, enskild skogsägare/skogsägarförening, marknadsmässig avkastning.
+- Verified: `ValidateTopicsData` passed; EN/SV parity holds in every topic. The print
+  export gives all 8 Forestry titles correctly in both languages.
+
+**2026-09-28 — Forestry rewritten** (EN)
+- `topics_en.json`, Forestry:
+  - **Brief:** adds SCA and Ohredahke.
+  - **Context:** the ownership error fixed (families 49%, 309,000 owners, Norra Skog
+    27,000, SCA ~¼, Sveaskog 14%); clear-cut dominance and 3% clear-cut-free. It
+    explicitly hands species, rotation and short-lived products to the Biodiversity topic.
+  - **Recent Developments:** added SCA/Ohredahke, the contorta invasive-risk rating and
+    the 2024 carbon-sink rebound.
+- Agenda points 7 → 8, all two-sided with a core question. The three old run-on points
+  (Introduced Species, Soil Scarification, Climate Benefit) now have separate titles and
+  full sides.
+  - **AP0 Clear-cut vs continuous cover:** 733k ha / 3%; Sveaskog's 37 ha against 14,500;
+    chequered felling still at trial stage; "a steady income" (interviews 3, 8).
+  - **AP1 Contorta:** 600k ha; invasive-risk rating; 22 of 30 plots; SCA for, the Church
+    of Sweden against.
+  - **AP2 Scarification:** the research numbers; Sveaskog's low-impact method as the good
+    example (interview 4).
+  - **AP3 Climate:** the 2024 sink rebound; stock vs flow; refers to Biodiversity for
+    short-lived products.
+  - **AP4 Governance:** the SCA/Ohredahke case with both sides; "chessboard" maps
+    (interview 5); "the wind companies can be talked to" (interview 4).
+  - **AP5 The People's Forest (new):** Sveaskog's return mission vs example role; the 1.2 bn
+    dividend; felling halved; Norrbotten −45% (contested); 37 ha; +22% lichen for −11–22%
+    revenue.
+  - **AP6 Rural economy:** family owners; the commons (interview 3's "protect everything
+    / use everything"); new incomes.
+  - **AP7 Deregulation:** unchanged apart from "half of Sweden's forest belongs to
+    families".
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Tourism rewritten, Swedish** (SV)
 - `topics_sv.json`, Turism: the brief, prompt and all seven agenda points mirror the
@@ -711,6 +799,18 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Forestry** [all 28 Sep]
+- Sveaskog — reduced felling in Norrbotten (9 Jan 2023): https://www.sveaskog.se/press/2023/minskade-avverkningsnivaer-i-norrbotten-2023/
+- Svensk Jakt — Sveaskog in conflict with herding: https://svenskjakt.se/start/nyhet/sveaskog-i-konflikt-med-renskotseln-kraftigt-minskade-avverkningar/
+- Skogsaktuellt — SCA pauses its FSC exit: https://www.skogsaktuellt.se/artikel/2237790/sca-pausar-uttrde-ur-fsc.html
+- Syre / DN — SCA leaves FSC (Apr 2025): https://tidningensyre.se/2025/10-april-2025/dn-sca-lamnar-miljocertifieringen-fsc/
+- Natursidan — 200+ SCA fellings despite the sameby's no: https://www.natursidan.se/nyheter/over-200-avverkningar-av-sca-trots-nej-fran-sameby/
+- SVT — SLU: contorta may become invasive (19 Jan 2025): https://www.svt.se/nyheter/sapmi/slu-varnar-contortatallen-kan-bli-invasiv
+- Skogsstyrelsen — measures in forestry (clear-cut-free, contorta): https://www.skogsstyrelsen.se/statistik/skogsskotsel/atgarder-i-skogsbruket/
+- Naturvårdsverket — carbon uptake improving (Dec 2025): https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2025/december/svart-att-na-klimatmalen-men-en-ljusning-for-upptaget-av-vaxthusgaser-i-skog-och-mark/
+- Skogsstyrelsen — ownership trend: https://www.skogsstyrelsen.se/nyhetslista/trenden-med-farre-skogsagare-och-storre-innehav-fortsatter/
+- Föreningen Skogen — who owns Sweden's forests: https://www.skogen.se/skogssverige/fakta-om-skog/vem-ager-sveriges-skogar/
 
 **Tourism** [all 28 Sep]
 - Visit Sweden — record summer 2025: https://corporate.visitsweden.com/press/2025-den-starkaste-turistsommaren-nagonsin-i-sverige-ingen-overturism/

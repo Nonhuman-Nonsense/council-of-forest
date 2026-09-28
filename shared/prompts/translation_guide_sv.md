@@ -142,6 +142,12 @@ Format: **English** → **Swedish** — *notes*.
 | biomass | biomassa | |
 | "green desert" | "grön öken" | sterile plantation |
 | rotation (period) | omloppstid | "omloppstiderna blir allt kortare" |
+| regeneration felling | föryngringsavverkning | Sveaskog's reporting term |
+| chequered (checkerboard) felling | schackrutehuggning | trial stage only |
+| co-planning (with samebyar) | samplanering | Sveaskog Norrbotten 2023 |
+| commons (forest) | allmänning | e.g. Arjeplogs allmänning |
+| family forest owner / owners' association | enskild skogsägare / skogsägarförening | Norra Skog |
+| market-based return | marknadsmässig avkastning | Sveaskog's mission |
 | retention trees / buffer zone | hänsynsträd / kantzon | |
 | sawlogs / residues | sågtimmer / restprodukter | |
 | browsing damage | betesskador (ÄBIN) | moose on young pine; 5% target |
