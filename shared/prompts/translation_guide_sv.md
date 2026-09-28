@@ -212,6 +212,12 @@ Format: **English** → **Swedish** — *notes*.
 | cultivation boundary | odlingsgränsen | |
 | small game hunting | småviltsjakt | |
 | migration route (the last one) | flyttled | "sista flyttleden" — the 50-metre corridor |
+| Saami Council | Samerådet | pan-Sámi NGO; wrote to CERD Oct 2025 |
+| year-round land / winter grazing land | åretruntmarker / vinterbetesmarker | Forestry Act samråd covers only the former |
+| by custom (Nordmaling 2011) | grundad på sedvana | distinct from urminnes hävd |
+| redress (UNDRIP Art. 28) | gottgörelse | |
+| Rönnbäcken case | Rönnbäckenfallet | Vapsten sameby, CERD opinion |
+| "Core Question:" (agenda points) | "Kärnfråga:" | |
 
 ### 2.7 Law, policy & institutions
 

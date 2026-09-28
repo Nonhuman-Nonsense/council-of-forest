@@ -236,7 +236,9 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   final report** (an earlier version of this file conflated them).
 - **Stegra timeline** due end of 2026. When it comes, update "no confirmed start date" /
   "inget bekräftat startdatum" in the Green Transition topic, both languages.
-- **Sámi agenda-point rewrite (proposed 28 Sept, not started).** In the Sámi topic, AP0
+- **Sámi agenda-point rewrite — done 28 Sept in EN and SV.** The notes below are the plan
+  it followed, kept as a map from each point to its material. Before the rewrite, in the
+  Sámi topic, AP0
   and AP2–AP5 are single paragraphs, 640–950 chars, with the opposing side only hinted at.
   AP1 and all of Green Transition use the two-sided format (§2). Plan, with material
   gathered from §5 and §7:
@@ -260,8 +262,9 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
     violence study; Sehlin MacNeil's cycle. Counter-side, without excusing hate: local
     non-Sámi hunters feel shut out after Girjas. Replace the vague "Härjedalen" reference
     with Nordmaling.
-  - Cost: the Sámi agenda block grows from ~6k to ~10k characters, in line with Green
-    Transition and Energy. The Swedish version needs the same pass with names.
+  - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
+    7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
+    drift or slow, trim the context paragraphs first; keep the labelled bullets.
 - **Still to verify against primary sources:** exact salmon quota and wind-veto figures;
   whether Renmarkskommittén's replacement was appointed; Lyten's actual restart; Leif
   Johansson as Stegra chair.
@@ -299,6 +302,41 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Sámi agenda points rewritten, Swedish** (SV)
+- `topics_sv.json`, Sámi topic: AP0 and AP2–AP5 mirror the English rewrite below, with
+  names restored per §2:
+  - Ran, Vapsten and Ubmeje tjeälddie (Nordmaling); Rans sameby and Lycksele tingsrätt
+    (the JK case, Jägareförbundet, Rally Sweden);
+  - Per Geijer and Gabna; Vapsten sameby for Rönnbäcken;
+  - KD for the April proposal; Samerådet; Brå; Kristina Sehlin MacNeil; Mats Jonsson's
+    *När vi var samer*.
+  - Uses *gåhtuone* (the Ume Sámi spelling in the guide) for guohtun.
+- `translation_guide_sv.md` §2.6: Samerådet, åretruntmarker/vinterbetesmarker, grundad på
+  sedvana, gottgörelse, Rönnbäckenfallet, Kärnfråga.
+- Verified: `ValidateTopicsData` passed.
+
+**2026-09-28 — Sámi agenda points rewritten** (EN)
+- `topics_en.json`, Sámi topic: AP0, AP2, AP3, AP4 and AP5 rewritten from single paragraphs
+  into the two-sided format (§2), each with labelled bullets and a `Core Question:`. AP1
+  (national interest) was already in format and is unchanged.
+  - **AP0 Parallel Ownership:** landowner vs herding perspectives; Nordmaling 2011, Girjas
+    2020, public interest vs property right, no reciprocal duty, JK tactic change.
+  - **AP2 Green Colonization:** coexistence vs colonization; May 2024 Natura 2000 change,
+    CRMA strategic project, no cap on cumulative land take, the 50 m corridor,
+    Rönnbäcken/CERD, avoidance zones.
+  - **AP3 Disappearing Library:** language-first vs landscape, framed by the April 2026
+    proposal to move support from herding to language; Ume Sámi facts from Sametinget's
+    2024 status report.
+  - **AP4 Consultation:** progress vs paper shield; Consultation Act scope, Forestry Act
+    winter gap, Renmarkskommittén (attributed to the Saami Council), CERD 2025, Rally
+    Sweden.
+  - **AP5 Lateral Violence:** evidence of harm vs local frustration; post-Girjas threats,
+    Rally Sweden 2025, Brå 2024 on hate-crime recording, the Jokkmokk violence survey,
+    Sehlin MacNeil's cycle. The vague "Härjedalen" reference was removed.
+- English stays structural. Places and institutions that help the story are named
+  (Nordmaling, Kiruna, Jokkmokk, Rönnbäcken, LKAB); parties are not.
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Election update and fact corrections** (EN + SV)
 - Sámi topic: the brief notes the government that proposed removing the riksintresse lost
