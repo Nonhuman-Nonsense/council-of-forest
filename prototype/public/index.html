@@ -71,6 +71,10 @@
         <button class="action-btn" @click="exportPrompts" style="width: 100%;">
           Export Prompts (JSON)
         </button>
+        <button class="action-btn" @click="exportPrintFiles" style="width: 100%; margin-top: 6px;"
+          title="Topics as InDesign Tagged Text and plain text, both languages, from the committed prompt files">
+          Export for Print (InDesign)
+        </button>
       </div>
     </aside>
 
@@ -618,6 +622,7 @@
 
   <script src="Sortable.min.js"></script>
   <script src="audio_controller.js"></script>
+  <script src="print_export.js"></script>
   <script src="prototype_client.js?v=3.0"></script>
 </body>
 

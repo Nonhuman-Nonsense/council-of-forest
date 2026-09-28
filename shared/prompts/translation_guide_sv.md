@@ -141,6 +141,21 @@ Format: **English** → **Swedish** — *notes*.
 | forest continuity | skogskontinuitet | |
 | biomass | biomassa | |
 | "green desert" | "grön öken" | sterile plantation |
+| rotation (period) | omloppstid | "omloppstiderna blir allt kortare" |
+| regeneration felling | föryngringsavverkning | Sveaskog's reporting term |
+| chequered (checkerboard) felling | schackrutehuggning | trial stage only |
+| co-planning (with samebyar) | samplanering | Sveaskog Norrbotten 2023 |
+| commons (forest) | allmänning | e.g. Arjeplogs allmänning |
+| family forest owner / owners' association | enskild skogsägare / skogsägarförening | Norra Skog |
+| market-based return | marknadsmässig avkastning | Sveaskog's mission |
+| retention trees / buffer zone | hänsynsträd / kantzon | |
+| sawlogs / residues | sågtimmer / restprodukter | |
+| browsing damage | betesskador (ÄBIN) | moose on young pine; 5% target |
+| rewetting / blocking ditches | återvätning / proppa igen diken | |
+| carbon credits / greenwashing | klimatkrediter / grönmålning | |
+| summer farm / hay meadow | fäbod / slåtteräng (älväng, slåttermyr) | |
+| umbrella species | paraplyart | vitryggig hackspett |
+| red list categories | livskraftig, nära hotad, sårbar, starkt hotad, akut hotad, nationellt utdöd | Rödlistan 2025 (SLU Artdatabanken) |
 
 ### 2.4 Lichen, reindeer & grazing
 
@@ -184,6 +199,14 @@ Format: **English** → **Swedish** — *notes*.
 | (sea) trout | havsöring |
 | freshwater pearl mussel | flodpärlmussla |
 | garden lupine | blomsterlupin |
+| moose | älg |
+| red fox | rödräv |
+| mountain birch | fjällbjörk |
+| white-tailed eagle | havsörn |
+| otter | utter |
+| Tengmalm's owl | pärluggla |
+| snowy owl | fjälluggla |
+| white-backed woodpecker | vitryggig hackspett |
 
 ### 2.6 Sámi rights & culture
 
@@ -231,6 +254,13 @@ Format: **English** → **Swedish** — *notes*.
 | EU Critical Raw Materials Act | EU:s förordning om kritiska råvaror | |
 | legal person / legal personhood | juridisk person | phrase as "status som juridisk person" where natural |
 | rights of nature | naturens rättigheter | |
+| standing (legal) | talerätt | "vem har talerätt" |
+| guardian (of a legal-person ecosystem) | förmyndare / förmyndarorgan | Mar Menor, Taranaki |
+| proxy (speaking for nature) | ombud | Ombudslogiken |
+| national river | nationalälv | Vindelälven, one of four |
+| stewardship vs kinship | förvaltarskap mot släktskap | |
+| "paper park" | pappersnationalpark | rights without enforcement |
+| Instrument of Government | regeringsformen | the 278–17 vote, 11 Mar 2026 |
 | Girjas Judgment (2020) | Girjasdomen (2020) | |
 | title deed / paper title | lagfart / papperstitel | |
 | concession (exploitation) | bearbetningskoncession | |
@@ -271,6 +301,11 @@ Format: **English** → **Swedish** — *notes*.
 | municipal veto / refusal | kommunalt veto / kommunalt nej | 93% of wind projects, 2025 |
 | spawning grounds | lekbottnar | |
 | incentive package (wind) | incitamentspaket | 340/370 MSEK to host municipalities |
+| national grid operator | Svenska kraftnät, det statliga affärsverk som driver stamnätet | not "the state energy utility"; that is Vattenfall |
+| bypassed reach (dried by a dam) | förbiledd sträcka / torrfåra | >70% lack minimitappning |
+| environmental flows | miljöanpassade flöden | Widén et al. 2024, Ume River |
+| throttled (turbines) | strypta | summer surplus, full grid |
+| small modular reactor | liten modulär reaktor (SMR) | Rolls-Royce SMR, Ringhals |
 | hydrogen steel / fossil-free steel | vätgasstål / fossilfritt stål | |
 | sponge iron (DRI) | järnsvamp | LKAB/HYBRIT, Gällivare |
 | steel plant (Stegra, Boden) | stålverket | "Stegra, tidigare H2 Green Steel" on first mention |
@@ -294,6 +329,11 @@ Format: **English** → **Swedish** — *notes*.
 | mineral compensation ("gruvpeng") | mineralersättning | 2026 inquiry, municipalities only |
 | strategic project (CRMA) | strategiskt projekt | Per Geijer, March 2026 |
 | exploration permit | undersökningstillstånd | |
+| mining authority | Bergsstaten | decides bearbetningskoncession |
+| municipal veto | kommunalt veto | uranium veto abolished 15 Jun 2026, 174–172 |
+| financial guarantee (closure) | ekonomisk säkerhet | Blaiken: 2.3 MSEK vs ≥427 MSEK clean-up |
+| settling basin | sedimenteringsbassäng | Saivastjärnen, Laisvall |
+| alum shale | alunskiffer | inquiry on municipal influence, June 2026 |
 
 ### 2.10 General framing concepts
 
@@ -311,6 +351,14 @@ Format: **English** → **Swedish** — *notes*.
 | coexistence | samexistens | |
 | depopulation | avfolkning | |
 | Right of Public Access | Allemansrätten | |
+| guest nights | gästnätter | Visit Sweden / Tillväxtverket statistics |
+| overtourism | överturism | |
+| regenerative tourism | regenerativ turism | "hållbar turism är bara ett långsammare sätt att dö" |
+| catch-and-release | fånga och släpp | |
+| fish ladder | fisktrappa | Norrfors |
+| heliskiing | heliskiing / helikopterskidåkning | unregulated; Transportstyrelsen can only issue temporary bans |
+| summer-farm clearing | fäbodvall | |
+| night train / procurement | nattåg / upphandling | Trafikverket, SJ stopgap Dec 2026–Dec 2028 |
 | "functionally unavailable" | "funktionellt otillgänglig" | land |
 
 ### 2.11 Lichen academic vocabulary
