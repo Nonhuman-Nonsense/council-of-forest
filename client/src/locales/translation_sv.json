@@ -98,13 +98,17 @@
     "museum": "Museum",
     "presenter": "Presentation",
     "modeSwitchButton": "Lägesbytarknapp",
+    "venue": {
+      "label": "Plats",
+      "none": "Ingen plats",
+      "unknown": "{{id}} (finns inte längre på servern)",
+      "hint": "Var den här installationen körs. Märker dess AI-användning för fotavtrycksmätaren och rummets eluttag, och avgör vem som får larmmejl om skrivaren."
+    },
     "bridge": {
       "title": "Brygga"
     },
     "alerts": {
       "label": "Larmmejl",
-      "venueLabel": "Plats",
-      "noVenue": "Ingen plats (inga mejl)",
       "test": "Skicka testlarm",
       "status": {
         "notConfigured": "Inte inställt på bryggan",
@@ -117,11 +121,6 @@
         "sent": "Skickat, kolla inkorgen",
         "failed": "Inte skickat"
       }
-    },
-    "installationId": {
-      "label": "Installations-ID",
-      "placeholder": "t.ex. museum-oslo",
-      "hint": "Märker AI-användningen för möten som körs på den här datorn, för fotavtrycksmätaren. Lämna tomt utanför installationer."
     },
     "print": {
       "toggle": "Skriv ut protokoll",
