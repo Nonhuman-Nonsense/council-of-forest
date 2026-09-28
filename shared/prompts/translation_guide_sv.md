@@ -248,6 +248,13 @@ Format: **English** → **Swedish** — *notes*.
 | EU Critical Raw Materials Act | EU:s förordning om kritiska råvaror | |
 | legal person / legal personhood | juridisk person | phrase as "status som juridisk person" where natural |
 | rights of nature | naturens rättigheter | |
+| standing (legal) | talerätt | "vem har talerätt" |
+| guardian (of a legal-person ecosystem) | förmyndare / förmyndarorgan | Mar Menor, Taranaki |
+| proxy (speaking for nature) | ombud | Ombudslogiken |
+| national river | nationalälv | Vindelälven, one of four |
+| stewardship vs kinship | förvaltarskap mot släktskap | |
+| "paper park" | pappersnationalpark | rights without enforcement |
+| Instrument of Government | regeringsformen | the 278–17 vote, 11 Mar 2026 |
 | Girjas Judgment (2020) | Girjasdomen (2020) | |
 | title deed / paper title | lagfart / papperstitel | |
 | concession (exploitation) | bearbetningskoncession | |

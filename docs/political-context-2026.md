@@ -270,6 +270,45 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   in ICES subdivisions 30–31 was closed from **25 June to 24 July 2026**. Finland was
   criticised for continuing under "research fishing".
 
+### 3.8 Rights of nature
+
+- **Sweden:**
+  - **11 March 2026:** the Riksdag rejected MP's motion 2025/26:3779 (an inquiry into
+    rights of nature in the constitution, regeringsformen) by **278–17** (KU28). Only MP
+    reserved.
+  - Vindelälven is one of four *nationalälvar*, protected from hydropower (the damming
+    was stopped after protests around 1970). It is protected as an object, not a subject.
+- **Nature's proxies in Swedish law:**
+  - **Skydda Skogen, CJEU C-473/19 & C-474/19 (4 March 2021)**, from a felling notice in
+    Härryda: the species-protection bans cover *every individual* of a protected species,
+    not only declining species.
+  - The June 2026 forestry law (prop. 2025/26:242): environmental organisations' appeal
+    time runs from the day a decision is announced, and Skogsstyrelsen becomes a party when
+    they appeal. Plus the landowner compensation right (prop. 2025/26:230).
+- **Aurora youth climate case:** the Supreme Court (Feb 2025) refused it, because courts
+  can't order parliament to act, but opened a route for an association, citing
+  KlimaSeniorinnen. It was refiled **6 Feb 2026** at Stockholm tingsrätt, asking only for a
+  declaration that rights were violated. A preparatory hearing was scheduled for
+  **21 Sept 2026**; the outcome was not checked.
+- **Abroad:**
+  - Ecuador's constitution (2008); the Atrato River, Colombia (2016); the Whanganui River,
+    NZ (2017).
+  - **Taranaki Maunga, NZ (30 Jan 2025):** "Te Kāhui Tupua", voiced by 4 iwi and 4
+    minister-appointed members.
+  - **Mar Menor, Spain:** Law 19/2022. The Constitutional Court upheld it on 20 Nov 2024
+    (Vox challenge). Guardian bodies started in May 2025. A local court refused civil
+    organisations standing to represent the lagoon. A first trial with the lagoon as
+    plaintiff was scheduled for May 2026 (outcome not checked). Polluted farm runoff
+    continues, and critics call it a "paper park".
+  - Ireland: the Citizens' Assembly (2023) and a parliamentary committee recommended a
+    referendum; none is scheduled.
+- **Laponia:** managed since 2013 by Laponiatjuottjudus. The samebyar hold 5 of 9 board
+  seats (via Mijá ednam), and decisions are taken by consensus.
+- **Language check pending:** the old Rights of Nature context called lichen "guoppar",
+  which I believe means *mushroom* in North Sámi; ground lichen is *jeagil*. Both
+  rewrites (EN and SV, 28 Sept) dropped the word. Confirm with a Sámi speaker before
+  using any Sámi term.
+
 ---
 
 ## 4. Decisions and open follow-ups
@@ -312,6 +351,9 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Rights of Nature rewrite — done 28 Sept in EN and SV.** Both languages have 5 agenda
+  points, and agenda-point counts match in every topic. "guoppar" no longer appears in
+  any prompt file.
 - **Biodiversity rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda
   points (new: *The Moose Paradox* / *Älgparadoxen*), and agenda-point counts match
   across every topic. Agenda block: 4.5k → ~12k characters. `ValidateTopicsData` does
@@ -393,6 +435,50 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Rights of Nature rewritten, Swedish** (SV)
+- `topics_sv.json`, Naturens rättigheter: the brief, prompt and all five agenda points
+  mirror the English below.
+- Names restored per §2: Miljöpartiet (the motion; the only party voting for it) and
+  "Bara MP reserverade sig"; the Skydda Skogen association and Härryda; Aurora;
+  Laponiatjuottjudus (samebyar majority, consensus); Sveaskog; lappskatteland.
+- The old Sámi word for lichen (guoppar) is gone.
+- Swedish agenda-point titles:
+  1. Att äga det oägbara: egendom mot tillhörighet
+  2. Juridisk ställning: resurs eller juridisk person?
+  3. Vem talar för naturen i dag?
+  4. Rättigheter för vem? Urfolksförvaltning eller grön vildmark
+  5. Myten om herravälde: släktskap mot förvaltarskap
+- `translation_guide_sv.md` §2.7: talerätt, förmyndare, ombud, nationalälv,
+  förvaltarskap/släktskap, pappersnationalpark, regeringsformen.
+- Verified: `ValidateTopicsData` passed; EN/SV agenda-point parity holds in every topic.
+
+**2026-09-28 — Rights of Nature rewritten** (EN)
+- `topics_en.json`, Rights of Nature:
+  - **Brief:** adds the personhood cases and the 278–17 vote.
+  - **Context:** now opens on Vindelälven as a *nationalälv*, protected as an object. It
+    adds a three-logic Framing (property, proxy, standing) and drops the Sámi word for
+    lichen (see §3.8).
+  - **Recent Developments:** added the 278–17 vote, Taranaki and Mar Menor, and the
+    Aurora case; kept the three existing bullets.
+- Agenda points, 3 → 5, all two-sided with a core question:
+  - **AP0 Owning the Unownable: Property vs. Belonging** (reframed; the old AP0
+    duplicated the Sámi topic's *Parallel Ownership*). State land taken from Sámi tax
+    lands; "who are humans to decide who owns a mountain" (interview 9); Taranaki owns
+    itself.
+  - **AP1 Legal Standing:** for (Ecuador, Atrato, Whanganui, Taranaki, Mar Menor) vs
+    against ("who speaks?", paper park, uncertainty, the "war" warning from interview 7,
+    278–17).
+  - **AP2 Who Speaks for Nature Today? (new):** the proxy perspective (Skydda Skogen at
+    the CJEU, the restoration regulation, Aurora) vs the owner and democracy perspective
+    (the June 2026 appeal changes and compensation).
+  - **AP3 Rights for Whom? (new):** the alliance perspective (the same enemy; Laponia's
+    Sámi-majority management) vs the competition perspective (rights for the river,
+    consultation for the people; wilderness without people).
+  - **AP4 The Myth of Mastery: Kinship vs. Stewardship** (the old AP2, completed): "trees
+    grow for themselves" (interview 4); a tree only worth what someone finds on it
+    (interview 5); humans are nature too; the Indigenous-scholar critique of personhood.
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Biodiversity rewritten, Swedish** (SV)
 - `topics_sv.json`, Biodiversity: the brief, prompt and all six agenda points mirror the
@@ -567,6 +653,18 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Rights of nature** [all 28 Sep]
+- Riksdagen — KU28 (motion rejected 11 Mar 2026, 278–17): https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/fri-och-rattigheter-m-m_hd01ku28/
+- Motion 2025/26:3779 Naturens rättigheter (MP): https://www.riksdagen.se/sv/dokument-och-lagar/dokument/motion/naturens-rattigheter_hd023779/
+- 1News — Taranaki Maunga law (30 Jan 2025): https://www.1news.co.nz/2025/01/30/te-kahui-tupua-taranaki-maunga-bill-passes-into-law/
+- Earth Law Center — Mar Menor constitutional ruling: https://www.earthlawcenter.org/blog-entries/2025/1/in-a-european-first-landmark-verdict-upholds-constitutionality-of-mar-menors-legal-rights
+- bioGraphic — Mar Menor three years on (Jun 2025): https://biographic.com/a-spanish-lagoon-was-granted-legal-personhood-then-what-happened/
+- EUR-Lex — C-473/19 Skydda Skogen: https://eur-lex.europa.eu/legal-content/SV/ALL/?uri=CELEX:62019CJ0473
+- Sveriges Domstolar — HD on Auroramålet (Feb 2025): https://www.domstol.se/nyheter/2025/02/hogsta-domstolen-meddelar-beslut-i-ett-uppmarksammat-mal-dar-fragan-om-en-klimattalan-kan-tas-upp-till-provning-har-hanskjutits-fran-nacka-tingsratt-det-sa-kallade-auroramalet/
+- Auroramålet — news (refiled Feb 2026): https://xn--auroramlet-75a.se/nyheter/
+- Wikipedia — Laponiatjuottjudus: https://sv.wikipedia.org/wiki/Laponiatjuottjudus
+- Ecojurisprudence — Ireland referendum recommendation: https://ecojurisprudence.org/initiatives/ireland-parliament-recommends-national-referendum-on-rights-of-nature-constitutional-amendment/
 
 **Biodiversity** [all 28 Sep]
 - SLU — Rödlistade arter i Sverige 2025: https://www.slu.se/artdatabanken/publikationer/rodlistor/rodlista-2025/
