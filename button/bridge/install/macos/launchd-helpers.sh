@@ -4,6 +4,20 @@
 SERVICE_LABEL="com.council.button-bridge"
 PLIST_DST="/Library/LaunchDaemons/com.council.button-bridge.plist"
 
+INSTALL_DIR="/usr/local/lib/council-button-bridge"
+
+# Print spool lives next to the bridge code. Reinstalling keeps it (see
+# remove_bridge_code); uninstalling removes it with everything else. Staff reach it through a Desktop shortcut; the folder itself
+# is not on the Desktop, which macOS privacy protection can block the root daemon from
+# writing.
+PRINT_SPOOL_DIR="$INSTALL_DIR/print"
+PRINT_DESKTOP_LINK_NAME="Council Print"
+
+# Printer alert settings (council server + bridge key). The bridge reads alerts.env from
+# its working directory; installs keep it, since it holds a secret nobody wants to re-enter.
+ALERTS_FILE="$INSTALL_DIR/alerts.env"
+DEFAULT_ALERT_SERVER="https://council-of-foods.com"
+
 launchd_service_loaded() {
   launchctl print "system/$SERVICE_LABEL" >/dev/null 2>&1
 }
@@ -57,6 +71,7 @@ EOF
   sed \
     -e "s|__RUN_SCRIPT__|$run_script|g" \
     -e "s|__INSTALL_DIR__|$install_dir|g" \
+    -e "s|__PRINT_SPOOL_DIR__|$PRINT_SPOOL_DIR|g" \
     "$plist_src" >"$tmp_plist"
 
   if ! plutil -lint "$tmp_plist" >/dev/null; then
@@ -105,4 +120,130 @@ print_launchd_failure() {
   echo >&2
   echo "Recent stderr log:" >&2
   sudo tail -30 /var/log/council-button-bridge.err.log 2>&1 >&2 || true
+}
+
+# Removes everything in the install directory except the print spool, whose done/
+# folder is the archive of every printed protocol, and the alert settings.
+remove_bridge_code() {
+  if [[ -d "$INSTALL_DIR" ]]; then
+    sudo find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 ! -name print ! -name alerts.env -exec rm -rf {} +
+  fi
+}
+
+# --- printing ---
+
+# Creates the spool so staff (every local account is in group `staff`) can reprint by
+# copying a PDF from done/ into pending/, and tidy up, without admin rights.
+setup_print_spool() {
+  sudo mkdir -p "$PRINT_SPOOL_DIR/pending" "$PRINT_SPOOL_DIR/done"
+  # Reachable through the shortcut: every folder on the way must be enterable.
+  sudo chmod o+rx "$INSTALL_DIR"
+  sudo chown root:staff "$PRINT_SPOOL_DIR" "$PRINT_SPOOL_DIR/pending" "$PRINT_SPOOL_DIR/done"
+  sudo chmod 775 "$PRINT_SPOOL_DIR" "$PRINT_SPOOL_DIR/pending" "$PRINT_SPOOL_DIR/done"
+}
+
+console_user() {
+  local user
+  user="$(stat -f%Su /dev/console 2>/dev/null || true)"
+  if [[ -z "$user" || "$user" == "root" || "$user" == "loginwindow" ]]; then
+    return 1
+  fi
+  printf '%s\n' "$user"
+}
+
+# Puts a shortcut to the spool on the logged-in user's Desktop. Best effort: printing
+# works without it.
+link_print_spool_on_desktop() {
+  local user home link
+  if ! user="$(console_user)"; then
+    echo "No user logged in at the screen; skipping the Desktop shortcut to $PRINT_SPOOL_DIR."
+    return 0
+  fi
+  home="$(dscl . -read "/Users/$user" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+  link="${home:-/Users/$user}/Desktop/$PRINT_DESKTOP_LINK_NAME"
+
+  if [[ -e "$link" && ! -L "$link" ]]; then
+    echo "Warning: $link exists and is not a shortcut; leaving it alone." >&2
+    return 0
+  fi
+  if sudo ln -sfn "$PRINT_SPOOL_DIR" "$link" && sudo chown -h "$user:staff" "$link"; then
+    echo "Desktop shortcut: $link"
+  else
+    echo "Warning: could not create Desktop shortcut $link." >&2
+  fi
+}
+
+remove_print_spool_links() {
+  local link
+  for link in /Users/*/Desktop/"$PRINT_DESKTOP_LINK_NAME"; do
+    if [[ -L "$link" && "$(readlink "$link")" == "$PRINT_SPOOL_DIR" ]]; then
+      sudo rm -f "$link"
+    fi
+  done
+}
+
+# CUPS stops a printer's whole queue on an error (paper out, printer off) and leaves it
+# stopped after the problem is fixed. retry-job keeps the queue running instead.
+configure_default_printer() {
+  local printer
+  printer="$(LANG=C LC_ALL=C lpstat -d 2>/dev/null | sed -n 's/^system default destination: *//p')"
+  if [[ -z "$printer" ]]; then
+    echo "Warning: no default printer. Protocols will wait in $PRINT_SPOOL_DIR/pending until one is set" >&2
+    echo "  (System Settings → Printers & Scanners), then re-run this installer." >&2
+    return 0
+  fi
+  if sudo lpadmin -p "$printer" -o printer-error-policy=retry-job; then
+    echo "Printer: $printer (retries jobs after errors)"
+  else
+    echo "Warning: could not set retry-job policy on $printer." >&2
+  fi
+}
+
+# --- printer alert emails ---
+
+has_terminal() {
+  { true </dev/tty; } 2>/dev/null
+}
+
+# Asks for the council server and bridge key the first time, and keeps the answers on
+# later installs. Reads from /dev/tty, so it also works under `curl | sudo bash`. With no
+# terminal, or no key given, alerts stay off and the file explains how to turn them on.
+configure_alerts() {
+  if sudo test -f "$ALERTS_FILE"; then
+    echo "Keeping printer alert settings in $ALERTS_FILE."
+    return 0
+  fi
+
+  local server="" key=""
+  if has_terminal; then
+    echo
+    echo "Printer alert emails tell museum staff when the printer needs attention."
+    echo "They need the council server and its bridge key (COUNCIL_BRIDGE_KEY). Leave the key empty to skip."
+    read -r -p "Council server [$DEFAULT_ALERT_SERVER]: " server </dev/tty || true
+    read -r -s -p "Bridge key: " key </dev/tty || true
+    echo
+  fi
+  server="${server:-$DEFAULT_ALERT_SERVER}"
+
+  local tmp
+  tmp="$(mktemp /tmp/council-bridge-alerts.XXXXXX)"
+  {
+    echo "# Printer alert emails: the council server that sends them, and its bridge key"
+    echo "# (COUNCIL_BRIDGE_KEY on that server). After editing, restart the bridge:"
+    echo "#   sudo launchctl kickstart -k system/$SERVICE_LABEL"
+    echo "BRIDGE_SERVER_URL=$server"
+    if [[ -n "$key" ]]; then
+      echo "BRIDGE_SERVER_KEY=$key"
+    else
+      echo "# BRIDGE_SERVER_KEY="
+    fi
+  } >"$tmp"
+  sudo install -m 600 -o root -g wheel "$tmp" "$ALERTS_FILE"
+  rm -f "$tmp"
+
+  if [[ -n "$key" ]]; then
+    echo "Printer alerts: on, via $server. Choose the venue on the #staff page."
+  else
+    echo "Printer alerts: off. To turn them on, set BRIDGE_SERVER_KEY in $ALERTS_FILE and restart the bridge."
+  fi
 }

@@ -90,15 +90,67 @@
         "META": "Metaagent",
         "AUTOPLAY": "Autouppspelning",
         "SYSTEM": "System",
-        "ERROR": "Feldetalj"
+        "ERROR": "Feldetalj",
+        "PRINT": "Utskrift"
       }
     },
     "web": "Webb",
     "museum": "Museum",
     "presenter": "Presentation",
     "modeSwitchButton": "Lägesbytarknapp",
+    "bridge": {
+      "title": "Brygga"
+    },
+    "alerts": {
+      "label": "Larmmejl",
+      "venueLabel": "Plats",
+      "noVenue": "Ingen plats (inga mejl)",
+      "test": "Skicka testlarm",
+      "status": {
+        "notConfigured": "Inte inställt på bryggan",
+        "chooseVenue": "Välj en plats",
+        "failing": "Fungerar inte",
+        "on": "På"
+      },
+      "testResult": {
+        "sending": "Skickar…",
+        "sent": "Skickat, kolla inkorgen",
+        "failed": "Inte skickat"
+      }
+    },
+    "installationId": {
+      "label": "Installations-ID",
+      "placeholder": "t.ex. museum-oslo",
+      "hint": "Märker AI-användningen för möten som körs på den här datorn, för fotavtrycksmätaren. Lämna tomt utanför installationer."
+    },
+    "print": {
+      "toggle": "Skriv ut protokoll",
+      "printerLabel": "Skrivare",
+      "pendingLabel": "Väntar på utskrift",
+      "attentionLabel": "Behöver åtgärdas",
+      "since": "sedan {{time}}",
+      "modeHint": "Protokoll skrivs bara ut i museiläge.",
+      "testPage": "Skriv ut testsida",
+      "testPageText": "## Testsida\n\nOm du kan läsa detta fungerar utskriften: webbläsaren skickade sidan till bryggan, och bryggan skickade den till skrivaren.\n\nMötesprotokoll skrivs ut på samma sätt, så snart ett live-möte i museiläge har fått sitt protokoll.",
+      "testPageResult": {
+        "sending": "Skickar…",
+        "queued": "Skickat till skrivaren",
+        "rejected": "Bryggan nekade sidan",
+        "unreachable": "Bryggan går inte att nå"
+      },
+      "printer": {
+        "unavailable": "—",
+        "outdated": "Bryggan är för gammal — uppdatera den",
+        "disabled": "Utskrift avstängd på bryggan",
+        "checking": "Kontrollerar…",
+        "noDefault": "Ingen standardskrivare",
+        "idle": "Redo",
+        "printing": "Skriver ut",
+        "stopped": "Stoppad",
+        "unknown": "Okänd"
+      }
+    },
     "button": {
-      "title": "Knapp",
       "bridgeLabel": "Brygga",
       "appLabel": "App",
       "usbLabel": "USB-knapp",

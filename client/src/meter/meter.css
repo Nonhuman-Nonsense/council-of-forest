@@ -1,0 +1,222 @@
+/* Footprint meter — tall portrait strip (864×2880). Sized in vw so it scales with the display. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: #f2efe6;
+  font-family: "Tinos", Georgia, serif;
+  overflow: hidden;
+  cursor: none;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ?rotate: lay a portrait page onto a display the OS shows as landscape. */
+html[data-rotate] #root {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 100vw;
+}
+html[data-rotate="90"] #root {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+html[data-rotate="-90"] #root {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.meter {
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6vw;
+  padding: 10vw 7vw;
+  --meter-unit: 1vw;
+}
+html[data-rotate] .meter {
+  --meter-unit: 1vh;
+}
+
+.meter h2 {
+  margin: 0 0 calc(var(--meter-unit) * 3);
+  font-size: calc(var(--meter-unit) * 4);
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9c9788;
+  border-bottom: 1px solid #333;
+  padding-bottom: calc(var(--meter-unit) * 1.5);
+}
+
+.meter-scope {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--meter-unit) * 4) calc(var(--meter-unit) * 3);
+}
+.meter-scope h2 {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.meter-label {
+  font-size: calc(var(--meter-unit) * 3.2);
+  color: #9c9788;
+}
+
+.meter-value {
+  font-size: calc(var(--meter-unit) * 8);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.meter-scope--large .meter-value {
+  font-size: calc(var(--meter-unit) * 11);
+}
+
+.meter-unit {
+  margin-left: 0.25em;
+  font-size: 0.4em;
+  color: #c9c4b6;
+}
+
+.meter-range {
+  font-size: calc(var(--meter-unit) * 2.8);
+  color: #6f6b60;
+}
+
+.meter-plugs {
+  grid-column: 1 / -1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--meter-unit) * 1.5);
+  font-size: calc(var(--meter-unit) * 3.2);
+}
+.meter-plugs li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.meter-models ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--meter-unit) * 2);
+  font-size: calc(var(--meter-unit) * 3.4);
+}
+.meter-models li {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--meter-unit) * 2);
+}
+.meter-place {
+  color: #9c9788;
+  text-align: right;
+}
+
+.meter-training-values {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--meter-unit) * 1);
+}
+.meter-training .meter-value {
+  font-size: calc(var(--meter-unit) * 6);
+}
+
+.meter-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--meter-unit) * 4);
+  font-size: calc(var(--meter-unit) * 2.6);
+  color: #6f6b60;
+}
+.meter-qr {
+  flex: none;
+  width: calc(var(--meter-unit) * 20);
+  height: calc(var(--meter-unit) * 20);
+}
+
+.meter-demo {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 4px 10px;
+  background: #b3261e;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 14px;
+  z-index: 1;
+}
+
+/* Methodology page: read on a visitor's phone, so it scrolls and keeps the pointer. */
+html[data-page="methodology"] body {
+  overflow: auto;
+  cursor: auto;
+  background: #f4f1e8;
+  color: #1d1c19;
+}
+.methodology {
+  box-sizing: border-box;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.methodology h1 {
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+.methodology h2 {
+  margin-top: 2.5rem;
+  font-size: 1.35rem;
+}
+.methodology a {
+  color: inherit;
+}
+.method-model {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border: 1px solid #d8d2c2;
+  border-radius: 6px;
+  background: #fbf9f3;
+}
+.method-model h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.method-role {
+  margin: 0.1rem 0 0.75rem;
+  color: #6f6b60;
+}
+.method-model dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 1rem;
+  margin: 0 0 0.75rem;
+}
+.method-model dt {
+  color: #6f6b60;
+}
+.method-model dd {
+  margin: 0;
+}
+.method-assumptions,
+.method-warning,
+.method-sources {
+  font-size: 0.92rem;
+  color: #4a473f;
+}
+.method-undisclosed {
+  font-weight: bold;
+}
