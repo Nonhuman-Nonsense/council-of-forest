@@ -216,6 +216,53 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   (EU 2024/1991), with 39 measure packages; final plan due 1 September 2027.
 - **April 2026:** licence-hunt decisions for lynx and wolverine delegated to the county
   boards. Norrbotten declined a lynx hunt for 2026.
+- **Red list 2025, published 24 March 2026 (SLU Artdatabanken):**
+  - 5,217 of ~23,100 assessed species are red-listed (23%, up from 21.9% in 2020);
+    2,373 are threatened.
+  - Modern forestry harms **1,744** red-listed species (>⅓); overgrowth of open land
+    harms 1,300; climate change is named for 210.
+  - The mountains show the largest increase in red-listed share. Birds: 45% red-listed.
+  - Pärluggla (Tengmalm's owl) went LC → EN. Fjälluggla (snowy owl, no breeding since
+    2015) and tornuggla (barn owl) are now regionally extinct (RE).
+  - **The moose is NT**, after a decline that was a management goal.
+  - The white-tailed eagle and the otter left the list.
+- **Moose:**
+  - Västerbotten fell ~34% over 2015–2024 (national −23%), and is now growing again.
+    12,700 may be shot in 2026; the county's balance target is ~20,000 after the hunt.
+  - ÄBIN browsing damage is ~11% of young pine, against a 5% target that Skogsstyrelsen
+    largely adopted from the forestry industry's own target formulation (Svensk Jakt).
+  - SLU (Widemo) finds no clear link between moose density and browsing damage in
+    Norrland.
+- **Garden lupine:** on Sweden's first national list of invasive alien species (34
+  species) from **15 May 2026**. Selling, growing and spreading are banned. Private
+  owners have no duty to eradicate; authorities, municipalities and regions have
+  EU-list-level duties.
+- **Arctic fox 2025:** 56 litters in Sweden (97 in Fennoscandia), with ~526 adults, down
+  from 582, but the long-term trend is up.
+- **White-backed woodpecker:** ~15–20 pairs in Sweden (about 15 pairs and 14 breedings
+  in 2025).
+- **Final felling age (SLU Riksskogstaxeringen, 5-year means, excluding stands without a
+  legal minimum age):**
+  - North Norrland 130 (2004) → 104 (2017–19) → 113 (2022).
+  - Whole country 118 → 99.
+  - These figures are averages over *all* final fellings, including the last old natural
+    forests, which lift the average. They say little about the rotations companies now
+    *plan* for managed stands. **Decided 28 Sept: the prompts do not cite the SLU
+    figures.** They describe rotations as "getting shorter" and attribute "100–120 years
+    once, 60–80 planned now" to people working in the forests (interviews 4 and 8). Do not
+    reinsert the SLU numbers as if they were rotation lengths.
+- **Harvest use (Naturvårdsverket via DN, March 2021):** ~22% sawn timber, ~50%
+  bioenergy, ~25% pulp and paper, so >80% goes to short-lived products. The industry
+  counters that pulp and energy come largely from residues and by-products.
+- **Treeline:**
+  - Up to ~200 m rise in parts of the Swedish mountains (Kullman); the highest in ~7,000
+    years.
+  - Reindeer grazing inhibits mountain birch recruitment at the treeline (Hagenberg,
+    Horstkotte, Olofsson et al., *Ecosystems* 2025; EU Commission news 8 June 2026).
+  - Warmer summers weaken that grazing pressure (*Ecography* 2025).
+- **Predator compensation to samebyar** is paid per documented presence or reproduction
+  (2023: wolverine or lynx litter 200,000 SEK; wolf 500,000 SEK). Bear and golden eagle
+  are paid on presence, not per reindeer lost (Sametinget).
 
 ### 3.7 Salmon and tourism
 
@@ -265,6 +312,11 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Biodiversity rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda
+  points (new: *The Moose Paradox* / *Älgparadoxen*), and agenda-point counts match
+  across every topic. Agenda block: 4.5k → ~12k characters. `ValidateTopicsData` does
+  **not** check agenda-point parity between languages; check it by hand after
+  adding or removing a point.
 - **Still to verify against primary sources:** exact salmon quota and wind-veto figures;
   whether Renmarkskommittén's replacement was appointed; Lyten's actual restart; Leif
   Johansson as Stegra chair.
@@ -292,6 +344,45 @@ The Sámi material (`Research/sami/`), with the facts most useful for the prompt
 | `Lag (2022_66) om konsultation….pdf` | The Consultation Act text |
 | Other `Samisk forskning/` papers | Hydropower cumulative effects in Sápmi, CSR in the green transition, colonial past and present, racism methods, EU–Sápmi relations |
 
+Biodiversity, forestry and water material:
+
+| File | Use it for |
+|---|---|
+| `pollination/Pollinatörer och pollinering i Sverige .pdf` (Naturvårdsverket 6841, 2018) | ⅓ of 299 wild bees red-listed; ~⅕ of butterflies and moths; >1/10 of 400+ hoverflies. Overgrowth (grazing ended) is the top threat for red-listed bees and butterflies; felling is the top threat for red-listed hoverflies |
+| `fishing/Vindel River LIFE report.pdf` + `…afterwards.pdf` (2015) | Vindelälven runs free for 450 km; timber floating 1850–1976; 26 tributaries and 66 km restored; 20 dams removed; ~1,070 spawning grounds built. Brown trout host the freshwater pearl mussel's larvae |
+| `wwf-rapport-framtida-trender-och-drivkrafter-vasterbotten.pdf` (~2012, dated) | Västerbotten land cover: 56% forest, 12% open mire; ~15% formally protected; *Vindelälvens Naturbeten* riverside grazing project; climate projections |
+| `reindeer/The decreasing availability of reindeer forage….pdf` | Intensive forestry is practised on ~90% of Swedish forest cover |
+| `reindeer/Reindeer husbandry in peril….pdf` | Laevas sameby: ~34% of grazing grounds functionally unavailable |
+| `lichen/Do forests treated by partial cutting….pdf` | Caution: in a Québec study, epiphytic lichens grew *worse* in partial cuts. Partial cutting is not automatically lichen-friendly |
+| `transcribed interviews/` (8 transcripts, April 2025, Swedish/English) | The project's own local voices (see below). Use them as perspectives, attributed by role, never by name in prompts. They include private details (e.g. a phone number), so never quote them wholesale |
+
+Interview map (file → role → what it gives the prompts):
+
+- **3/3a** — a forest manager for a commons (allmänning) in Arjeplog. The fair production
+  voice: balancing hunters, timber and reserves; mixing species to spread climate risk;
+  forest roads as barriers; fire suppression turning reserves to spruce; signal species
+  (garnlav, three-toed woodpecker); a ditched mire as "a wound in its body".
+- **4** — a reindeer herder from Gran sameby who sits on the biosphere board and was
+  secretary to the Truth Commission. Ground lichen down 70–80%; low-impact soil
+  scarification agreed with Sveaskog; moose culled yet browsing damage persists because of
+  monocultures; fewer insects; the last patches around lakes cut now; no disturbance-free
+  zones; place names and language; the creation story (vaja).
+- **5** — Ran sameby members in Ammarnäs. Eagles as calf predators that are hard to
+  count; consultation always comes too late; reindeer keep the mountains open; "a tree
+  isn't worth enough to stand" without a signal species; the 15-year felling plans look
+  like a chessboard; Rally Sweden.
+- **6a/7** — a Naturskyddsföreningen Västerbotten board member (insects) and a Vindeln
+  resident. Pollinators and the one-year life cycle; growth-economy critique; rights of
+  nature; lupine; summer-farm meadows (Brattåker); "restore to what state?"; old
+  clear-cuts as raspberry patches (a counterpoint).
+- **8** — a biologist at Rewilding Sweden, Umeå. White-backed woodpecker as an umbrella
+  species; converting spruce to deciduous forest; veteranisation; restoring
+  timber-floated tributaries (Rödån, Juksån); mires ditched as relief work; a carbon-credit
+  rewetting project dropped by Sveaskog over greenwashing fears.
+- **9** — a tourism association (Gold of Lapland). Responsible and regenerative tourism;
+  "fish, moose and lynx are worth more alive"; the hunters vs forest companies moose
+  conflict; mow less, leave meadows.
+
 **Nordmaling case (web, not in the folder):** in 1998 more than 120 landowners in
 Nordmaling sued Ran, Vapsten and Ubmeje tjeälddie samebyar. On 27 April 2011 the Supreme
 Court (T 4028-07) found the samebyar hold winter-grazing rights on that private land,
@@ -302,6 +393,49 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Biodiversity rewritten, Swedish** (SV)
+- `topics_sv.json`, Biodiversity: the brief, prompt and all six agenda points mirror the
+  English below, including the softened rotation wording.
+- Names restored per §2: SLU Artdatabanken, Naturvårdsverket, Skogsstyrelsen (ÄBIN),
+  Länsstyrelsen Västerbotten, Norrbotten, SLU, **Sveaskog** (the carbon-credit rewetting
+  project; also named in EN since 28 Sept — state-owned, no reason to anonymise), Trafikverket.
+- `translation_guide_sv.md` §2.3 and §2.5 gained omloppstid, hänsynsträd/kantzon,
+  betesskador (ÄBIN), återvätning, klimatkrediter/grönmålning, fäbod/slåtteräng,
+  paraplyart, the red-list categories, and species names (älg, rödräv, fjällbjörk,
+  havsörn, utter, pärluggla, fjälluggla, vitryggig hackspett).
+- Verified: `ValidateTopicsData` passed; agenda-point counts match EN in every topic.
+
+**2026-09-28 — Biodiversity rewritten** (EN)
+- `topics_en.json`, Biodiversity topic:
+  - **Brief:** now cites the March 2026 red list and the moose.
+  - **Prompt:** the generic textbook context was replaced by a concrete one (the gradient,
+    450 km free river, timber floating and Vindel River LIFE, ditched mires, 90% rotation
+    forestry, falling felling age), and a three-logic Framing was added. The glued
+    sentences ("life.Within") were fixed.
+  - **Recent Developments:** added the red list, the owls/moose/eagle changes and the
+    lupine ban; kept the restoration plan, compensation and devolution bullets.
+- Agenda points, all two-sided with labelled bullets and a core question:
+  - **AP0 Predators:** recovery vs herding; the eagle problem; compensation paid for
+    presence, not loss.
+  - **AP1 Wetlands:** restoration vs landowner; relief-work ditching; the carbon-credit
+    project that collapsed; "restore to what?".
+  - **AP2 Forest:** production (record stock, set-asides, risk-spreading, "nothing
+    wasted") vs complexity (1,744 species, Tengmalm's owl, hoverflies, white-backed
+    woodpecker, ~80% short-lived products, the last patches).
+  - **AP3 Treeline:** adaptation vs alpine; snowy owl extinct; Arctic fox; reindeer
+    grazing holds the treeline.
+  - **AP4 Meadows, Verges and Invasive Lupines** (broadened): what rules can do (the
+    lupine ban, late mowing, grazing) vs what they can't reach (gardens, tidiness,
+    one-year life cycles).
+  - **AP5 The Moose Paradox** (new): forest owner vs hunter and herder; ÄBIN 11% vs the
+    5% target, who set the target, no link between density and damage, monocultures.
+- Interview-derived numbers were checked (§3.6). Short-lived products use the
+  Naturvårdsverket figures. Rotation length follows the interviews, attributed to "people
+  who work in these forests" (100–120 years once, 60–80 planned now). The production side
+  gets its own reason: younger stands grow faster and carry less rot and storm risk.
+  (Revised the same day. A first draft cited SLU average felling ages instead.)
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Sámi agenda points rewritten, Swedish** (SV)
 - `topics_sv.json`, Sámi topic: AP0 and AP2–AP5 mirror the English rewrite below, with
@@ -433,6 +567,26 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Biodiversity** [all 28 Sep]
+- SLU — Rödlistade arter i Sverige 2025: https://www.slu.se/artdatabanken/publikationer/rodlistor/rodlista-2025/
+- Natursidan — Rödlistan 2025 (24 Mar 2026): https://www.natursidan.se/nyheter/rodlistan-2025-det-gar-allt-samre-for-sveriges-arter/
+- BirdLife Sverige — birds in the 2025 red list: https://birdlife.se/blandad-utveckling-for-sveriges-faglar-i-nya-rodlistan/
+- Natursidan — snowy owl and barn owl RE: https://www.natursidan.se/nyheter/tva-fagelarter-till-anses-nu-utdoda-i-sverige/
+- SVT — the moose red-listed (NT): https://www.svt.se/nyheter/lokalt/jamtland/algen-rodlistad-men-inte-hotad-menar-slu-forskaren-medveten-minskning
+- SVT — Västerbotten moose −34% (Sep 2024): https://www.svt.se/nyheter/lokalt/vasterbotten/algstammen-har-minskat-nastan-25-procent-nu-valjer-jagare-att-skona-kor
+- Svensk Jakt — the 5% ÄBIN target never decided politically: https://svenskjakt.se/start/nyhet/del-1-fem-procents-abin-skador-aldrig-politiskt-beslutat-myndighet-tog-skogsbrukets-mal/
+- Länsstyrelsen Västerbotten — 12,700 moose in 2026: https://www.lansstyrelsen.se/vasterbotten/om-oss/nyheter-och-press/nyheter---vasterbotten/2026-06-24-12-700-algar-far-fallas-under-arets-licensjakt-pa-alg.html
+- Naturvårdsverket — first national invasive list, 34 species: https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2026/maj/sveriges-forsta-nationella-forteckning-med-34-arter-ger-nya-verktyg-mot-invasiva-frammande-arter/
+- Länsstyrelsen Halland — national list incl. lupines: https://www.lansstyrelsen.se/halland/om-oss/nyheter-och-press/nyheter----halland/2026-05-20-ny-nationell-forteckning-for-invasiva-frammande-arter.html
+- Naturvårdsverket — Arctic fox 2025: https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2025/december/farre-fjallravar-i-arets-inventering--men-langsiktig-trend-pekar-uppat/
+- Natursidan — white-backed woodpecker: https://www.natursidan.se/nyheter/fortsatt-langsam-forbattring-for-vitryggig-hackspett/
+- SLU skogsstatistik — Figur 4.9, average age at final felling (API): https://skogsstatistik.slu.se/pxweb/sv/OffStat/OffStat__Avverkning/AVV_alder_slutavverkning_fig.px/
+- Natursidan — 75–80% short-lived products (Naturvårdsverket via DN, Mar 2021): https://www.natursidan.se/nyheter/svensk-skog-blir-till-75-procent-kortlivade-produkter/
+- EU Commission — reindeer grazing and the treeline (8 Jun 2026): https://environment.ec.europa.eu/news/reindeer-grazing-can-help-maintain-tundra-ecosystems-counteracting-treeline-advance-due-climate-2026-06-08_en
+- Hagenberg et al. 2025, *Ecosystems*: https://link.springer.com/article/10.1007/s10021-025-01025-z
+- Sveriges Natur — the treeline is rising: https://www.sverigesnatur.org/arkiv/tradgransen-stiger/
+- Sametinget — predator compensation: https://sametinget.se/rovdjur
 
 **Forestry, mining, energy, biodiversity, salmon** [all 9 Sep]
 - Riksdagen — MJU29: https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/ett-tydligt-regelverk-for-aktivt-skogsbruk_hd01mju29/

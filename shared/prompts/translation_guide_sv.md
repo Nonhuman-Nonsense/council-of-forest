@@ -141,6 +141,15 @@ Format: **English** → **Swedish** — *notes*.
 | forest continuity | skogskontinuitet | |
 | biomass | biomassa | |
 | "green desert" | "grön öken" | sterile plantation |
+| rotation (period) | omloppstid | "omloppstiderna blir allt kortare" |
+| retention trees / buffer zone | hänsynsträd / kantzon | |
+| sawlogs / residues | sågtimmer / restprodukter | |
+| browsing damage | betesskador (ÄBIN) | moose on young pine; 5% target |
+| rewetting / blocking ditches | återvätning / proppa igen diken | |
+| carbon credits / greenwashing | klimatkrediter / grönmålning | |
+| summer farm / hay meadow | fäbod / slåtteräng (älväng, slåttermyr) | |
+| umbrella species | paraplyart | vitryggig hackspett |
+| red list categories | livskraftig, nära hotad, sårbar, starkt hotad, akut hotad, nationellt utdöd | Rödlistan 2025 (SLU Artdatabanken) |
 
 ### 2.4 Lichen, reindeer & grazing
 
@@ -184,6 +193,14 @@ Format: **English** → **Swedish** — *notes*.
 | (sea) trout | havsöring |
 | freshwater pearl mussel | flodpärlmussla |
 | garden lupine | blomsterlupin |
+| moose | älg |
+| red fox | rödräv |
+| mountain birch | fjällbjörk |
+| white-tailed eagle | havsörn |
+| otter | utter |
+| Tengmalm's owl | pärluggla |
+| snowy owl | fjälluggla |
+| white-backed woodpecker | vitryggig hackspett |
 
 ### 2.6 Sámi rights & culture
 
