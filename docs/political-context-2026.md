@@ -269,6 +269,27 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
 - The 2026 Baltic salmon quota fell to **7,152** fish (from 9,743). Swedish salmon fishing
   in ICES subdivisions 30–31 was closed from **25 June to 24 July 2026**. Finland was
   criticised for continuing under "research fishing".
+- **Norrfors fish ladder, 2026:** 11,375 salmon by 6 Aug. A single-day record of 2,200 on
+  31 July (counting began in 1925). On track against the season record of 14,995 (2013).
+  The final 2026 count was not checked.
+- **Guest nights:**
+  - Summer 2025: Sweden's record, 30.8M (+3.4%; international +8.8%). Västerbotten
+    +7.0%; Norrbotten −1.4%, the only region to decline after three record years.
+  - Visit Sweden: "no general overtourism", with 51.5% bed occupancy.
+  - Winter 2024/25: international +7%. Norrbotten's international share was 42%.
+- **Heliskiing:** effectively unregulated. The county boards lack legal power;
+  Transportstyrelsen can only issue temporary flight bans. Norrbotten's county governor
+  has asked the government for rules since 2023. No regulation was found as of Sept 2026.
+- **Rally Sweden (Umeå 2025–2027):** ~150,000 visits over 4 days (2025); ~4,000 volunteers;
+  ~5 MSEK back to local clubs; 120M TV viewers (organiser's figure).
+- **Sápmi Experience:** VisitSápmi's voluntary quality label. No law restricts who may sell
+  "Sámi"/"Lapland" experiences.
+- **Transport:**
+  - ~60% of foreign guest nights are attributable to flights (Tillväxtverket / Copenhagen
+    Economics, 2019).
+  - Night-train procurement to upper Norrland stopped in March 2026 on cost. SJ runs a
+    stopgap from Dec 2026 to Dec 2028, and new vehicles come from ~2030.
+  - Norrbotniabanan: Umeå–Dåva ~2026; Dåva–Skellefteå ~2035–36.
 
 ### 3.8 Rights of nature
 
@@ -351,6 +372,8 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Tourism rewrite — done 28 Sept in EN and SV.** Both languages have 7 agenda points,
+  and EN/SV parity holds in every topic.
 - **Rights of Nature rewrite — done 28 Sept in EN and SV.** Both languages have 5 agenda
   points, and agenda-point counts match in every topic. "guoppar" no longer appears in
   any prompt file.
@@ -435,6 +458,41 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Tourism rewritten, Swedish** (SV)
+- `topics_sv.json`, Turism: the brief, prompt and all seven agenda points mirror the
+  English below. Titles AP0–AP5 are unchanged (for the printed graphics); AP6 is new: *Att
+  flyga in för att se Arktis: turismens klimatparadox*.
+- Names restored per §2: Visit Sweden, Tillväxtverket, VisitSápmi (Sápmi Experience),
+  Transportstyrelsen, Länsstyrelsen i Norrbotten, Trafikverket, SJ, Norrbotniabanan,
+  **Rans sameby** (Rally Sweden), Finland (research fishing, kept from before).
+- `translation_guide_sv.md` §2.10: gästnätter, överturism, regenerativ turism, fånga och
+  släpp, fisktrappa, heliskiing, fäbodvall, nattåg/upphandling.
+- Verified: `ValidateTopicsData` passed; EN/SV parity holds in every topic.
+
+**2026-09-28 — Tourism rewritten** (EN)
+- `topics_en.json`, Tourism:
+  - **Brief:** adds rally stages and long-haul flights.
+  - **Context:** local places (Ammarnäs, Hemavan-Tärnaby, Vindeln, Umeå), Västerbotten
+    +7% in 2025, small firms, and the Responsible Tourism Program.
+  - **Recent Developments:** added the 2025 record summer, the Norrfors salmon run next to
+    the Baltic quota cut, and the night-train collapse.
+- Agenda points, 6 → 7; titles AP0–AP5 unchanged:
+  - **AP0 Volume vs Eco:** "not yet crowded" (half the beds empty); Ammarnäs housing;
+    "sustainable tourism is a slower way to die" (interview 9).
+  - **AP1 Motorised:** "nowhere left undisturbed" (interview 4); unregulated heliskiing.
+  - **AP2 Cultural:** the Sápmi Experience label; "a label, not a law"; unpaid
+    explaining (interview 5).
+  - **AP3 Fishing:** fixed the unsourced "unique Ammarnäs trout"; "worth more alive";
+    Laisälven and Vindelälven both undammed; the Norrfors run as a contested counterpoint.
+  - **AP4 Governance:** an open-access side added; "we sold the right to roam"; the
+    state-land line softened (Statens fastighetsverk removed); Rally Sweden on both sides.
+  - **AP5 Standing forest:** a **forestry side added** (roads, scale, berry clear-cuts,
+    plan together); the vague carbon-credit bullet cut; the riding-trail and meadow
+    stories added.
+  - **AP6 Flying In to See the Arctic (new):** export vs climate; the 60% flight share;
+    the night-train collapse; Norrbotniabanan mid-2030s; rain in January.
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Rights of Nature rewritten, Swedish** (SV)
 - `topics_sv.json`, Naturens rättigheter: the brief, prompt and all five agenda points
@@ -653,6 +711,19 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Tourism** [all 28 Sep]
+- Visit Sweden — record summer 2025: https://corporate.visitsweden.com/press/2025-den-starkaste-turistsommaren-nagonsin-i-sverige-ingen-overturism/
+- Tillväxtverket — winter tourism keeps growing: https://www.mynewsdesk.com/se/tillvaextverket/pressreleases/vinterturismen-till-sverige-fortsaetter-att-oeka-visar-ny-statistik-fraan-tillvaextverket-3450614
+- SVT — Norrfors salmon record near (7 Aug 2026): https://www.svt.se/nyheter/lokalt/vasterbotten/gladjebeskedet-laxrekord-nara-for-fisktrappan-i-norrfors
+- SVT — calls to regulate heliskiing (2023): https://www.svt.se/nyheter/lokalt/norrbotten/okat-intresse-for-heliskiing-nu-efterlyses-reglering-i-fjallen
+- Rally Sweden — Umeå 2025–2027: https://rallysweden.com/en/three-new-years-in-umea-2025-2027/
+- Besöksliv — Rally Sweden and Umeå: https://www.besoksliv.se/nyheter/rally-sweden-driver-pa-umea-som-evenemangsstad/
+- Visit Sweden — VisitSápmi agreement: https://corporate.visitsweden.com/press/visitsweden-och-visitsapmi-i-varldens-forsta-overenskommelse-om-turismsamarbete-for-urfolk/
+- Naturvårdsverket — allemansrätten and organised activity: https://www.naturvardsverket.se/vagledning-och-stod/allemansratten/organiserad-verksamhet/
+- Tillväxtverket — Flygets roll för besöksnäring och miljö (2019): https://tillvaxtverket.se/tillvaxtverket/publikationer/arkiveradepublikationer/publikationer2019/flygetsrollforbesoksnaringochmiljoisverige.1342.html
+- Järnvägsnyheter — night-train procurement stopped (30 Mar 2026): https://www.jarnvagsnyheter.se/20260330/18493/nattag-till-norrland-stoppas-ny-losning-vantar
+- Trafikverket — Norrbotniabanan: https://www.trafikverket.se/vara-projekt/projekt-som-stracker-sig-over-flera-lan/norrbotniabanan/
 
 **Rights of nature** [all 28 Sep]
 - Riksdagen — KU28 (motion rejected 11 Mar 2026, 278–17): https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/fri-och-rattigheter-m-m_hd01ku28/

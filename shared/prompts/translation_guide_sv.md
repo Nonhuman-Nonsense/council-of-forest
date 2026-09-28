@@ -335,6 +335,14 @@ Format: **English** → **Swedish** — *notes*.
 | coexistence | samexistens | |
 | depopulation | avfolkning | |
 | Right of Public Access | Allemansrätten | |
+| guest nights | gästnätter | Visit Sweden / Tillväxtverket statistics |
+| overtourism | överturism | |
+| regenerative tourism | regenerativ turism | "hållbar turism är bara ett långsammare sätt att dö" |
+| catch-and-release | fånga och släpp | |
+| fish ladder | fisktrappa | Norrfors |
+| heliskiing | heliskiing / helikopterskidåkning | unregulated; Transportstyrelsen can only issue temporary bans |
+| summer-farm clearing | fäbodvall | |
+| night train / procurement | nattåg / upphandling | Trafikverket, SJ stopgap Dec 2026–Dec 2028 |
 | "functionally unavailable" | "funktionellt otillgänglig" | land |
 
 ### 2.11 Lichen academic vocabulary
