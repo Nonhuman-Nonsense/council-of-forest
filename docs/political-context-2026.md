@@ -564,6 +564,14 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
 
+**2026-09-28 — Green Transition core questions** (EN + SV)
+- `topics_en.json` / `topics_sv.json`, Green Transition: a `Core Question:` / `Kärnfråga:`
+  appended to each of the 5 agenda points. No other text changed.
+- **This completes the topic pass:** all 8 topics, 48 agenda points per language, are
+  two-sided with a core question. Checked with the print export's parser: 48/48 core
+  questions in each language.
+- Verified: `ValidateTopicsData` passed.
+
 **2026-09-28 — Energy rewritten, Swedish** (SV)
 - `topics_sv.json`, Energiproduktion: the brief, context and all five agenda points
   mirror the English below. All titles unchanged.
