@@ -301,6 +301,11 @@ Format: **English** → **Swedish** — *notes*.
 | municipal veto / refusal | kommunalt veto / kommunalt nej | 93% of wind projects, 2025 |
 | spawning grounds | lekbottnar | |
 | incentive package (wind) | incitamentspaket | 340/370 MSEK to host municipalities |
+| national grid operator | Svenska kraftnät, det statliga affärsverk som driver stamnätet | not "the state energy utility"; that is Vattenfall |
+| bypassed reach (dried by a dam) | förbiledd sträcka / torrfåra | >70% lack minimitappning |
+| environmental flows | miljöanpassade flöden | Widén et al. 2024, Ume River |
+| throttled (turbines) | strypta | summer surplus, full grid |
+| small modular reactor | liten modulär reaktor (SMR) | Rolls-Royce SMR, Ringhals |
 | hydrogen steel / fossil-free steel | vätgasstål / fossilfritt stål | |
 | sponge iron (DRI) | järnsvamp | LKAB/HYBRIT, Gällivare |
 | steel plant (Stegra, Boden) | stålverket | "Stegra, tidigare H2 Green Steel" on first mention |

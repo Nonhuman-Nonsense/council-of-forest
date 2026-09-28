@@ -281,6 +281,30 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
 - **Hydropower omprövning** restarted 25 June 2025. Vattenfall filed its first applications
   on 20 February 2026 (Älvkarleby, Söderfors). All plants must hold modern conditions by
   ~2040, **Stornorrfors included**.
+- **Offshore wind, 4 Nov 2024:** the government rejected 13 of 14 Baltic offshore parks
+  (~30 GW, ~140 TWh/yr) on defence grounds; Poseidon (west coast) was approved.
+- **Region Västerbotten, May 2025 (SVT):** regional council chair: "no great need here
+  and now … the network is full". Turbines are throttled in summer.
+- **Skellefteå's wind plan:** 23 → 2 areas. Robertsfors, Malå, Norsjö and Skellefteå
+  redid their plans in Nov 2023 ("sålt ut oss alldeles för billigt", Robertsfors).
+- **Nuclear:** Vattenfall shortlisted GE Vernova and Rolls-Royce SMR on 18 Jul 2025. In
+  June 2026 Videberg Kraft chose **Rolls-Royce SMR**: 3 reactors, ~1,500 MWe at Ringhals,
+  the first in the mid-2030s and all ~2040. The state reserves ~220 bn SEK in loans and
+  risk-sharing.
+- **Juktan pumped storage (Storuman):** the Land and Environment Court dismissed the
+  application on 10 Feb 2025 as too unclear, partly over tailings from the Blaiken mine
+  on the bottom of Blaiksjön. Leave to appeal was refused in May 2025. A new application
+  was planned for Q3 2026, with a start of ~2034. **Decided 28 Sept: no agenda point on
+  Juktan.** The existing one-line mention in the Energy context stays.
+- **Research folder:**
+  - Widén et al. 2024 (*Science of the Total Environment*): all 19 Ume River stations
+    modelled. The 2040 climate gives ~+2.2% production under current rules, and e-flows
+    are met in all modelled years with smaller losses than today.
+  - "Like a fish takes to water": >70% of Swedish bypassed reaches lack any minimum-flow
+    mandate.
+- **Corrections applied:** Svenska kraftnät is the grid operator, not "the state energy
+  utility". Corporate and property tax on energy go to the state, not to HQ
+  municipalities.
 
 ### 3.6 Biodiversity
 
@@ -444,6 +468,8 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Energy rewrite — done 28 Sept in EN and SV.** Still 5 agenda points with the same
+  titles; EN/SV parity holds in every topic.
 - **Mining rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda points
   (new: *Who Can Say No? Uranium and the Local Veto* / *Vem får säga nej? Uranet och det
   kommunala vetot*); EN/SV parity holds in every topic.
@@ -537,6 +563,45 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Energy rewritten, Swedish** (SV)
+- `topics_sv.json`, Energiproduktion: the brief, context and all five agenda points
+  mirror the English below. All titles unchanged.
+- Names per §2:
+  - Region Västerbotten's chair **Rickard Carstedt (S)** ("inget stort behov här och
+    nu … nätet är fullt").
+  - Skellefteå (23 → 2); Robertsfors ("sålt ut oss för billigt", SVT's headline wording).
+  - Svenska kraftnät, described as the affärsverk running the national grid.
+  - Vattenfall, Videberg Kraft, Rolls-Royce SMR, Försvarsmakten.
+- The existing Swedish Recent Developments bullets are kept; two were added (offshore
+  rejection, Rolls-Royce SMR).
+- `translation_guide_sv.md` §2.8: Svenska kraftnät's role, förbiledd sträcka/torrfåra,
+  miljöanpassade flöden, strypta, SMR.
+- Verified: `ValidateTopicsData` passed; EN/SV parity holds in every topic.
+
+**2026-09-28 — Energy rewritten** (EN)
+- `topics_en.json`, Energy Production:
+  - **Brief:** adds "the grid is full".
+  - **Context:** Svenska kraftnät's role corrected; the 300 TWh forecast now "was
+    projected … now contested"; the buildout slowing (Skellefteå 23 → 2, Region
+    Västerbotten); the Lule vs Vindel "river voice" line (interview 4).
+  - **Recent Developments:** added the offshore rejection (Nov 2024) and the Rolls-Royce
+    SMR choice (June 2026).
+- All 5 agenda points kept their titles and gained a core question:
+  - **AP0 Wind:** offshore blocked; the herder's 19 turbines and 3–5 km avoidance
+    (interview 4); "power nobody can send"; Skellefteå and "sold ourselves far too
+    cheaply".
+  - **AP1 Hydro:** Ume River's 19 stations and the 2040 e-flow model; >70% of bypassed
+    reaches with no minimum flow; the char and the empty riverbed (interview 7);
+    Stornorrfors (interview 3a); the Norrfors 2026 run.
+  - **AP2 Grid:** the export bottleneck on both sides.
+  - **AP3 Regional burden:** the tax error fixed (tax goes to the state); cheapest power in
+    the north on the national side; Norway/Finland comparison attributed; municipalities
+    demanding profit share.
+  - **AP4 Nuclear:** Rolls-Royce at Ringhals, 220 bn, offshore blocked; waste, and uranium
+    demand linking to the Mining topic.
+- The Juktan point was proposed and declined.
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Mining rewritten, Swedish** (SV)
 - `topics_sv.json`, Gruvdrift: the brief, prompt and all six agenda points mirror the
@@ -875,6 +940,16 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Energy** [all 28 Sep]
+- Regeringen — 13 offshore parks rejected (Nov 2024): https://www.regeringen.se/pressmeddelanden/2024/11/avslag-pa-13-havsbaserade-vindkraftparker-i-ostersjon/
+- SVT — "no more wind needed, the grid is full" (May 2025): https://www.svt.se/nyheter/lokalt/vasterbotten/regionradet-i-vasterbotten-behovs-inte-mer-vindkraft-natet-fullt
+- SVT — Skellefteå wind plan 23 → 2: https://www.svt.se/nyheter/lokalt/vasterbotten/vindkraftsplanen-bantas-kraftigt-i-skelleftea-fran-23-till-2
+- SVT — "sold ourselves too cheaply" (Nov 2023): https://www.svt.se/nyheter/lokalt/vasterbotten/kommuner-i-vasterbotten-gor-nya-vindkraftsplaner-kraver-mer-betalt-salt-ut-oss-for-billigt--wlu8l9
+- Energinyheter — Videberg Kraft chooses Rolls-Royce SMR (Jun 2026): https://www.energinyheter.se/20260616/34945/videberg-kraft-valjer-rolls-royce-smr-som-leverantor-av-ny-karnkraft-i-sverige
+- DN — state frame for new nuclear: https://www.dagensnaringsliv.se/20251010/283466/regeringen-oppnar-miljardlan-till-nya-karnreaktorer
+- Vattenfall — Juktan rebuild: https://projekt.vattenfall.se/vattenkraftsprojekt/juktan/
+- Sveriges Domstolar — Juktan dismissed (Feb 2025): https://www.domstol.se/nyheter/2025/02/mark--och-miljodomstolen-avvisar-vattenfalls-ansokan-om-att-bygga-om-juktans-kraftstation/
 
 **Mining** [all 28 Sep]
 - SVT — Riksdag abolishes municipal uranium veto (15 Jun 2026): https://www.svt.se/nyheter/lokalt/jamtland/riksdagen-kommunalt-veto-mot-uranbrytning-avskaffas
