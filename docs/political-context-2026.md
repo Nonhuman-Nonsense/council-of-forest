@@ -1,22 +1,31 @@
-# Political context update — September 2026
+# Political context of the prompts — research notes and change log
 
-Working document for the update of `shared/prompts/topics_en.json` and
-`shared/prompts/beings_en.json` ahead of the **10 October 2026** exhibition opening.
+Research, decisions and a dated change log for the political facts in
+`shared/prompts/topics_{en,sv}.json` and `shared/prompts/beings_{en,sv}.json`, the
+prompts the Council's beings speak from.
 
-Written 9 September 2026. Everything below is dated on purpose: this file will go stale,
-and a fact without a date cannot be re-verified.
+**State as of 28 September 2026.** The prompts were printed on the exhibition wall on
+28 September; the exhibition (Boden) opens **10 October 2026**. Everything below is dated
+on purpose: this file goes stale, and a fact without a date cannot be re-verified.
+
+How to use this file:
+
+- **Before changing a political fact in a prompt,** read §2 (rules) and the topic's entry
+  in §3. §3 holds the *current* fact set; superseded facts are marked, not deleted, so you
+  can see what the prompts used to say and why it changed.
+- **After changing one,** add a dated entry to §6 and put the source in §7.
+- **Swedish wording** lives in `shared/prompts/translation_guide_sv.md` — terms,
+  per-character voice rules, and the EN-structural/SV-named rule.
+- **Deeper background** is in the `Research/` folder (§5), mostly PDFs from the project's
+  research phase. The Sámi papers are the most useful for the prompts.
 
 ---
 
-## 1. Why this update exists: the model knows nothing after 2024
+## 1. Why this exists: the model knows nothing after 2024
 
 `server/global-options.json` sets `"conversationModel": "mistral/mistral-large-3"`.
-Mistral **does not publish knowledge cutoffs** — neither `docs.mistral.ai/models/overview`
-nor `legal.mistral.ai/ai-governance/models/*` has a cutoff column; they list release and
-retirement dates only. Third-party aggregator tables claiming "Oct 2024" are guesses.
-
-So we probed the actual endpoint. Results (9 Sept 2026, temperature 0, via
-`https://api.inworld.ai/v1/chat/completions`):
+Mistral publishes no knowledge cutoffs, so on 9 September 2026 we probed the endpoint
+(`api.inworld.ai/v1/chat/completions`, temperature 0):
 
 | Model string | Self-reported cutoff | Knows Trump won Nov 2024? | Swedish uranium law |
 |---|---|---|---|
@@ -26,257 +35,376 @@ So we probed the actual endpoint. Results (9 Sept 2026, temperature 0, via
 | `openai/gpt-4.1` | June 2024 | No | Correct for its era ("No, 2018") |
 | `anthropic/claude-sonnet-4-5` | April 2024 | Yes | Correct for its era |
 
-Model strings that returned `400 not supported` on our account: `mistral-medium-3-5`,
-`mistral-medium-3504`, `mistral-small-4`, `mistral-large-2411`, `magistral-*`,
-`open-mistral-nemo`, `openai/gpt-5`, `anthropic/claude-opus-4-5`, `google/gemini-3-pro`,
-`deepseek/deepseek-v3.2`. There is no `GET /v1/models` endpoint (returns 404).
+Returned `400 not supported` on our account: `mistral-medium-3-5`, `mistral-medium-3504`,
+`mistral-small-4`, `mistral-large-2411`, `magistral-*`, `open-mistral-nemo`,
+`openai/gpt-5`, `anthropic/claude-opus-4-5`, `google/gemini-3-pro`,
+`deepseek/deepseek-v3.2`. There is no `GET /v1/models` endpoint.
 
-### Conclusions
+Conclusions:
 
-1. **No Mistral model reachable through Inworld has a later cutoff than the one we run.**
-   `mistral-large-latest` and `mistral-medium-latest` share the same ~Oct 2023 horizon.
-   Mistral Medium 3.5 (v26.04) is not routable on this account.
-2. **No available model of any provider knows 2025–2026.** The best is ~mid-2024.
-   Switching models cannot solve this problem; only prompt content can.
-3. **Decision: keep `mistral/mistral-large-3` for the October exhibition.** Swapping the
-   model four weeks before opening risks the tightly tuned character voices (Mountain's
-   20-word stone-speech, Bumblebee's Z-rule, the per-character length limits) for a
-   benefit that does not exist.
-4. One thing worth remembering: on the uranium question Mistral **asserted the opposite of
-   the truth** while the others correctly said "no, banned in 2018". That is a
-   hallucination-confidence difference, not a cutoff difference — but it means unstated
-   facts do not come back as "I don't know", they come back as confident errors. Anything
-   we care about must be in the prompt.
+1. No model reachable through Inworld knows 2025–2026. Only prompt content can fix that.
+2. Decision: keep `mistral/mistral-large-3` for the October exhibition. Swapping models
+   risks the tightly tuned character voices (Mountain's 20-word stone-speech, Bumblebee's
+   Z-rule, per-character length limits) for no gain.
+3. Mistral **asserted the opposite of the truth** on uranium. Unstated facts come back as
+   confident errors, not "I don't know" — anything we care about must be in the prompt.
 
-To re-run the probe later, recreate the script from this table's method: POST to
-`api.inworld.ai/v1/chat/completions` with a dated question whose answer we know, a system
-message instructing "answer `unknown` if after your training data", and `temperature: 0`.
-Good boundary probes: US Nov 2024 election, Northvolt (Mar 2025), German Chancellor
-(Merz, May 2025), Pope Leo XIV (May 2025), Swedish uranium ban lifted (Jan 2026).
+To re-probe: ask a dated question with a known answer, with a system message saying
+"answer `unknown` if after your training data". Good boundary probes: US election Nov 2024,
+Northvolt bankruptcy (Mar 2025), Chancellor Merz (May 2025), Pope Leo XIV (May 2025),
+Swedish uranium ban lifted (Jan 2026).
 
 ---
 
-## 2. Editorial rules agreed for this update
+## 2. Editorial rules
 
-- **English = structural, no party names.** `topics_en.json` says "the government proposed",
-  "a majority of parliamentary parties". The English version is for an international
-  audience that cannot place KD, M or SD, and naming them adds noise rather than meaning.
-- **Swedish = parties named.** `topics_sv.json` is for a local audience who will find
-  the anonymised version evasive. Name KD, M, SD, L, C, S, V, MP as factual record.
-- **Characters never campaign.** Facts go in the topic prompts, which are swappable per
-  meeting. Characters may react to a policy; they may not endorse a party or tell anyone
-  how to vote. A talking reindeer campaigning during election week is a different artwork
-  than the one we built.
-- **Dated facts live per topic, not in `system`.** A "recent developments" block in the
-  system prompt would hit every conversation regardless of subject and burn context.
-  Each topic carries its own dated block.
-- **Absolute dates only.** Never "recently" or "last year" — the model has no idea when now is.
-- **The present date is injected, never written.** `[CURRENT_DATE]` is substituted at meeting
-  setup by `buildMeetingSystemPrompt` (`shared/topicPrompt.ts`), formatted for `en` or `sv`.
-  The system prompt states only when its facts were *verified* — a fact about the document,
-  which does not go stale as time passes. An earlier draft said "The Council meets in the autumn
-  of 2026"; that would have needed updating every season and been silently wrong in between.
+- **English = structural, no party names.** "The government side proposed", "the
+  opposition won". The English audience is international and cannot place KD or SD.
+- **Swedish = parties and ministers named** (KD, M, SD, L, C, S, V, MP; Ebba Busch, Peter
+  Kullgren; Wallenbergsfären). A local audience would find the anonymised version evasive.
+  This divergence is deliberate — do not "correct" it in either direction.
+- **Characters never campaign.** Party politics goes in the topics, which are swappable per
+  meeting. A being may react to a policy; it may not endorse a party or tell anyone how to
+  vote.
+- **Dated facts live per topic, not in `system`.** Each topic prompt ends with a
+  `RECENT DEVELOPMENTS (verified <month year>)` block (Swedish: `AKTUELL UTVECKLING
+  (kontrollerad i <månad år>)`). A block in `system` would hit every conversation.
+- **Absolute dates only.** Never "recently" or "last year". The current date is injected
+  as `[CURRENT_DATE]` by `buildMeetingSystemPrompt` (`shared/topicPrompt.ts`); never write
+  it into a prompt.
+- **Agenda points state both sides at their strongest.** The pattern that works (Green
+  Transition, and Sámi "Is a Culture a National Interest?"): title on its own line, one or
+  two sentences of context, two named perspectives with labelled bullets
+  (`- Label: explanation`), concrete dates and figures, optionally a `Core Question:`.
+  River picks one agenda point and hands it to a being; two named sides give River a
+  conflict to stage and give the Tree Harvester an argument to make. Agreed 28 Sept 2026:
+  landowner and industry cases may be stated strongly — the Boden and Västerbotten
+  audience includes landowners and hunters.
+- **Balance for the venue.** Critical framings stay, but each gets its strongest counter
+  (e.g. "the 2026 rescue of the Boden steel plant as proof that serious long-term capital
+  still believes in the north").
 
 ---
 
-## 3. Findings by topic
+## 3. Current fact set by topic
 
-All dates verified 9 Sept 2026 via the sources in §6.
+Verified dates are given per item. **Superseded** marks what the prompts used to say.
 
-### 3.1 The riksintresse fight — the single biggest development
+### 3.1 Sámi land, rights and culture — the riksintresse fight
 
-- **20 April 2026, Luleå:** Kristdemokraterna (Ebba Busch, with rural affairs minister
-  Peter Kullgren) proposed that reindeer herding should **no longer be a riksintresse**,
-  that reindeer numbers be reduced, and that subsidies be reconsidered and redirected to
-  Sámi language and culture instead. Argument: the industry "affects very large areas but
-  has limited economic significance" — one tenth of a promille of GDP in the four
-  northernmost counties.
-- Party positions (SVT, 24 April, updated 2 Sept 2026): **remove** — KD, M
-  ("riksintressesystemet behöver reformeras i grunden"), SD. **Review the whole system** —
-  C (wants a parliamentary committee to rewrite the reindeer herding law), S.
-  **Keep** — L (breaking with its coalition partners), V, MP.
-- **Six of eight riksdag parties now support easing mining rules.**
-- **3 September 2026:** Busch dismissed UN criticism of Swedish mining policy with
-  **"Då har FN fel"** — "Then the UN is wrong."
-- **General election: 13 September 2026.**
+- **20 April 2026, Luleå:** KD (Ebba Busch, with rural affairs minister Peter Kullgren)
+  proposed that reindeer herding should **no longer be a riksintresse**, that reindeer
+  numbers be reduced, and support redirected to Sámi language and culture. Argument: very
+  large land use, about one ten-thousandth of GDP in the four northern counties. The
+  government sent a memo on reviewing the whole riksintresse system to Sametinget on
+  16 April.
+- Party positions (SVT, 24 April, updated 2 Sept 2026): **remove** — KD, M, SD.
+  **Review the whole system** — S (keep status, review system), C (review all
+  riksintressen; parliamentary committee to rewrite the herding law). **Keep** — L, V, MP.
+- **3 September 2026:** Busch dismissed UN criticism with "Då har FN fel".
+- **13 September 2026 general election:** S, V, MP and C won **176 seats to 173** for the
+  Tidö parties (M, KD, SD, L). Result certified 19 September; Magdalena Andersson (S) asked
+  to form a government; Kristersson resigned. Government formation was not complete as of
+  28 September. Implication: outright removal of the status is now unlikely; the fight
+  moves into the wider review of the riksintresse system, which has support on both sides.
+  *Superseded (prompts until 28 Sept): "a national election is held in September 2026 with
+  these questions unresolved."*
+- **Post-Girjas lawsuits: five samebyar** have sued the state for exclusive rights to
+  grant small-game hunting and fishing above the cultivation boundary — **Talma (2022)**,
+  then **Ran (28 May 2024**, Lycksele tingsrätt, T 353-24), Sirges, Unna Tjerusj and Baste
+  (Gällivare tingsrätt). Ran was the first from Västerbotten, not the first overall.
+  **April 2026:** the state (Justitiekanslern) changed tactics and now argues the Reindeer
+  Husbandry Act overrides immemorial rights — an argument that did not prevail in Girjas —
+  and asked for referral straight to the Supreme Court. The court refused the hunters'
+  association (Svenska Jägareförbundet) permission to join Ran's case.
+  *Superseded: "four herding communities… the first, filed in May 2024".*
+- **Renmarkskommittén** was scrapped (announced Nov 2024, after criticism of its Aug 2023
+  partial report) with a replacement inquiry promised. Whether one was appointed is not
+  verified.
+- **CERD, 5 December 2025:** stronger land-rights protection, full implementation of the
+  Consultation Act, measures against the increasing killing of and attacks on reindeer,
+  and action on violence against Sámi women. The Council of Europe raised parallel concerns.
+- **Per Geijer (Kiruna):** Gabna sameby's remaining migration corridor is about **50 m**,
+  down from about 13 km. The single most useful fact in this file.
+- **Ran sameby is the local thread** for a Västerbotten council. It won the Nordmaling
+  case (§5), is suing the state post-Girjas, and is in the Rally Sweden conflict. Ran has
+  about 6,000 reindeer around Umeå; the 2025 rally was followed by reindeer killings and
+  hate speech. In early 2026 the Transport Agency rejected Ran's appeal against the 2026
+  rally, while noting that the impact on winter grazing is "not insignificant".
 
-This deserves its own agenda point under Sámi Land, Rights & Culture. It is the live
-Swedish land-use question, it is abstract enough for nonhumans to argue about (the forest
-has never been a riksintresse; the mine is), and it connects straight to Rights of Nature.
+### 3.2 Green transition — bust, then rescue
 
-### 3.2 Green transition — the boom has already busted
-
-- **12 March 2025:** Northvolt bankruptcy, the largest in Swedish history. Assets bought
-  by US company **Lyten in February 2026**.
-- **Stegra** (ex-H2 Green Steel, Boden): capital need up to **€2bn**; Harald Mix stepped
-  down as chair October 2025; widely discussed in 2026 as "the next Northvolt".
-- **Boden municipality's loan debt: 90 MSEK → over 1 billion SEK**, built out ahead of
-  an industry that may not arrive.
+- **12 March 2025:** Northvolt bankruptcy, the largest in Swedish history. **26 February
+  2026:** Lyten (US) completed the purchase of Northvolt Ett, Ett Expansion and Northvolt
+  Labs; restart of cell shipments planned for H2 2026 (not verified as happened).
+- **Stegra (formerly H2 Green Steel, Boden):**
+  - Winter 2025–26: construction slowed during fundraising; contractors reported several
+    hundred million SEK of unpaid invoices (Feb 2026). Chair Harald Mix stepped down
+    Oct 2025.
+  - **April 2026:** agreed in principle on a **€1.4bn round led by a Wallenberg
+    Investments consortium** (Wallenbergs ~€250m; with Temasek, IMAS, Bolero,
+    SEB-Stiftelsen; Altor second-largest owner). **Closed 24 June 2026.** Wallenberg
+    Investments is now the largest owner. Existing lenders approved, and the state's
+    support via Riksgälden and SEK stays in place. Håkan Buskhe joins the board; Leif
+    Johansson was reported as incoming chair (not confirmed at closing).
+  - Plant about 60% built (June 2026), with a 100-day acceleration plan under way.
+    Production was first promised for 2024, then the turn of 2026/27; **no confirmed start
+    date**. A new timeline is due **end of 2026**, and full capacity 12–18 months after start.
+  - *Superseded (prompts until 27 Sept): "ran out of money", "openly discussed as the next
+    collapse", capital need "a further two billion euros".*
+- **Boden municipality:** loan debt **~80 MSEK (2017) → 1,790 MSEK (end 2025)**, with a
+  loss of 88 MSEK in 2025. S and M in Boden greeted the rescue with open relief.
+  *Superseded: "90 MSEK → over one billion".*
+- **HYBRIT (the state-backed route)** — SSAB, LKAB and Vattenfall. LKAB and Vattenfall
+  are wholly state-owned; SSAB is listed, with LKAB as its largest voting owner. There is
+  no ownership link to Stegra.
+  - LKAB paused sponge-iron plans in Kiruna in **Oct 2024**.
+  - The Gällivare/Malmberget demonstration plant got its environmental permit on
+    **15 June 2026** (Umeå land and environment court), appealed by LKAB and the Swedish
+    Agency for Marine and Water Management. The last report found (Oct 2025) said there
+    was no investment decision.
+  - SSAB's Oxelösund electric arc furnace slipped to early 2027 because of grid
+    connection delays.
+  - Stegra vs HYBRIT, in one line: private, fast and financially fragile vs state-backed,
+    slow and prone to drift.
 - **Svenska kraftnät** revised industrial electricity demand **down ~20%** in its 2026
-  long-term market analysis; consumption has *fallen* over the past two years. The
-  140→300 TWh framing in our prompt is now contested rather than assumed.
-
-The topic currently reads as 2023 boosterism and frames collapse as "Boom and Bust
-*Anxiety*". It is no longer anxiety. The land was fragmented for a factory that may never
-open — that is a genuinely new argument for the Council, distinct from extraction vs.
-protection.
+  long-term market analysis; national consumption has fallen over the past two years.
 
 ### 3.3 Forestry — deregulation passed
 
-- **16 June 2026:** *Ett tydligt regelverk för aktivt skogsbruk* passed **308–21**,
-  in force **1 January 2027**. Narrows when samråd notification is required; shortens the
-  review window **from six weeks to three**; moves Skogsstyrelsen appeals to the mark- och
-  miljödomstolar; caps landowner costs for species knowledge relative to property value.
-  MP warned it puts ~670,000 ha of old-growth at risk over 25 years.
+- **16 June 2026:** *Ett tydligt regelverk för aktivt skogsbruk* (prop. 2025/26:242,
+  MJU29) passed **308–21**; in force **1 January 2027**. It:
+  - decouples felling notification from environmental-code consultation;
+  - cuts the review window from six weeks to three;
+  - moves Skogsstyrelsen appeals to the mark- och miljödomstolar;
+  - caps landowner costs for species knowledge relative to property value.
+
+  Consultation with a sameby remains mandatory when a particularly important area for
+  herding is affected. MP warned of ~670,000 ha of old-growth at risk over 25 years.
 - **June 2026:** prop. 2025/26:230 — landowners gain a **right to compensation** when
   species protection restricts land use.
-- **EUDR** (deforestation regulation) paused/reconsidered at Sweden's urging.
-  **LULUCF to 2040** proposal due from the Commission during 2026; Sweden expected to
-  deliver the EU's largest sink (+4 Mt CO₂e by 2030).
 - **Skogsstyrelsen:** at current rates, nearly all remaining natural forest outside
-  protected areas disappears **within 26 years**.
-
-Note for the Pine character: Pine's blueprint demands banning clear-cutting. The Riksdag
-just voted 308–21 the other way. Pine should know it lost.
+  protected areas is gone **within 26 years**.
+- EUDR paused/reconsidered at Sweden's urging; the Commission's LULUCF-to-2040 proposal is
+  due in 2026.
 
 ### 3.4 Mining
 
-- **1 January 2026:** the **uranium mining ban was lifted**, after the Riksdag voted it
-  through in November 2025 **by a single vote**. Uranium is now a concession mineral.
-- **March 2026:** **Per Geijer** (Kiruna) received EU **Critical Raw Materials Act
-  Strategic Project** status, together with the Gällivare apatite expansion and a Luleå
-  processing hub. Still lacks both mining concession and environmental permit.
-  Demo plant end-2026, full production 2030s. ~2.2 Mt rare earth oxides in situ.
-- **Gabna sameby's remaining migration corridor is roughly 50 metres wide, down from
-  about 13 kilometres.** The single most useful fact in this whole document — it does the
-  work of a paragraph of "cumulative encroachment" framing.
-- **4 September 2026:** government inquiry launched into a **"gruvpeng"** — redistributing
-  mineral compensation and exploration fees to host municipalities (rates unchanged since
-  2005). Reports **30 September 2028**. Recipients: municipalities, possibly landowners.
-  **Samebyar are not named as recipients.**
-- Minerallagen was amended so a Natura 2000 permit is no longer a prerequisite for
-  granting a bearbetningskoncession.
+- **1 January 2026:** uranium ban lifted (Riksdag vote Nov 2025, by one vote). Uranium is
+  now a concession mineral.
+- **May 2024:** Minerals Act amended so a Natura 2000 permit is no longer required before a
+  bearbetningskoncession.
+- **March 2026:** Per Geijer (Kiruna) became an **EU CRMA Strategic Project**, with the
+  Gällivare apatite expansion and a Luleå processing hub. It still lacks a concession and
+  environmental permit.
+- **4 September 2026:** inquiry into a **"gruvpeng"** (mineral compensation and exploration
+  fees to host municipalities), reporting 30 September 2028. **Samebyar are not named as
+  recipients.**
+- Six of eight Riksdag parties support easing mining rules.
 
 ### 3.5 Energy
 
-- **Municipalities vetoed 93% of planned wind projects in 2025**, up from 63% in 2024.
-  Our prompt assumes an unstoppable buildout; the opposite is happening.
-- Wind municipalities now receive **340 MSEK for 2025 and 370 MSEK for 2026** (matching
-  total national wind property tax). Our "municipal tax deficit" bullet is outdated as
-  written — the critique now has to argue against the compensation, not pretend it's absent.
-- **Hydropower omprövning restarted 25 June 2025.** Vattenfall filed its first
-  applications **20 February 2026** (Älvkarleby and Söderfors, lower Dalälven, 40-year
-  conditions, ~16 GWh/yr production loss). Miljöfonden reopened **1 March 2026**. All
-  plants to hold modern environmental conditions by ~2040. **Stornorrfors is in this
-  queue** — this is the local hook for the protected-river-above-a-turbine paradox, and
-  a rare piece of good news for Salmon to be grudging about.
+- Municipalities vetoed **93%** of planned wind projects in 2025 (**63%** in 2024).
+- Wind host municipalities receive **340 MSEK for 2025, 370 MSEK for 2026**.
+- **Hydropower omprövning** restarted 25 June 2025. Vattenfall filed its first applications
+  on 20 February 2026 (Älvkarleby, Söderfors). All plants must hold modern conditions by
+  ~2040, **Stornorrfors included**.
 
 ### 3.6 Biodiversity
 
-- **3 September 2026:** the government adopted Sweden's **draft national nature
-  restoration plan** under the EU Restoration Regulation (EU) 2024/1991 — **39 measure
-  packages**. Commission has six months to respond; final plan due **1 September 2027**.
-  Our wetland-rewetting agenda point is now a live process with a deadline.
-- **April 2026:** Naturvårdsverket **delegated licence-hunt decisions** for lynx (all
-  counties but Gotland) and wolverine (northern management area) to the länsstyrelser.
-  Norrbotten declined a lynx hunt for 2026 — population not recovered. Devolution cuts
-  both ways; worth keeping the nuance.
+- **3 September 2026:** the government adopted a draft national nature restoration plan
+  (EU 2024/1991), with 39 measure packages; final plan due 1 September 2027.
+- **April 2026:** licence-hunt decisions for lynx and wolverine delegated to the county
+  boards. Norrbotten declined a lynx hunt for 2026.
 
 ### 3.7 Salmon and tourism
 
-- Sweden's **2026 Baltic salmon quota fell to 7,152 fish** (from 9,743).
-- **25 June – 24 July 2026:** HaV banned Swedish salmon fishing in ICES subdivisions
-  30–31 once the allocation was exhausted.
-- Finland criticised for circumventing the stop via "research fishing".
-
-### 3.8 Sámi rights beyond the riksintresse
-
-- **Renmarkskommittén was scrapped** (announced Nov 2024, after criticism of its Aug 2023
-  partial report). A replacement inquiry was promised. MP campaigns on completing it.
-- **Four samebyar are suing the state** post-Girjas for exclusive hunting and fishing
-  rights above the cultivation boundary: **Ran (Västerbotten) filed first, 28 May 2024**,
-  then Sirges, Unna Tjerusj, Baste. *Ran is in our biosphere region* — a local case.
-- **CERD recommendations to Sweden, 5 December 2025:** stronger land-rights protection and
-  genuine influence in decisions; full nationwide implementation of the Consultation Act;
-  measures against the **increasing killing of and attacks on reindeer**; action on
-  violence against Sámi women. Council of Europe separately urged Sweden to ensure
-  land-use decisions do not harm Sámi culture, language and identity.
+- The 2026 Baltic salmon quota fell to **7,152** fish (from 9,743). Swedish salmon fishing
+  in ICES subdivisions 30–31 was closed from **25 June to 24 July 2026**. Finland was
+  criticised for continuing under "research fishing".
 
 ---
 
-## 4. Scheduled follow-up: the Truth Commission
+## 4. Decisions and open follow-ups
 
-**30 September 2026** — the Truth Commission for the Sámi People delivers its final report,
-**"Marken, vattnet, tankarna. Konsekvenser för samer av svensk politik" (SOU 2026:15)**,
-at Mittuniversitetet in Östersund. A research anthology was already handed over 4 March 2026.
-
-Agreed plan: **do not write the report's content into the prompts yet** — we do not know
-what it says. In the week of **30 Sept – 9 Oct**, before the 10 October opening, add its
-findings to the Sámi Land, Rights & Culture topic. Until then the prompts may note only
-that the commission is due to report, as a dated fact.
+- **Truth Commission — deliberately not updated.** The final report is delivered
+  **30 September 2026** in Östersund, with a narrative volume of 300+ testimonies. The
+  prompts say only that it is "due at the end of September 2026". Decided 28 Sept 2026: no
+  change before opening — the prompts are already printed on the wall, and the dated
+  "verified September 2026" framing already tells the reader what the model knows.
+  **SOU 2026:15 *Marken, vattnet, tankarna* is the March 2026 research anthology, not the
+  final report** (an earlier version of this file conflated them).
+- **Stegra timeline** due end of 2026. When it comes, update "no confirmed start date" /
+  "inget bekräftat startdatum" in the Green Transition topic, both languages.
+- **Sámi agenda-point rewrite (proposed 28 Sept, not started).** In the Sámi topic, AP0
+  and AP2–AP5 are single paragraphs, 640–950 chars, with the opposing side only hinted at.
+  AP1 and all of Green Transition use the two-sided format (§2). Plan, with material
+  gathered from §5 and §7:
+  - **AP0 Parallel Ownership.** Landowner side: clear title; shared use mostly works;
+    Sweden's 2007 statement that UNDRIP gives no redress for ordinary forestry. Herding
+    side: Nordmaling (2011) and Girjas (2020); the Forestry Act treats herding as a public
+    interest rather than a property right (Brännström); no reciprocal duty of
+    consideration; the JK tactic change. A full sample draft was written in the
+    28 Sept session.
+  - **AP1** is already in format. Keep it, with the election update applied 28 Sept.
+  - **AP2 Green colonization.** Take the rights angle rather than climate: the 2024
+    Natura 2000 change, EU CRMA strategic projects, the Rönnbäcken CERD opinion, no cap on
+    cumulative land take, the 50 m corridor. Industry side: climate urgency, ethical
+    sourcing, jobs, benefit-sharing.
+  - **AP3 Disappearing Library.** Ume Sámi facts (§5). Counter-side: most Sámi do not
+    herd, so language policy tied to herding land leaves most speakers out.
+  - **AP4 Consultation.** No decision power under 2022:66; Forestry Act §20 covers only
+    year-round land; Renmarkskommittén closed without consultation; Rally Sweden.
+    Counter-side: a veto for every affected group; companies' dialogue record.
+  - **AP5 Lateral violence.** Brå 2024:5; post-Girjas hate in Kiruna; the Jokkmokk
+    violence study; Sehlin MacNeil's cycle. Counter-side, without excusing hate: local
+    non-Sámi hunters feel shut out after Girjas. Replace the vague "Härjedalen" reference
+    with Nordmaling.
+  - Cost: the Sámi agenda block grows from ~6k to ~10k characters, in line with Green
+    Transition and Energy. The Swedish version needs the same pass with names.
+- **Still to verify against primary sources:** exact salmon quota and wind-veto figures;
+  whether Renmarkskommittén's replacement was appointed; Lyten's actual restart; Leif
+  Johansson as Stegra chair.
 
 ---
 
-## 5. Change log for this pass
+## 5. Research library (`Research/`)
 
-English first, Swedish second — both now done.
+PDFs from the research phase, one folder per theme: `biosphere area`, `fishing`,
+`forestry`, `lichen`, `minerals`, `pollination`, `reindeer`, `sami`, `tourism`,
+`transcribed interviews`, `water systems`. They cannot be grepped directly; extract text with
+`pypdf` (e.g. `pip install --target <scratch> pypdf`); `pdftotext` is not installed.
 
-- [x] `topics_en.json` (v1.2.0) — `system` now states the Council meets in autumn 2026 and
-      instructs the model to trust the dated facts over its own priors. Every topic gained a
-      "RECENT DEVELOPMENTS (verified September 2026)" block. New agenda points: *Is a Culture
-      a National Interest?* (Sámi, inserted second) and *Deregulation as Forest Policy*
-      (Forestry). Green Transition agenda point 4 rewritten from "Boom and Bust Anxiety" to
-      the bust as fact. Energy: municipal-refusal bullet added to wind, omprövning added to
-      hydropower, the tax-deficit bullet rewritten against the compensation package.
-      Biodiversity: restoration plan and predator devolution folded into existing points.
-      Mining: uranium and gruvpeng bullets. Tourism: salmon quota. Rights of Nature and the
-      custom-topic fault-line list updated. `agentBrief`s refreshed on six topics.
-- [x] `beings_en.json` (v1.1.0) — Reindeer: two Politics entries (being counted as small;
-      the UN told them and the minister shrugged) and two Threats entries (the fifty metres;
-      faster cutting). Salmon: quota cut, fishing stop, and the omprövning as the first real
-      crack in the wall, with instructions to give credit and still push. Wind Turbine:
-      refusal rate, revised forecast, "most of your siblings were never allowed to exist".
-      Tree Harvester: *Regulatory Reality (2026)*, explicitly told not to gloat. Pine: *What
-      has actually happened*, told it lost 308–21 and that this changes its register from
-      warning to indictment. River, Lichen, Mountain and Bumblebee untouched as agreed.
-- [x] Verified: `cd server && npm test` (481 passed) and `cd client && npm test`
-      (1088 passed), type-checks included, after the edits.
-- [ ] After 30 Sept: Truth Commission findings.
-- [x] Swedish pass — `topics_sv.json` and `beings_sv.json` mirror the English changes with
-      party names restored per §2: KD (Busch, Kullgren) named as proposers, M/SD backing,
-      C/S wanting the system reviewed, L/V/MP opposed; MP named as the reserving party on
-      the forestry act; Per Geijer and Gabna sameby named; Ran sameby named as the local
-      post-Girjas case. Swedish `system` gained `[CURRENT_DATE]`. Structural parity verified:
-      identical topic ids and agenda-point counts, every topic carrying its dated block.
-      Terms locked into `shared/prompts/translation_guide_sv.md` (riksintresse, avverkningsanmälan,
-      mark- och miljödomstolarna, naturrestaureringsförordningen, koncessionsmineral,
-      mineralersättning, flyttled, omprövning …), together with the EN-structural/SV-named rule
-      so the divergence is not "corrected" by a later pass.
-- [x] Verified after the Swedish pass: server 505 passed, client 1138 passed, both lints clean.
+The Sámi material (`Research/sami/`), with the facts most useful for the prompts:
 
-## 6. Sources
+| File | Use it for |
+|---|---|
+| `Saami+Council+CERD+report+on+Sweden+.pdf` (20 Oct 2025) | The Saami Council's own case: Rally Sweden 2025; hate crimes not flagged; May 2024 Minerals Act/Natura 2000 change; CRMA; Rönnbäcken; Consultation Act gives no decision power; Forestry Act §20 excludes winter grazing; ~6% of productive forest formally protected; no reciprocal duty of consideration; Renmarkskommittén closed without consultation; ILO 169 unratified |
+| `Samisk forskning/The implementation of Sámi land rights in the Swedish Forestry Act.pdf` (Brännström) | Core legal argument: herding rights are private property rights in case law but protected as a *public interest* in the Forestry Act, so they are balanced against timber rather than secured. Sweden's 2007 UNDRIP statement on Art. 28 |
+| `Skogsbruk och renskötsel på samma mark.pdf` (Brännström, PhD 2017, 380 pp.) | The full legal analysis behind the above (pp. 278–279: no reciprocal duty) |
+| `Samisk forskning/Lateral violence….pdf` (Sehlin MacNeil) | 20–40k Sámi in Sweden, most in the south (no ethnic registration); hate and death threats in the Kiruna area after Girjas; the extractive → structural → cultural → lateral violence cycle |
+| `Samisk forskning/Interpersonal Violence….pdf` (Simmons et al. 2024) | Jokkmokk 2021 survey: Sámi more often report violence by acquaintances and strangers, explained entirely by historical losses and discrimination; family violence reported by women 16.4% (Sámi) vs 9.2% (Swedish) |
+| `language/Lägesrapport De samiska språken i Sverige 2024.pdf` (Sametinget) | Ume Sámi: no Sámi school in the area; 4 titles published in 2024; UR produced nothing in Ume Sámi in 2024; demand "enormous", the work carried by "a few people"; first time on a theatre stage (*När vi var samer*, 2024) |
+| `Of forest, snow and lichen….pdf` (Roturier & Roué 2009) | Herders' winter-pasture knowledge; *guohtun*; snow and lichen classification |
+| `Lag (2022_66) om konsultation….pdf` | The Consultation Act text |
+| Other `Samisk forskning/` papers | Hydropower cumulative effects in Sápmi, CSR in the green transition, colonial past and present, racism methods, EU–Sápmi relations |
 
-Verified 9 September 2026.
+**Nordmaling case (web, not in the folder):** in 1998 more than 120 landowners in
+Nordmaling sued Ran, Vapsten and Ubmeje tjeälddie samebyar. On 27 April 2011 the Supreme
+Court (T 4028-07) found the samebyar hold winter-grazing rights on that private land,
+grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 
-- SVT — Busch on riksintresset: https://www.svt.se/nyheter/lokalt/norrbotten/busch-rennaringen-bor-inte-vara-ett-riksintresse
-- SVT — all parties' positions: https://www.svt.se/nyheter/lokalt/norrbotten/efter-kd-utspelet-sa-ser-ovriga-partier-pa-rennaringsfragorna
-- SVT — "Då har FN fel" (3 Sept 2026): https://www.svt.se/nyheter/inrikes/ebba-busch-om-kritiken-mot-rennaringspolitiken-da-har-fn-fel
-- European Times — Kiruna / Gabna 50 metres: https://europeantimes.news/2026/09/kiruna-mine-plan-narrows-sami-choices/
-- Riksdagen — Ett tydligt regelverk för aktivt skogsbruk (MJU29): https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/ett-tydligt-regelverk-for-aktivt-skogsbruk_hd01mju29/
-- Riksdagen — artskyddsersättning (prop. 2025/26:230): https://www.riksdagen.se/sv/dokument-och-lagar/dokument/proposition/ersattning-vid-radighetsinskrankningar-till-foljd_hd03230/html/
-- Regeringen — utkast till nationell restaureringsplan (3 Sept 2026): https://www.regeringen.se/informationsmaterial/2026/09/sveriges-utkast-till-nationell-restaureringsplan
-- Ny Teknik — uranbrytning möjlig från 2026: https://www.nyteknik.se/industri/efter-beslut-i-riksdagen-uranbrytning-mojlig-i-sverige-fran-2026/4408597
-- Nordiska Projekt — lokal gruvpeng (4 Sept 2026): https://www.nordiskaprojekt.se/2026/09/04/regeringen-tar-steg-mot-lokal-gruvpeng-till-kommunerna/
-- Vattenfall — omprövningen startar (Feb 2026): https://group.vattenfall.com/se/nyheter-och-press/pressmeddelanden/2026/nu-startar-omprovningen-av-vattenfalls-storskaliga-vattenkraft
-- Green Power Sweden — incitamentspaket för vindkraft: https://greenpowersweden.se/fakta/regeringens-incitamentspaket-for-vindkraft/
-- HaV — laxfiskeförbud 2026: https://www.havochvatten.se/arkiv/nytt-om-fiskeregler/2026-06-24-forbud-mot-visst-svenskt-fiske-av-lax-i-ostersjon.html
-- EFN — Stegra ett år efter Northvolt: https://efn.se/anders-hagerstrand-extremt-svart-lage-for-stegra-ett-ar-efter-northvolts-konkurs
-- Mittuniversitetet — sanningskommissionens slutbetänkande: https://www.miun.se/Forskning/forskargrupper/baskoes/nyhetsarkiv/2026-4/sanningskommissionen-for-det-samiska-folket-overlamnar-sitt-slutbetankande-till-regeringen-pa-mittuniversietet
-- Naturvårdsverket — licensjakt delegeras (April 2026): https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2026/april/ratten-att-fatta-beslut-om-licensjakt-pa-lodjur-och-jarv-overlamnas-till-lansstyrelserna/
+---
+
+## 6. Change log
+
+Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Election update and fact corrections** (EN + SV)
+- Sámi topic: the brief notes the government that proposed removing the riksintresse lost
+  the election. In Recent Developments, "election is held… unresolved" is replaced by the
+  result (176–173) and the incoming parties' positions, and the lawsuit bullet is
+  corrected (five samebyar, Talma 2022; Ran first from Västerbotten; JK tactic change).
+  SV names Tidöpartierna, S/V/MP/C and Magdalena Andersson.
+- Sámi AP1 "Is a Culture a National Interest?": the election outcome is added, and the
+  minister is now "the outgoing government's minister" (SV: Ebba Busch (KD), named).
+- Rights of Nature: the April 2026 proposal is marked as from the government voted out in
+  September.
+- Reindeer being: "Being counted as small" is in past tense, plus "In September those
+  humans lost the big vote, but many of the ones who won also want to look again at all
+  the protected places."
+- This file restructured: current fact set, research library, decisions, change log.
+
+**2026-09-27 — Stegra rescue and HYBRIT** (EN + SV)
+- Green Transition:
+  - Brief: the steel mill "nearly followed, until Sweden's most powerful industrial family
+    bought in" (SV: Wallenbergsfären), adding "who owns it now".
+  - Context: "Stegra, formerly H2 Green Steel".
+  - Recent Developments: the collapse bullet is replaced by the rescue and construction
+    status; Boden debt corrected; a HYBRIT bullet added; the last bullet reworded.
+  - AP "Societal Boom… First Bust": pro-development rescue bullet, corrected debt, the
+    rescue in "The Bust Has Already Happened Once", and a new "Who Carries the Risk" bullet.
+- Energy: "gone bankrupt, stalled, or been delayed by years".
+- Tourism: "been through bankruptcy and rescue, and neither is yet producing at scale".
+- Custom topic: "one bankrupt, one rescued at the last minute by new owners".
+- Wind Turbine being: "went bankrupt, stalled, or are years late".
+- `translation_guide_sv.md` §2.8: vätgasstål, järnsvamp, stålverket, räddningsrunda,
+  Wallenbergsfären, kommunal låneskuld.
+- Verified: `ValidateTopicsData` / `ValidateFoodData` passed.
+
+**2026-09-09 — First political-context pass** (EN v1.2.0 / beings v1.1.0, then SV)
+- `system` instructs the model to trust dated facts over its priors; Swedish `system` gained
+  `[CURRENT_DATE]`. Every topic gained a dated Recent Developments block.
+- New agenda points: *Is a Culture a National Interest?* (Sámi, second) and *Deregulation
+  as Forest Policy* (Forestry). Green Transition "Boom and Bust Anxiety" rewritten as the
+  bust. Energy: municipal veto, omprövning, compensation package. Biodiversity, Mining,
+  Tourism, Rights of Nature and the custom topic updated. `agentBrief`s refreshed on six
+  topics.
+- Beings:
+  - Reindeer: two Politics entries and two Threats entries (the 50 m corridor; faster
+    cutting).
+  - Salmon: quota and fishing stop, and the omprövning as "the first real crack in the
+    wall".
+  - Wind Turbine: refusal rate and revised forecast.
+  - Tree Harvester: *Regulatory Reality (2026)*, told not to gloat.
+  - Pine: told it lost 308–21.
+  - River, Lichen, Mountain and Bumblebee untouched.
+- SV mirrors EN with parties named; terms locked in `translation_guide_sv.md`.
+- Verified: server 505 and client 1138 tests passed; lints clean.
+
+---
+
+## 7. Sources
+
+Verification date in brackets.
+
+**Sámi rights and politics**
+- SVT — Busch on riksintresset [9 Sep]: https://www.svt.se/nyheter/lokalt/norrbotten/busch-rennaringen-bor-inte-vara-ett-riksintresse
+- SVT — all parties' positions [9 Sep, re-checked 28 Sep]: https://www.svt.se/nyheter/lokalt/norrbotten/efter-kd-utspelet-sa-ser-ovriga-partier-pa-rennaringsfragorna
+- SVT — "Då har FN fel" [9 Sep]: https://www.svt.se/nyheter/inrikes/ebba-busch-om-kritiken-mot-rennaringspolitiken-da-har-fn-fel
+- European Times — Kiruna / Gabna 50 metres [9 Sep]: https://europeantimes.news/2026/09/kiruna-mine-plan-narrows-sami-choices/
+- SVT — JK insists on the Reindeer Husbandry Act (30 Apr 2026) [28 Sep]: https://www.svt.se/nyheter/sapmi/jk-star-fast-vid-krav-tillampa-rennaringslagen-i-malen
+- SVT — Ran sameby sues the state [28 Sep]: https://www.svt.se/nyheter/lokalt/vasterbotten/rans-sameby-i-norra-vasterbotten-stammer-staten
+- Svensk Jakt — Jägareförbundet refused in Ran's case [28 Sep]: https://svenskjakt.se/start/nyhet/jagareforbundet-stoppas-fran-att-delta-i-rattsprocess-om-fjalljakten/
+- Högsta domstolen — Nordmaling, T 4028-07 [28 Sep]: https://www.domstol.se/hogsta-domstolen/avgoranden/2011/37976/
+- Wikipedia — Nordmalingsmålet [28 Sep]: https://sv.wikipedia.org/wiki/Nordmalingsm%C3%A5let
+- Regeringen — Renmarkskommittén to be wound up (Nov 2024) [28 Sep]: https://www.regeringen.se/pressmeddelanden/2024/11/regeringen-avser-avveckla-renmarkskommitten-och-tillsatta-en-ny-utredning/
+- Transportstyrelsen — Rally Sweden appeal rejected (2026) [28 Sep]: https://www.transportstyrelsen.se/sv/om-oss/pressrum/nyhetsarkiv/2026/besked-i-rallyfragan-overklagandet-avslas/
+- SVT — Ran sameby appeals the rally permit [28 Sep]: https://www.svt.se/nyheter/lokalt/vasterbotten/rans-sameby-overklagar-tillstandet-for-rally-sweden-har-renar-i-omradet
+- Mittuniversitetet — Truth Commission final report, 30 Sep [9 Sep, 28 Sep]: https://www.miun.se/Forskning/forskargrupper/baskoes/nyhetsarkiv/2026-4/sanningskommissionen-for-det-samiska-folket-overlamnar-sitt-slutbetankande-till-regeringen-pa-mittuniversietet
+- Regeringen — SOU 2026:15 (interim anthology, 4 Mar 2026) [28 Sep]: https://www.regeringen.se/rattsliga-dokument/statens-offentliga-utredningar/2026/03/sou-202615/
+
+**Election**
+- Valmyndigheten — result certified 19 Sep 2026 [28 Sep]: https://www.val.se/servicelankar/servicelankar/pressrum/nyheter--pressmeddelanden/pressmeddelande-nya/2026-09-19-valresultat-faststallt-i-2026-ars-riksdagsval
+- Wikipedia — 2026 Swedish general election [28 Sep]: https://en.wikipedia.org/wiki/2026_Swedish_general_election
+
+**Green transition, Stegra, HYBRIT**
+- Stegra — closing of €1.4bn round (24 Jun 2026) [27 Sep]: https://stegra.com/en/news-and-stories/stegra-announces-closing-of-14-billion-financing-round
+- Bloomberg — Wallenberg-led rescue (14 Apr 2026) [27 Sep]: https://www.bloomberg.com/news/articles/2026-04-14/stegra-gets-1-4-billion-from-wallenberg-led-group-to-save-plant
+- The Next Web — rescue details, board changes [27 Sep]: https://thenextweb.com/news/stegra-14-billion-wallenberg-green-steel-boden
+- High North News — closing (26 Jun 2026) [27 Sep]: https://en.highnorthnews.com/business/stegra-secures-eur-14-billion-to-complete-green-steel-plant-in-northern-sweden/1114775
+- Bergsmannen — new timeline end of 2026, 60% built (15 Jun 2026) [27 Sep]: https://www.bergsmannen.se/nyheter/e/8785/ny-tidsplan-for-stegra-drojer-till-slutet-av-aret/
+- Aktuell Hållbarhet — production start pushed back [27 Sep]: https://www.aktuellhallbarhet.se/ekonomi-och-strategi/affarsstrategi/stegra-tar-in-10-nya-miljarder-till-stalfabriken/
+- Dagens PS — unpaid contractors (5 Feb 2026) [27 Sep]: https://www.dagensps.se/foretag/betalar-inte-stegra-efter-med-100-tals-miljoner/
+- SVT — Boden debt 1,790 MSEK, loss 88 MSEK (13 Apr 2026) [27 Sep]: https://www.svt.se/nyheter/lokalt/norrbotten/kommunens-lanekostnader-skenar-lattnad-efter-uppgifter-om-stegra
+- SVT — Boden debt from 80 MSEK [27 Sep]: https://www.svt.se/nyheter/lokalt/norrbotten/laneskulden-skenar-i-boden-fran-80-miljoner-till-15-miljard
+- EFN — Stegra a year after Northvolt [9 Sep]: https://efn.se/anders-hagerstrand-extremt-svart-lage-for-stegra-ett-ar-efter-northvolts-konkurs
+- Lyten — Northvolt acquisition completed (26 Feb 2026) [27 Sep]: https://lyten.com/2026/02/26/lyten-completes-acquisition-of-northvolt-sweden-and-establishes-its-first-lyten-industrial-hub-in-sweden/
+- SVT — LKAB pauses Hybrit in Kiruna [27 Sep]: https://www.svt.se/nyheter/sapmi/lkab-pausar-satsning-pa-hybrit-i-kiruna
+- SVT — LKAB after the Hybrit setback (17 Oct 2025) [27 Sep]: https://www.svt.se/nyheter/lokalt/norrbotten/sa-ser-lkab-pa-framtiden-efter-bakslaget-med-hybrit
+- LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
+- GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
+- Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Forestry, mining, energy, biodiversity, salmon** [all 9 Sep]
+- Riksdagen — MJU29: https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/ett-tydligt-regelverk-for-aktivt-skogsbruk_hd01mju29/
+- Regeringen — prop. 2025/26:242 [28 Sep]: https://www.regeringen.se/rattsliga-dokument/proposition/2026/04/prop.-202526242
+- Riksdagen — prop. 2025/26:230: https://www.riksdagen.se/sv/dokument-och-lagar/dokument/proposition/ersattning-vid-radighetsinskrankningar-till-foljd_hd03230/html/
+- Ny Teknik — uranium mining possible from 2026: https://www.nyteknik.se/industri/efter-beslut-i-riksdagen-uranbrytning-mojlig-i-sverige-fran-2026/4408597
+- Nordiska Projekt — gruvpeng inquiry: https://www.nordiskaprojekt.se/2026/09/04/regeringen-tar-steg-mot-lokal-gruvpeng-till-kommunerna/
+- Vattenfall — omprövning starts: https://group.vattenfall.com/se/nyheter-och-press/pressmeddelanden/2026/nu-startar-omprovningen-av-vattenfalls-storskaliga-vattenkraft
+- Green Power Sweden — wind incentive package: https://greenpowersweden.se/fakta/regeringens-incitamentspaket-for-vindkraft/
+- Regeringen — draft restoration plan: https://www.regeringen.se/informationsmaterial/2026/09/sveriges-utkast-till-nationell-restaureringsplan
+- Naturvårdsverket — licence hunts delegated: https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2026/april/ratten-att-fatta-beslut-om-licensjakt-pa-lodjur-och-jarv-overlamnas-till-lansstyrelserna/
+- HaV — salmon fishing stop: https://www.havochvatten.se/arkiv/nytt-om-fiskeregler/2026-06-24-forbud-mot-visst-svenskt-fiske-av-lax-i-ostersjon.html
 - Mistral docs — models overview (no cutoff column): https://docs.mistral.ai/models/overview
-
-### Still to verify against primary sources before opening
-
-- The exact Baltic salmon quota figures and the 93% / 63% wind veto percentages.
-- The Truth Commission's title, SOU number and 30 Sept date (currently one source).
-- Whether the replacement for Renmarkskommittén has actually been appointed.
