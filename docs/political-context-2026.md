@@ -241,6 +241,38 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   fees to host municipalities), reporting 30 September 2028. **Samebyar are not named as
   recipients.**
 - Six of eight Riksdag parties support easing mining rules.
+- **15 June 2026:** the Riksdag **abolished the municipal veto on uranium mining, 174–172**.
+  The opposition (now the incoming majority) reserved. A committee inquiry
+  (bokstavsutredare) is looking at municipal influence over alum-shale mining. *Note:*
+  Sveriges Natur (June 2025) reported the veto as kept in the government's 2025 draft;
+  that was superseded by the June 2026 vote.
+- **Arjeplog, 19 Aug 2026 (SVT):** four uranium exploration permits granted in Arjeplog;
+  no mine application yet. Arjeplog is the site of the 1981 Pleutajokk uranium protest.
+- **Per Geijer:**
+  - Gabna ended its 2013 cooperation agreement with LKAB on 2 Dec 2025 and rejects the
+    mine.
+  - LKAB's concession application went to Bergsstaten in 2024, with a herding analysis
+    due by 1 May 2026.
+  - **25 Sept 2026:** Länsstyrelsen Norrbotten recommended granting it (mining outweighs
+    herding) while writing that losing the migration route ends the functional connection
+    and "cannot be fully compensated".
+  - Bergsstaten's decision is expected ~end of Nov 2026. **Update the prompts when it
+    comes.**
+- **LKAB: 86% of EU iron ore in 2025** (LKAB Annual Report 2025). The old "over 90%" came
+  from the 2013 figure in the regional mineral strategy (90% iron ore, 24% gold, 10%
+  copper for Norrbotten + Västerbotten).
+- **Blaiken (near Sorsele):** Scanmining began mining in 2006 and went bankrupt in 2007;
+  a later operator also went bankrupt. The state pays ≥427 MSEK for the clean-up through
+  2035, against guarantees of 2.3 MSEK (for Blaiken and Svärtträsk together). It is the
+  most expensive state-funded clean-up of a bankrupt mine (SVT, TV4).
+- **Laisvall (Arjeplog, on the Laisälven):** Boliden lead mine 1943–2001, Europe's
+  largest. Remediation completed in 2009. Lead-rich sediment remains in Saivastjärnen, the
+  former settling basin.
+- **EU CRMA:** permitting for strategic projects is capped at 27 months for extraction and
+  15 months for others.
+- **Mineral compensation:** two thousandths of the ore value, unchanged since 2005.
+  Corporate tax goes to the state. The interview claim "LKAB pays tax in Stockholm" is
+  inaccurate (LKAB's HQ is in Luleå; corporate tax is national), so it was not used.
 
 ### 3.5 Energy
 
@@ -412,6 +444,9 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   - Cost: the Sámi agenda block went from ~6k to **~13k characters** (Green Transition
     7.3k, Energy 7.2k). Every being's context carries it on Sámi meetings. If responses
     drift or slow, trim the context paragraphs first; keep the labelled bullets.
+- **Mining rewrite — done 28 Sept in EN and SV.** Both languages have 6 agenda points
+  (new: *Who Can Say No? Uranium and the Local Veto* / *Vem får säga nej? Uranet och det
+  kommunala vetot*); EN/SV parity holds in every topic.
 - **Forestry rewrite — done 28 Sept in EN and SV.** Both languages have 8 agenda points
   (new point 6: *The People's Forest: Sveaskog's Double Mission* / *Folkets skog: Sveaskogs
   dubbla uppdrag*). **Numbering shifted:** Rural Economy is now point 7 and Deregulation
@@ -502,6 +537,47 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-09-28 — Mining rewritten, Swedish** (SV)
+- `topics_sv.json`, Gruvdrift: the brief, prompt and all six agenda points mirror the
+  English below. Titles AP0–AP4 unchanged; AP5 is new: *Vem får säga nej? Uranet och det
+  kommunala vetot*.
+- Names per §2:
+  - **Tidöpartierna for, S/V/MP/C against** on the 174–172 veto vote.
+  - Ebba Busch (KD) as the minister rejecting UN criticism.
+  - Gabna sameby, LKAB, Länsstyrelsen i Norrbotten, Bergsstaten.
+  - Vapsten sameby (Rönnbäcken), Laevas sameby.
+  - Boliden (Laisvall, Saivastjärnen), Gold of Lapland and Guldriket, Arjeplog and
+    Pleutajokk.
+- Gabna's position is paraphrased, not quoted. The source quote was only available in
+  English translation, so no Swedish quotation marks were used.
+- `translation_guide_sv.md` §2.9: Bergsstaten, kommunalt veto, ekonomisk säkerhet,
+  sedimenteringsbassäng, alunskiffer.
+- Verified: `ValidateTopicsData` passed; EN/SV parity holds in every topic.
+
+**2026-09-28 — Mining rewritten** (EN)
+- `topics_en.json`, Mining:
+  - **Brief:** "Over 90%" → "Most"; adds the 174–172 veto vote.
+  - **Context:** LKAB 86% (2025); the Skellefte field; Kiruna and Malmberget moving;
+    Laisvall on the Laisälven.
+  - **Recent Developments:** added the veto abolition and Arjeplog permits, plus the Per
+    Geijer timeline (Gabna's exit, the county board's recommendation on 25 Sept,
+    decision due in November).
+- Agenda points 5 → 6, all with a core question; titles AP0–AP4 unchanged:
+  - **AP0 Urgency vs sacrifice zone:** industry side adds "mining built the north",
+    tourism born from mining heritage (interview 9), and recycling limits (SOU 2022:56).
+    Critics add towns moving, and tax and compensation (corrected: corporate tax is
+    national). The uranium bullet moved to AP5.
+  - **AP1 Minerals Act:** Per Geijer as the live case; Rönnbäcken; compensation without a
+    seat.
+  - **AP2 Cumulative impact:** Laevas one third functionally unavailable; the fifty metres.
+  - **AP3 Tailings:** Laisvall as the industry's good example (remediated by 2009, but
+    lead sediment remains); Blaiken's 427 MSEK against 2.3 MSEK of guarantees.
+  - **AP4 Fast-tracking:** CRMA 27-month cap; Natura 2000 now parallel.
+  - **AP5 Who Can Say No? (new):** uranium ban lifted by one vote, veto removed by two,
+    Arjeplog permits, the 1981 Pleutajokk protest; the national-resource vs local-consent
+    sides.
+- Verified: `ValidateTopicsData` passed.
 
 **2026-09-28 — Forestry rewritten, Swedish** (SV)
 - `topics_sv.json`, Skogsbruk: the brief, prompt and all eight agenda points mirror the
@@ -799,6 +875,18 @@ Verification date in brackets.
 - LKAB — environmental permit for Gällivare (15 Jun 2026) [27 Sep]: https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/
 - GMK Center — SSAB Oxelösund furnace delayed to 2027 [27 Sep]: https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/
 - Börsvärlden — LKAB largest owner in SSAB [27 Sep]: https://borsvarlden.com/artiklar/lkab-flaggar-upp-som-storsta-agare-i-ssab
+
+**Mining** [all 28 Sep]
+- SVT — Riksdag abolishes municipal uranium veto (15 Jun 2026): https://www.svt.se/nyheter/lokalt/jamtland/riksdagen-kommunalt-veto-mot-uranbrytning-avskaffas
+- SVT — uranium question back in Arjeplog (19 Aug 2026): https://www.svt.se/nyheter/sapmi/uranfragan-ater-aktuell-i-arjeplog-samtalsamne-bland-ortsbor
+- NSD — county board wants to grant Per Geijer (25 Sep 2026): https://www.nsd.se/nyheter/kiruna/artikel/lansstyrelsen-vill-bevilja-lkab-koncession-per-geijer/r0ezx59j
+- Ny Teknik — Gabna breaks with LKAB (2 Dec 2025): https://www.nyteknik.se/industri/sameby-bryter-med-lkab-sager-nej-till-per-geijer-gruvan/4416715
+- LKAB — Annual and Sustainability Report 2025: https://lkab.com/en/financial-information/annual-reports/annual-and-sustainability-report-2025/
+- SVT — Blaiken remediation: https://www.svt.se/nyheter/lokalt/vasterbotten/nu-saneras-blaikengruvan-ett-sar-i-naturen
+- TV4 — the state paid for the Blaiken clean-up: https://www.tv4.se/artikel/61yKRK6K4nXGvWqnWg9jPL/gruvbolag-gick-i-konkurs-staten-fick-sta-foer-saneringen
+- SOU 2018:59 Statens gruvliga risker: https://www.riksdagen.se/sv/dokument-och-lagar/dokument/statens-offentliga-utredningar/statens-gruvliga-risker_h6b359/html/
+- Mining Technology — Laisvall: https://www.mining-technology.com/projects/laisvall/
+- IEA — EU Critical Raw Materials Act (permit caps): https://www.iea.org/policies/17662-european-critical-raw-materials-act
 
 **Forestry** [all 28 Sep]
 - Sveaskog — reduced felling in Norrbotten (9 Jan 2023): https://www.sveaskog.se/press/2023/minskade-avverkningsnivaer-i-norrbotten-2023/

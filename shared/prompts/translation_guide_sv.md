@@ -324,6 +324,11 @@ Format: **English** → **Swedish** — *notes*.
 | mineral compensation ("gruvpeng") | mineralersättning | 2026 inquiry, municipalities only |
 | strategic project (CRMA) | strategiskt projekt | Per Geijer, March 2026 |
 | exploration permit | undersökningstillstånd | |
+| mining authority | Bergsstaten | decides bearbetningskoncession |
+| municipal veto | kommunalt veto | uranium veto abolished 15 Jun 2026, 174–172 |
+| financial guarantee (closure) | ekonomisk säkerhet | Blaiken: 2.3 MSEK vs ≥427 MSEK clean-up |
+| settling basin | sedimenteringsbassäng | Saivastjärnen, Laisvall |
+| alum shale | alunskiffer | inquiry on municipal influence, June 2026 |
 
 ### 2.10 General framing concepts
 
