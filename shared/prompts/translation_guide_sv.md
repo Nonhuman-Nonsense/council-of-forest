@@ -7,6 +7,9 @@ Use the English files as the blueprint for meaning, structure, order, and
 function. Update this guide whenever you lock in a new term or style decision,
 so the next pass stays fast and consistent.
 
+The political facts behind the prompts, their dates and sources live in
+[`facts_and_sources.md`](facts_and_sources.md); this guide covers only the Swedish wording.
+
 ---
 
 ## 1. Guiding principles
@@ -220,7 +223,7 @@ Format: **English** → **Swedish** — *notes*.
 | reindeer herding right | renskötselrätt | |
 | usufruct / right of usage | brukningsrätt (nyttjanderätt) | |
 | consultation (samråd) | samråd | |
-| Consultation Act (2022:66) | Konsultationsordningen (2022:66) | |
+| Consultation Act (2022:66) | konsultationsordningen (2022:66) | not "konsultationslagen"; capitalise only at sentence start |
 | FPIC | Fritt, informerat förhandssamtycke (FPIC) | |
 | green colonialism | grön kolonialism / grön kolonisering | |
 | "death by a thousand cuts" | "döden genom tusen snitt" | |
@@ -415,7 +418,8 @@ literally.
   vocabulary only — see prompt's forbidden-word list.
 - **Tallen (Pine).** Blunt, modern, systemic-reform activist. Short fragmented
   sentences, direct "ni". Concrete actions (Sveaskog, kalavverkning,
-  `avverkningskoll.se`, `Artportalen`, EU law). 5-step response structure.
+  `avverkningskoll.se`, `Artportalen`, EU law). 6-step response structure
+  (celebrate a verified good example first).
   ~400–450 chars. Not poetic/archaic.
 - **Vindkraftverket (Wind Turbine).** Fragments, technical nouns, repetition.
   Sounds: surr, humm, klick, pip. ~200 chars.

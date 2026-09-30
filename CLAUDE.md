@@ -20,6 +20,10 @@ MongoDB, conversation/TTS orchestration), and `button/` (talk-button stack for i
   reconnect/resume logic. New client-driven socket actions must follow this pattern.
 - [README.md](README.md) — project overview and build instructions.
 - [server/README.md](server/README.md) — backend details and test modes (mock/fast/full).
+- [shared/prompts/facts_and_sources.md](shared/prompts/facts_and_sources.md) — the dated
+  political facts in the topic and being prompts, the editorial rules for them, and a
+  change log. Read it **before changing a fact in a prompt**; Swedish wording is in
+  [shared/prompts/translation_guide_sv.md](shared/prompts/translation_guide_sv.md).
 - [MUSEUM.md](MUSEUM.md) — physical installations: museum kiosks and presented screenings
   (app mode, button bridge, staff setup).
 
