@@ -1,0 +1,791 @@
+{
+  "metadata": {
+    "status": "draft",
+    "lastChecked": "2026-09-17",
+    "addressCheck": {
+      "verified": "read on the organisation's own website",
+      "search": "found through search; confirm on their website before activating"
+    },
+    "notes": "Public role addresses only. Entries with email null are inactive gaps to fill. Topic ids match shared/prompts/topics_en.json on forest-leo."
+  },
+  "recipients": [
+    {
+      "id": "skogsstyrelsen",
+      "name": "Skogsstyrelsen (Swedish Forest Agency)",
+      "category": "agency",
+      "email": "skogsstyrelsen@skogsstyrelsen.se",
+      "language": "sv",
+      "remit": "Supervises the Forestry Act, receives felling notifications, consultation with samebyar before large fellings, woodland key habitats, nature conservation agreements.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.skogsstyrelsen.se/kontakt/",
+      "active": true,
+      "notes": "registrator@skogsstyrelsen.se is the registry address for formal submissions."
+    },
+    {
+      "id": "naturvardsverket",
+      "name": "Naturvårdsverket (Swedish Environmental Protection Agency)",
+      "category": "agency",
+      "email": "registrator@naturvardsverket.se",
+      "language": "sv",
+      "remit": "Nature reserves and national parks, species protection, the national nature restoration plan, predator management, environmental objectives.",
+      "topics": [
+        "biodiversity",
+        "rightsofnature",
+        "forestry",
+        "tourism",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.naturvardsverket.se/om-oss/kontakt/",
+      "active": true
+    },
+    {
+      "id": "havochvatten",
+      "name": "Havs- och vattenmyndigheten (Swedish Agency for Marine and Water Management)",
+      "category": "agency",
+      "email": "havochvatten@havochvatten.se",
+      "language": "sv",
+      "remit": "Fisheries and salmon quotas, national plan for modern environmental conditions on hydropower (omprövning), water quality standards.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.havochvatten.se/om-oss-kontakt-och-karriar/kontakta-oss.html",
+      "active": true
+    },
+    {
+      "id": "bergsstaten",
+      "name": "Bergsstaten (Mining Inspectorate of Sweden)",
+      "category": "agency",
+      "email": "mineinspect@bergsstaten.se",
+      "language": "sv",
+      "remit": "Grants exploration permits and exploitation concessions under the Minerals Act, including on reindeer grazing land.",
+      "topics": [
+        "mining",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sgu.se/bergsstaten/om-bergsstaten/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "sgu",
+      "name": "SGU (Geological Survey of Sweden)",
+      "category": "agency",
+      "email": "sgu@sgu.se",
+      "language": "sv",
+      "remit": "Mineral strategy and critical raw materials, designates national interests for minerals, after-treatment of abandoned mines.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sgu.se/om-sgu/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "energimyndigheten",
+      "name": "Energimyndigheten (Swedish Energy Agency)",
+      "category": "agency",
+      "email": "registrator@energimyndigheten.se",
+      "language": "sv",
+      "remit": "Energy policy analysis, wind power national interests and planning support, renewable energy targets.",
+      "topics": [
+        "energyproduction",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.energimyndigheten.se/om-oss/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "svenskakraftnat",
+      "name": "Svenska kraftnät (Swedish transmission system operator)",
+      "category": "agency",
+      "email": "registrator@svk.se",
+      "language": "sv",
+      "remit": "The national grid: new power lines through the north, long-term electricity demand forecasts.",
+      "topics": [
+        "energyproduction",
+        "greentransition",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.svk.se/om-oss/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "sametinget",
+      "name": "Sametinget (Sámi Parliament)",
+      "category": "agency",
+      "email": "kansli@sametinget.se",
+      "language": "sv",
+      "remit": "Both elected Sámi parliament and state agency: reindeer husbandry administration, Sámi language and culture, consultation under the Consultation Act.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "forestry",
+        "energyproduction",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sametinget.se/kontakt",
+      "active": true,
+      "notes": "Not a sameby, but the side carrying the burden. Decide whether letters asking it to act are appropriate, or only letters of recognition."
+    },
+    {
+      "id": "jordbruksverket",
+      "name": "Jordbruksverket (Swedish Board of Agriculture)",
+      "category": "agency",
+      "email": "jordbruksverket@jordbruksverket.se",
+      "language": "sv",
+      "remit": "Rural development funds, agricultural landscape and grazing, the CAP in Sweden.",
+      "topics": [
+        "biodiversity",
+        "tourism"
+      ],
+      "addressCheck": "search",
+      "source": "https://jordbruksverket.se/kontakta-oss",
+      "active": true
+    },
+    {
+      "id": "trafikverket",
+      "name": "Trafikverket (Swedish Transport Administration)",
+      "category": "agency",
+      "email": "trafikverket@trafikverket.se",
+      "language": "sv",
+      "remit": "Roads and railways: landscape fragmentation, wildlife passages, reindeer and wildlife collisions.",
+      "topics": [
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.trafikverket.se/om-oss/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "slu",
+      "name": "SLU (Swedish University of Agricultural Sciences)",
+      "category": "research",
+      "email": "registrator@slu.se",
+      "language": "sv",
+      "remit": "Forest research, the national forest inventory, ArtDatabanken (red list of species).",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.slu.se/om-slu/kontakta-slu/",
+      "active": true,
+      "notes": "Faculty of Forest Science has its own registry: registrator-sfak@slu.se."
+    },
+    {
+      "id": "ministry-li",
+      "name": "Landsbygds- och infrastrukturdepartementet (Ministry of Rural Affairs and Infrastructure)",
+      "category": "government",
+      "email": "li.registrator@regeringskansliet.se",
+      "language": "sv",
+      "remit": "Forestry policy, reindeer husbandry and Sámi policy, rural affairs, infrastructure.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "tourism",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regeringen.se/sveriges-regering/landsbygds--och-infrastrukturdepartementet/",
+      "active": true,
+      "notes": "Ministries may be reorganised by the government formed after the 13 September 2026 election. Recheck names and addresses before opening."
+    },
+    {
+      "id": "ministry-kn",
+      "name": "Klimat- och näringslivsdepartementet (Ministry of Climate and Enterprise)",
+      "category": "government",
+      "email": "kn.registrator@regeringskansliet.se",
+      "language": "sv",
+      "remit": "Climate and environment policy, the Minerals Act, energy policy, industrial policy and the green transition.",
+      "topics": [
+        "mining",
+        "energyproduction",
+        "greentransition",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regeringen.se/kontaktuppgifter/kontaktuppgifter-till-departementens-registratorer/",
+      "active": true,
+      "notes": "Same caveat as ministry-li: may be reorganised after the election."
+    },
+    {
+      "id": "lst-vasterbotten",
+      "name": "Länsstyrelsen Västerbotten (County Administrative Board)",
+      "category": "regional",
+      "email": "vasterbotten@lansstyrelsen.se",
+      "language": "sv",
+      "remit": "Environmental permits and supervision, nature reserves, predator hunting decisions, the county's part of the biosphere reserve.",
+      "topics": [
+        "biodiversity",
+        "energyproduction",
+        "mining",
+        "tourism",
+        "samilandrights&culture",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.lansstyrelsen.se/vasterbotten/om-oss/kontakta-oss.html",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Inform before letters start."
+    },
+    {
+      "id": "lst-norrbotten",
+      "name": "Länsstyrelsen Norrbotten (County Administrative Board)",
+      "category": "regional",
+      "email": "norrbotten@lansstyrelsen.se",
+      "language": "sv",
+      "remit": "Environmental permits and supervision in Norrbotten, including the mining districts and Boden.",
+      "topics": [
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.lansstyrelsen.se/norrbotten/om-oss/kontakta-oss.html",
+      "active": true
+    },
+    {
+      "id": "region-vasterbotten",
+      "name": "Region Västerbotten",
+      "category": "regional",
+      "email": "regionen@regionvasterbotten.se",
+      "language": "sv",
+      "remit": "Regional development strategy, tourism and business development in Västerbotten.",
+      "topics": [
+        "tourism",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regionvasterbotten.se/det-har-gor-regionen/kontakt",
+      "active": true
+    },
+    {
+      "id": "region-norrbotten",
+      "name": "Region Norrbotten",
+      "category": "regional",
+      "email": "regionnorrbotten@norrbotten.se",
+      "language": "sv",
+      "remit": "Regional development strategy for Norrbotten, including the green industrial investments.",
+      "topics": [
+        "greentransition",
+        "tourism",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.norrbotten.se/sv/om-region-norrbotten/kontakt/",
+      "active": true
+    },
+    {
+      "id": "umea-kommun",
+      "name": "Umeå kommun",
+      "category": "municipality",
+      "email": "umea.kommun@umea.se",
+      "language": "sv",
+      "remit": "Planning and permits at the river mouth, Stornorrfors, part of the biosphere reserve.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.umea.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Inform before letters start."
+    },
+    {
+      "id": "vindeln-kommun",
+      "name": "Vindelns kommun",
+      "category": "municipality",
+      "email": "vindelns.kommun@vindeln.se",
+      "language": "sv",
+      "remit": "Local planning and wind power veto along the middle Vindelälven.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.vindeln.se/kontakt",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap."
+    },
+    {
+      "id": "vannas-kommun",
+      "name": "Vännäs kommun",
+      "category": "municipality",
+      "email": "vannas.kommun@vannas.se",
+      "language": "sv",
+      "remit": "Local planning where Vindelälven meets Umeälven.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://vannas.se/kommun-och-politik/kontakt",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap."
+    },
+    {
+      "id": "lycksele-kommun",
+      "name": "Lycksele kommun",
+      "category": "municipality",
+      "email": "kommun@lycksele.se",
+      "language": "sv",
+      "remit": "Local planning and wind power veto in the inland of the biosphere reserve.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.lycksele.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Consider a weekly cap."
+    },
+    {
+      "id": "sorsele-kommun",
+      "name": "Sorsele kommun",
+      "category": "municipality",
+      "email": "kommun@sorsele.se",
+      "language": "sv",
+      "remit": "Local planning in the upper Vindelälven, Sámi administrative municipality.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "mining",
+        "forestry"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sorsele.se/kommun/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap."
+    },
+    {
+      "id": "arjeplog-kommun",
+      "name": "Arjeplogs kommun",
+      "category": "municipality",
+      "email": "kommun@arjeplog.se",
+      "language": "sv",
+      "remit": "Local planning in the mountain part of the biosphere reserve, Sámi administrative municipality.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://arjeplog.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap."
+    },
+    {
+      "id": "mala-kommun",
+      "name": "Malå kommun",
+      "category": "municipality",
+      "email": "kommunstyrelsen@mala.se",
+      "language": "sv",
+      "remit": "Local planning; exploration and mining interest in the Skellefte field.",
+      "topics": [
+        "mining",
+        "forestry",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.mala.se/kommun-och-politik/kontakt-och-organisationsbeskrivning/",
+      "active": true,
+      "notes": "No general mailbox; this is the municipal executive board. Small municipality: consider a weekly cap."
+    },
+    {
+      "id": "norsjo-kommun",
+      "name": "Norsjö kommun",
+      "category": "municipality",
+      "email": null,
+      "language": "sv",
+      "remit": "Local planning; mining in the Skellefte field.",
+      "topics": [
+        "mining",
+        "forestry"
+      ],
+      "addressCheck": null,
+      "source": "https://norsjo.se/kommun-politik/kontakta-oss/",
+      "active": false,
+      "notes": "No general address found yet."
+    },
+    {
+      "id": "boden-kommun",
+      "name": "Bodens kommun",
+      "category": "municipality",
+      "email": "kommunen@boden.se",
+      "language": "sv",
+      "remit": "Hosts the Stegra green steel plant; municipal debt taken on ahead of the industry. Home of Havremagasinet.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.boden.se/kommunen/bodens-kommun/service-och-tillganglighet",
+      "active": true,
+      "notes": "The exhibition's host town. Tell Havremagasinet first."
+    },
+    {
+      "id": "sveaskog",
+      "name": "Sveaskog (state-owned forest company)",
+      "category": "company",
+      "email": "kundcenter@sveaskog.se",
+      "language": "sv",
+      "remit": "Sweden's largest forest owner, owned by the state: fellings, set-asides, lodgepole pine plantations, consultation with samebyar.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "biodiversity",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sveaskog.se/kontakt/",
+      "active": true,
+      "notes": "Only a customer-centre address is published."
+    },
+    {
+      "id": "sca",
+      "name": "SCA",
+      "category": "company",
+      "email": "info@sca.com",
+      "language": "sv",
+      "remit": "Europe's largest private forest owner, in Norrland: fellings, bioenergy, wind power on its land.",
+      "topics": [
+        "forestry",
+        "greentransition",
+        "samilandrights&culture",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sca.com/sv/hallbarhet/kontakter-hallbarhet/",
+      "active": true
+    },
+    {
+      "id": "holmen",
+      "name": "Holmen",
+      "category": "company",
+      "email": "info@holmen.com",
+      "language": "sv",
+      "remit": "Large forest owner and hydropower producer; forestry in northern Sweden.",
+      "topics": [
+        "forestry",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.holmen.com/en/contact-us/",
+      "active": true
+    },
+    {
+      "id": "vattenfall",
+      "name": "Vattenfall (state-owned energy company)",
+      "category": "company",
+      "email": "press@vattenfall.com",
+      "language": "sv",
+      "remit": "Operates Stornorrfors and most hydropower in the Ume river system; first omprövning applications in 2026.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://group.vattenfall.com/se/nyheter-och-press/presskontakter",
+      "active": true,
+      "notes": "Press desk; no general mailbox published."
+    },
+    {
+      "id": "lkab",
+      "name": "LKAB (state-owned mining company)",
+      "category": "company",
+      "email": "info@lkab.com",
+      "language": "sv",
+      "remit": "Iron ore in Kiruna and Malmberget, Per Geijer rare earth deposit, fossil-free sponge iron plans.",
+      "topics": [
+        "mining",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://lkab.com/en/contact-us/sustainability-and-climate/",
+      "active": true
+    },
+    {
+      "id": "boliden",
+      "name": "Boliden",
+      "category": "company",
+      "email": "info@boliden.com",
+      "language": "sv",
+      "remit": "Mines in the Skellefte field and Aitik; tailings and water.",
+      "topics": [
+        "mining",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://news.cision.com/boliden/contact",
+      "active": true
+    },
+    {
+      "id": "stegra",
+      "name": "Stegra",
+      "category": "company",
+      "email": null,
+      "language": "sv",
+      "remit": "Green steel plant in Boden.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "addressCheck": null,
+      "source": "https://stegra.com/contact",
+      "active": false,
+      "notes": "Contact form only, no email address."
+    },
+    {
+      "id": "fsc-sverige",
+      "name": "FSC Sverige",
+      "category": "certification",
+      "email": "kontakt@se.fsc.org",
+      "language": "sv",
+      "remit": "Forest certification standard, including consultation on winter grazing land.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://se.fsc.org/se-sv/kontakt",
+      "active": true
+    },
+    {
+      "id": "pefc-sverige",
+      "name": "Svenska PEFC",
+      "category": "certification",
+      "email": "svenskapefc@pefc.se",
+      "language": "sv",
+      "remit": "Forest certification standard used by most small private forest owners.",
+      "topics": [
+        "forestry",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.pefc.se/",
+      "active": true
+    },
+    {
+      "id": "svemin",
+      "name": "Svemin (Swedish mining industry association)",
+      "category": "industry",
+      "email": "info@svemin.se",
+      "language": "sv",
+      "remit": "Lobbies for the mining industry, including faster permitting.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://svemin.se/om-oss/kontakta-oss",
+      "active": true
+    },
+    {
+      "id": "skogsindustrierna",
+      "name": "Skogsindustrierna (Swedish Forest Industries Federation)",
+      "category": "industry",
+      "email": null,
+      "language": "sv",
+      "remit": "Lobbies for the forest industry.",
+      "topics": [
+        "forestry"
+      ],
+      "addressCheck": null,
+      "source": "https://www.skogsindustrierna.se/om-oss/kontakt/",
+      "active": false,
+      "notes": "Contact form and named staff only."
+    },
+    {
+      "id": "svensk-vindenergi",
+      "name": "Svensk Vindenergi (wind industry association)",
+      "category": "industry",
+      "email": null,
+      "language": "sv",
+      "remit": "Lobbies for wind power.",
+      "topics": [
+        "energyproduction",
+        "greentransition"
+      ],
+      "addressCheck": null,
+      "source": "https://svenskvindenergi.org/kontakt",
+      "active": false,
+      "notes": "Named staff only."
+    },
+    {
+      "id": "arctic-sweden-visitors-board",
+      "name": "Swedish Lapland Visitors Board",
+      "category": "tourism",
+      "email": "info@swedishlapland.com",
+      "language": "sv",
+      "remit": "Destination management for tourism in Swedish Lapland.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.swedishlaplandvisitorsboard.com/en/about-us/organisation-contact/",
+      "active": true,
+      "notes": "Possibly renamed Arctic Sweden Visitors Board; check name and address."
+    },
+    {
+      "id": "naturskyddsforeningen",
+      "name": "Naturskyddsföreningen (Swedish Society for Nature Conservation)",
+      "category": "ngo",
+      "email": "remisser@naturskyddsforeningen.se",
+      "language": "sv",
+      "remit": "Largest environmental organisation in Sweden; policy statements and campaigns on forests and mining.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "mining",
+        "energyproduction",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.naturskyddsforeningen.se/om-oss/kontakta-oss/",
+      "active": true,
+      "notes": "No general mailbox; this is the policy-statement address. press@naturskyddsforeningen.se is the alternative."
+    },
+    {
+      "id": "skydda-skogen",
+      "name": "Skydda Skogen (Protect the Forest)",
+      "category": "ngo",
+      "email": "info@skyddaskogen.se",
+      "language": "sv",
+      "remit": "Campaigns against clear-cutting of old-growth forest; monitors felling notifications.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://skyddaskogen.se/kontakt/",
+      "active": true
+    },
+    {
+      "id": "wwf-sverige",
+      "name": "Världsnaturfonden WWF",
+      "category": "ngo",
+      "email": "info@wwf.se",
+      "language": "sv",
+      "remit": "Conservation organisation; forest and freshwater programmes.",
+      "topics": [
+        "biodiversity",
+        "forestry",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.wwf.se/kontakt/",
+      "active": true
+    },
+    {
+      "id": "greenpeace-sverige",
+      "name": "Greenpeace Sverige",
+      "category": "ngo",
+      "email": "info.se@greenpeace.org",
+      "language": "sv",
+      "remit": "Campaigns on forests and climate.",
+      "topics": [
+        "forestry",
+        "greentransition",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.greenpeace.org/sweden/om-oss/kontakta-oss/",
+      "active": true
+    },
+    {
+      "id": "faltbiologerna",
+      "name": "Fältbiologerna (youth nature organisation)",
+      "category": "ngo",
+      "email": "info@faltbiologerna.se",
+      "language": "sv",
+      "remit": "Youth organisation; forest defence actions and inventories.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://faltbiologerna.se/om-oss/kontakt/",
+      "active": true
+    },
+    {
+      "id": "sportfiskarna",
+      "name": "Sportfiskarna (Swedish Anglers Association)",
+      "category": "ngo",
+      "email": "info@sportfiskarna.se",
+      "language": "sv",
+      "remit": "Pushes for fish passages and hydropower omprövning; salmon rivers.",
+      "topics": [
+        "energyproduction",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sportfiskarna.se/om-oss/kontakt/",
+      "active": true
+    },
+    {
+      "id": "eu-dg-env",
+      "name": "European Commission, DG Environment",
+      "category": "eu",
+      "email": null,
+      "language": "sv",
+      "remit": "Nature Restoration Regulation, deforestation regulation, LULUCF.",
+      "topics": [
+        "biodiversity",
+        "forestry",
+        "rightsofnature"
+      ],
+      "addressCheck": null,
+      "source": "https://commission.europa.eu/about/departments-and-executive-agencies/environment_en",
+      "active": false,
+      "notes": "No public functional mailbox found. Letters would be in English."
+    },
+    {
+      "id": "eu-dg-grow",
+      "name": "European Commission, DG GROW",
+      "category": "eu",
+      "email": null,
+      "language": "sv",
+      "remit": "Critical Raw Materials Act and strategic projects such as Per Geijer.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": null,
+      "source": "https://commission.europa.eu/about/departments-and-executive-agencies/internal-market-industry-entrepreneurship-and-smes_en",
+      "active": false,
+      "notes": "Not researched yet."
+    }
+  ]
+}
