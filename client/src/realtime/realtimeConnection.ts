@@ -391,7 +391,7 @@ async function fetchWithTimeout(
     // Re-brand our own timeout so callers don't mistake it for a caller-driven
     // cancellation and drop the session on the floor.
     if (timedOut && !externalSignal?.aborted) {
-      throw new RealtimeTimeoutError(`Realtime request timed out after ${timeoutMs}ms`);
+      throw new RealtimeTimeoutError(`Realtime request timed out after ${timeoutMs}ms (${String(input)})`);
     }
     throw err;
   } finally {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ClientErrorKey } from "@shared/SocketTypes";
 import { reportTerminalError, type ClientReportSeverity, type ClientReportImpact } from "@/logger";
+import { isNetworkFailure } from "@/api/http";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,7 +105,9 @@ export const useErrorStore = create<ErrorStore>((set) => ({
     set({ unrecoverableError: normalized });
     reportTerminalError(normalized.source, normalized.message, normalized.cause, {
       meetingId: normalized.meetingId,
-      severity: normalized.severity,
+      // The session still ended for the visitor, but a request that never got
+      // an answer is their network, not a crash of ours — not worth 'critical'.
+      severity: normalized.severity ?? (isNetworkFailure(normalized.cause) ? "warning" : undefined),
       clientImpact: normalized.clientImpact,
     });
   },

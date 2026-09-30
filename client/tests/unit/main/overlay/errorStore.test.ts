@@ -1,6 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act } from "@testing-library/react";
 import { useErrorStore } from "@main/overlay/errorStore";
+import { reportTerminalError } from "@/logger";
+
+vi.mock("@/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/logger")>()),
+  reportTerminalError: vi.fn(),
+}));
 
 describe("errorStore — connection error tracking", () => {
   beforeEach(() => {
@@ -94,6 +100,23 @@ describe("errorStore — unrecoverable error tracking", () => {
     act(() => useErrorStore.getState().resetForTests());
     expect(useErrorStore.getState().connectionError).toBe(false);
     expect(useErrorStore.getState().unrecoverableError).toBeNull();
+  });
+
+  /** A request that never got an answer is the visitor's network, not a crash of ours. */
+  it.each([
+    { name: "Chromium network failure", cause: new TypeError("Failed to fetch"), severity: undefined, reported: "warning" },
+    { name: "WebKit network failure", cause: new TypeError("Load failed"), severity: undefined, reported: "warning" },
+    { name: "network failure with a severity of its own", cause: new TypeError("Failed to fetch"), severity: "info" as const, reported: "info" },
+    { name: "bug that happens to be a TypeError", cause: new TypeError("x is undefined"), severity: undefined, reported: undefined },
+  ])("reports a $name at $reported", ({ cause, severity, reported }) => {
+    vi.mocked(reportTerminalError).mockClear();
+    act(() => useErrorStore.getState().setUnrecoverableError({ message: cause.message, source: "test", cause, severity }));
+    expect(reportTerminalError).toHaveBeenCalledWith(
+      "test",
+      cause.message,
+      cause,
+      expect.objectContaining({ severity: reported }),
+    );
   });
 });
 
