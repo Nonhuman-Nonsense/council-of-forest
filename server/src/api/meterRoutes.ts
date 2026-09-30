@@ -1,24 +1,24 @@
+import path from "node:path";
 import type { Express, Request, Response } from "express";
 import type { Server } from "socket.io";
 
 import {
     METER_NAMESPACE,
+    METER_PAGE_PATHS,
     METER_ROOM_POWER_EVENT,
     METER_USAGE_EVENT,
     type MeterSnapshot,
     type MeterUsageEvent,
+    type RoomPowerReading,
 } from "@shared/MeterTypes.js";
+import type { UsageEvent } from "@shared/UsageTypes.js";
 import { meetingsCollection } from "@services/DbService.js";
-import {
-    getMeetingUsageTotals,
-    getUsageTotals,
-    GLOBAL_USAGE_SCOPE,
-    venueUsageScope,
-    onUsageRecorded,
-} from "@services/UsageService.js";
-import { getRoomPower, onRoomPowerRecorded } from "@services/RoomPowerService.js";
+import { getUsageTotals } from "@services/UsageService.js";
+import { getRoomPower } from "@services/RoomPowerService.js";
+import { meterEvents } from "@services/meterEvents.js";
 import { InternalServerError } from "@models/Errors.js";
 import { Logger } from "@utils/Logger.js";
+import { CACHE_CONTROL_NO_STORE } from "@utils/httpCache.js";
 import { findVenue, resolveVenueId } from "@utils/venues.js";
 
 /**
@@ -33,9 +33,9 @@ export async function getMeterSnapshot(venueId: string | undefined): Promise<Met
         : null;
 
     const [global, venue, meetingTotals, room] = await Promise.all([
-        getUsageTotals(GLOBAL_USAGE_SCOPE),
-        venueId ? getUsageTotals(venueUsageScope(venueId)) : Promise.resolve([]),
-        latestMeeting ? getMeetingUsageTotals(latestMeeting._id) : Promise.resolve([]),
+        getUsageTotals(),
+        venueId ? getUsageTotals({ venueId }) : Promise.resolve([]),
+        latestMeeting ? getUsageTotals({ meetingId: latestMeeting._id }) : Promise.resolve([]),
         venueId ? getRoomPower(venueId) : Promise.resolve([]),
     ]);
 
@@ -46,6 +46,14 @@ export async function getMeterSnapshot(venueId: string | undefined): Promise<Met
         meeting: latestMeeting ? { meetingId: latestMeeting._id, totals: meetingTotals } : null,
         room,
     };
+}
+
+/** The meter's own page and bundle (client/dist/meter.html), outside the council app's language routing. */
+export function registerMeterPage(app: Express, clientDistPath: string): void {
+    app.get(METER_PAGE_PATHS, (_req: Request, res: Response) => {
+        res.setHeader("Cache-Control", CACHE_CONTROL_NO_STORE);
+        res.sendFile(path.join(clientDistPath, "meter.html"));
+    });
 }
 
 export function registerMeterRoutes(app: Express): void {
@@ -65,15 +73,15 @@ export function registerMeterRoutes(app: Express): void {
  */
 export function registerMeterSocket(io: Server): () => void {
     const meters = io.of(METER_NAMESPACE);
-    const stopUsage = onUsageRecorded((event) => {
+    const onUsage = (event: UsageEvent) => {
         const payload: MeterUsageEvent = { ...event, ts: event.ts.toISOString() };
         meters.emit(METER_USAGE_EVENT, payload);
-    });
-    const stopRoomPower = onRoomPowerRecorded((reading) => {
-        meters.emit(METER_ROOM_POWER_EVENT, reading);
-    });
+    };
+    const onRoomPower = (reading: RoomPowerReading) => meters.emit(METER_ROOM_POWER_EVENT, reading);
+    meterEvents.on("usage", onUsage);
+    meterEvents.on("roomPower", onRoomPower);
     return () => {
-        stopUsage();
-        stopRoomPower();
+        meterEvents.off("usage", onUsage);
+        meterEvents.off("roomPower", onRoomPower);
     };
 }

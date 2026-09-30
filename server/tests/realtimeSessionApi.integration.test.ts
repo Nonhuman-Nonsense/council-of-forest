@@ -408,11 +408,11 @@ describe("POST /api/realtime/* (integration)", () => {
             return (await res.json()).usageToken;
         }
 
-        function report(usageToken: string, responses: unknown[]) {
+        function report(usageToken: string, usage: unknown) {
             return fetch(`${base()}/api/usage/realtime`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ usageToken, responses }),
+                body: JSON.stringify({ usageToken, usage }),
             });
         }
 
@@ -427,11 +427,10 @@ describe("POST /api/realtime/* (integration)", () => {
         it("records a setup-agent session's usage under the venue it names", async () => {
             const usageToken = await bootstrap({ feature: "setup-agent", language: "en", venueId: "museum-oslo" });
 
-            expect((await report(usageToken, [greetingUsage])).status).toBe(204);
+            expect((await report(usageToken, greetingUsage)).status).toBe(204);
 
             expect(await storedEvents(2)).toEqual(expect.arrayContaining([
                 {
-                    source: "client",
                     feature: "setup-agent",
                     provider: "inworld",
                     model: "google-ai-studio/gemini-2.5-flash",
@@ -439,7 +438,6 @@ describe("POST /api/realtime/* (integration)", () => {
                     venueId: "museum-oslo",
                 },
                 {
-                    source: "client",
                     feature: "setup-agent",
                     provider: "inworld",
                     model: "inworld-tts-1.5-max",
@@ -455,10 +453,9 @@ describe("POST /api/realtime/* (integration)", () => {
             await meetingsCollection.updateOne({ liveKey }, { $set: { venueId: "museum-oslo" } });
             const usageToken = await bootstrap({ feature: "meta-agent", language: "en" }, liveKey);
 
-            await report(usageToken, [{ stt: { model: "soniox/stt-rt-v4", audio_seconds: 2.879 } }]);
+            await report(usageToken, { stt: { model: "soniox/stt-rt-v4", audio_seconds: 2.879 } });
 
             expect(await storedEvents(1)).toEqual([{
-                source: "client",
                 feature: "meta-agent",
                 provider: "inworld",
                 model: "soniox/stt-rt-v4",
@@ -469,7 +466,7 @@ describe("POST /api/realtime/* (integration)", () => {
         });
 
         it("rejects reports without a token the server handed out", async () => {
-            const res = await report("forged-token", [greetingUsage]);
+            const res = await report("forged-token", greetingUsage);
 
             expect(res.status).toBe(403);
             expect(await usageEventsCollection!.countDocuments()).toBe(0);
@@ -478,7 +475,7 @@ describe("POST /api/realtime/* (integration)", () => {
         it("clamps a response's usage to plausible limits", async () => {
             const usageToken = await bootstrap({ feature: "setup-agent", language: "en" });
 
-            await report(usageToken, [{ tts: { model: "inworld-tts-1.5-max", characters: 1e12, audio_seconds: -5 } }]);
+            await report(usageToken, { tts: { model: "inworld-tts-1.5-max", characters: 1e12, audio_seconds: -5 } });
 
             const [event] = await storedEvents(1);
             expect(event.measures).toEqual({ characters: 50_000 });
