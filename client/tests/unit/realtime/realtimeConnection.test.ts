@@ -617,8 +617,6 @@ describe("realtime request timeouts", () => {
 
     expect(err).toBeInstanceOf(RealtimeTimeoutError);
     expect((err as Error).name).not.toBe("AbortError");
-    // ErrorBot only sees the message, so it has to say which request hung.
-    expect((err as Error).message).toContain("/api/realtime/bootstrap");
   });
 
   it("still reports a caller-driven abort as AbortError", async () => {

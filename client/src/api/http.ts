@@ -18,24 +18,6 @@ export class HttpStatusError extends Error {
   }
 }
 
-/**
- * What `fetch` rejects with when no response came back at all — the visitor is
- * offline, their network dropped the connection, an extension blocked it —
- * as each engine words it (Chromium, Firefox, WebKit).
- */
-const NETWORK_FAILURE_MESSAGE =
-  /^(Failed to fetch|NetworkError when attempting to fetch resource\.?|Load failed|Network request failed)$/;
-
-/**
- * Did this request fail without ever reaching an answer from the server?
- *
- * Almost always the visitor's own connection rather than a fault of ours, so
- * reporting treats it apart from a genuine crash.
- */
-export function isNetworkFailure(err: unknown): boolean {
-  return err instanceof TypeError && NETWORK_FAILURE_MESSAGE.test(err.message);
-}
-
 function shouldLogApi(): boolean {
   return getDevLogEnabled() && isDevLogCategoryEnabled("API");
 }

@@ -34,9 +34,7 @@ const SEVERITY: Record<RealtimeIssueKind, ClientReportSeverity> = {
   "connection-lost": "warning",
   "turn-recovered": "warning",
   "capacity": "warning",
-  // Only the web gives up, and the app carries on without the agent — worth
-  // knowing about, but nothing is broken.
-  "retry-exhausted": "warning",
+  "retry-exhausted": "error",
   "refused": "error",
 };
 

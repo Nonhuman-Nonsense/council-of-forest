@@ -198,24 +198,6 @@ export interface ClientReportMeta {
   clientImpact?: ClientReportImpact;
 }
 
-/** Chromium's Network Information API — absent elsewhere, and not in lib.dom. */
-type NetworkInformationLike = { effectiveType?: unknown; rtt?: unknown; downlink?: unknown };
-
-/**
- * The visitor's connection as the browser sees it, so a report can tell a bad
- * network from a fault of ours. `onLine` false is conclusive; true only means
- * some interface is up.
- */
-function describeNetwork(): { online: boolean; effectiveType?: string; rttMs?: number; downlinkMbps?: number } {
-  const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection;
-  return {
-    online: navigator.onLine,
-    ...(typeof connection?.effectiveType === "string" ? { effectiveType: connection.effectiveType } : {}),
-    ...(Number.isFinite(connection?.rtt) ? { rttMs: connection!.rtt as number } : {}),
-    ...(Number.isFinite(connection?.downlink) ? { downlinkMbps: connection!.downlink as number } : {}),
-  };
-}
-
 function postClientReport(
   source: string,
   message: string,
@@ -237,7 +219,6 @@ function postClientReport(
       // Lets ErrorBot tell a visitor from a crawler.
       interacted: hasSignOfLife(),
       webdriver: navigator.webdriver === true,
-      network: describeNetwork(),
       cause: cause === undefined ? undefined : serializeClientCause(cause),
     }),
     keepalive: true,

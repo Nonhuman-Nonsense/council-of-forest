@@ -325,11 +325,6 @@ export function useRealtimeVoiceSession(
   /** True once onConnectionLost has been called and onConnectionRestored not yet. */
   const hasNotifiedLostRef = useRef(false);
   /**
-   * Why the latest attempt failed. The attempts of a bounded budget are not
-   * reported one by one, so the giving-up report carries the reason instead.
-   */
-  const lastFailureRef = useRef<string | null>(null);
-  /**
    * The data channel opened, so this session genuinely worked. An SDP exchange
    * that returns proves nothing: on a network that blocks WebRTC, ICE fails
    * ~20s later and the peer connection never carries anything. Counting that as
@@ -457,19 +452,11 @@ export function useRealtimeVoiceSession(
     // Without a policy, fall through to error state.
     if (!policy || (maxRetries !== Infinity && attempt >= maxRetries)) {
       log.event("REALTIME", "retry exhausted", { feature, attempt });
-      const lastFailure = lastFailureRef.current;
       reportRealtimeIssue({
         feature,
         kind: "retry-exhausted",
-        message:
-          `Realtime agent gave up after ${attempt} reconnect attempts${policy?.giveUpSilently ? ", switched off" : ""}` +
-          (lastFailure ? `. Last failure: ${lastFailure}` : ""),
-        detail: {
-          attempt,
-          giveUpSilently: policy?.giveUpSilently ?? false,
-          everOpened: dcOpenedRef.current,
-          lastFailure,
-        },
+        message: `Realtime agent gave up after ${attempt} reconnect attempts${policy?.giveUpSilently ? ", switched off" : ""}`,
+        detail: { attempt, giveUpSilently: policy?.giveUpSilently ?? false, everOpened: dcOpenedRef.current },
       });
       if (policy?.giveUpSilently) {
         setConnectionState("idle");
@@ -504,7 +491,6 @@ export function useRealtimeVoiceSession(
       onConnectionRestoredRef.current?.();
     }
     retryAttemptsRef.current = 0;
-    lastFailureRef.current = null;
     setConnectionState("ready");
   }, [feature]);
 
@@ -897,7 +883,6 @@ export function useRealtimeVoiceSession(
             // heartbeat is the only sign the kiosk is wedged.
             const summaryComing =
               !dcOpenedRef.current && retryPolicyRef.current?.maxRetries !== Infinity;
-            lastFailureRef.current = `connection ${reason}`;
             if (!summaryComing) {
               reportRealtimeIssue({
                 feature,
@@ -982,19 +967,12 @@ export function useRealtimeVoiceSession(
         });
         scheduleRetry(false, true);
       } else {
-        // As with a connection that never carried media: a bounded budget ends
-        // in one `retry-exhausted` report carrying this reason, so one visitor
-        // on a bad network costs one message instead of four. Unlimited
-        // retries never send that summary, so each failure keeps reporting.
-        lastFailureRef.current = msg;
-        if (retryPolicyRef.current?.maxRetries === Infinity) {
-          reportRealtimeIssue({
-            feature,
-            kind: "connection-lost",
-            message: `Realtime session failed to start, retrying: ${msg}`,
-            code: "start-failed",
-          });
-        }
+        reportRealtimeIssue({
+          feature,
+          kind: "connection-lost",
+          message: `Realtime session failed to start, retrying: ${msg}`,
+          code: "start-failed",
+        });
         scheduleRetry();
       }
     } finally {

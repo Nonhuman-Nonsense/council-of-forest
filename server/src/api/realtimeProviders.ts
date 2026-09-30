@@ -103,40 +103,18 @@ export function resolveChairRealtimeCallProvider(
     return pickChairRealtimeProvider(language);
 }
 
-/**
- * How long Inworld gets to answer, retries included. Every call here has a
- * browser waiting behind its own 15s timeout (`FETCH_TIMEOUT_MS` in the
- * client's realtimeConnection), so giving up first turns a slow provider into
- * an error we log and answer, instead of a hang that only ever shows up as
- * the visitor's timeout.
- */
-export const INWORLD_REALTIME_DEADLINE_MS = 10_000;
-
 async function inworldFetch(path: string, init: RequestInit, context: string): Promise<Response> {
-    const controller = new AbortController();
-    const deadline = setTimeout(() => controller.abort(), INWORLD_REALTIME_DEADLINE_MS);
-    let response: Response;
-    try {
-        response = await withNetworkRetry(
-            () =>
-                fetch(`${INWORLD_BASE}${path}`, {
-                    ...init,
-                    signal: controller.signal,
-                    headers: {
-                        Authorization: `Bearer ${config.INWORLD_API_KEY}`,
-                        ...(init.headers ?? {}),
-                    },
-                }),
-            context
-        );
-    } catch (error) {
-        if (controller.signal.aborted) {
-            throw new Error(`Inworld ${path} did not answer within ${INWORLD_REALTIME_DEADLINE_MS}ms`, { cause: error });
-        }
-        throw error;
-    } finally {
-        clearTimeout(deadline);
-    }
+    const response = await withNetworkRetry(
+        () =>
+            fetch(`${INWORLD_BASE}${path}`, {
+                ...init,
+                headers: {
+                    Authorization: `Bearer ${config.INWORLD_API_KEY}`,
+                    ...(init.headers ?? {}),
+                },
+            }),
+        context
+    );
     // Deliberately outside the retry: a browser is waiting on this request
     // behind its own 15s timeout, so waiting a busy account out here would
     // just time the visitor out. The status is carried instead, and the

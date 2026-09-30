@@ -804,46 +804,6 @@ describe("useRealtimeVoiceSession", () => {
     expect(mockFetchRealtimeBootstrap).toHaveBeenCalledTimes(2);
   });
 
-  it("reports a start that never succeeds once, when it gives up, naming why", async () => {
-    mockFetchRealtimeBootstrap.mockRejectedValue(
-      new Error("Realtime request timed out after 15000ms (/api/realtime/bootstrap)")
-    );
-    const onExhausted = vi.fn();
-
-    renderHook(() =>
-      useRealtimeVoiceSession({
-        ...defaultParams,
-        retryPolicy: { maxRetries: 3, giveUpSilently: true },
-        onExhausted,
-      })
-    );
-
-    await waitFor(() => expect(onExhausted).toHaveBeenCalledOnce());
-    expect(reportRealtimeIssue).toHaveBeenCalledOnce();
-    expect(reportRealtimeIssue).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: "retry-exhausted",
-        message: expect.stringContaining("/api/realtime/bootstrap"),
-      })
-    );
-  });
-
-  it("reports each failed start when retries are unlimited, since no summary is coming", async () => {
-    mockFetchRealtimeBootstrap.mockRejectedValueOnce(new Error("Failed to fetch"));
-
-    const { result } = renderHook(() =>
-      useRealtimeVoiceSession({
-        ...defaultParams,
-        retryPolicy: { maxRetries: Infinity, giveUpSilently: false },
-      })
-    );
-
-    await waitFor(() => expect(result.current.connectionState).toBe("ready"));
-    expect(reportRealtimeIssue).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "connection-lost", code: "start-failed" })
-    );
-  });
-
   /**
    * A network that blocks WebRTC still completes the SDP exchange — ICE fails
    * ~20s later. Counting that as a working session reset the retry budget every

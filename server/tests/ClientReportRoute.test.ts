@@ -42,16 +42,6 @@ describe('ClientReportBody schema', () => {
         expect(result.success).toBe(true);
     });
 
-    it('keeps a report whose network details are malformed, dropping just those', () => {
-        const result = ClientReportBody.safeParse({
-            message: 'boom',
-            source: 'window.onerror',
-            network: { online: true, rttMs: null },
-        });
-        expect(result.success).toBe(true);
-        expect(result.data?.network).toBeUndefined();
-    });
-
     it('rejects a missing message', () => {
         const result = ClientReportBody.safeParse({ source: 'window.onerror' });
         expect(result.success).toBe(false);
@@ -95,22 +85,13 @@ describe('buildClientErrorReport', () => {
     });
 
     it.each([
-        { name: 'visitor who interacted', interacted: true, webdriver: false, network: { online: true }, present: [], absent: ['[no-interaction]', '[webdriver]', '[offline]', '[net'] },
-        { name: 'crawler that never interacted', interacted: false, webdriver: false, network: undefined, present: ['[no-interaction]'], absent: ['[webdriver]'] },
-        { name: 'headless browser', interacted: true, webdriver: true, network: undefined, present: ['[webdriver]'], absent: ['[no-interaction]'] },
-        { name: 'older client without signals', interacted: undefined, webdriver: undefined, network: undefined, present: [], absent: ['[no-interaction]', '[webdriver]', '[offline]', '[net'] },
-        { name: 'browser that is offline', interacted: true, webdriver: false, network: { online: false }, present: ['[offline]'], absent: ['[net'] },
-        {
-            name: 'visitor on a slow connection',
-            interacted: true,
-            webdriver: false,
-            network: { online: true, effectiveType: '3g', rttMs: 450, downlinkMbps: 1.5 },
-            present: ['[net 3g rtt=450ms 1.5Mbps]'],
-            absent: ['[offline]'],
-        },
-    ])('tags the client line for a $name', ({ interacted, webdriver, network, present, absent }) => {
+        { name: 'visitor who interacted', interacted: true, webdriver: false, present: [], absent: ['[no-interaction]', '[webdriver]'] },
+        { name: 'crawler that never interacted', interacted: false, webdriver: false, present: ['[no-interaction]'], absent: ['[webdriver]'] },
+        { name: 'headless browser', interacted: true, webdriver: true, present: ['[webdriver]'], absent: ['[no-interaction]'] },
+        { name: 'older client without signals', interacted: undefined, webdriver: undefined, present: [], absent: ['[no-interaction]', '[webdriver]'] },
+    ])('tags the client line for a $name', ({ interacted, webdriver, present, absent }) => {
         const report = buildClientErrorReport(
-            { message: 'boom', source: 'window.onerror', interacted, webdriver, network },
+            { message: 'boom', source: 'window.onerror', interacted, webdriver },
             'Mozilla/5.0 (compatible; Googlebot/2.1)',
         );
         const clientLine = report.message.split('\n')[1];

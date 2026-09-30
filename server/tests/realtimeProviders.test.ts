@@ -75,7 +75,6 @@ import {
     getInworldIceServers,
     getMetaAgentRealtimeBootstrap,
     getSetupAgentRealtimeBootstrap,
-    INWORLD_REALTIME_DEADLINE_MS,
 } from "@api/realtimeProviders.js";
 
 const SDP_ANSWER = "v=0\r\no=- 9 2 IN IP4 0.0.0.0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
@@ -394,30 +393,5 @@ describe("createInworldCall", () => {
         );
 
         await expect(createInworldCall({ sdp: SDP_OFFER })).rejects.toThrow(/empty SDP answer/);
-    });
-
-    describe("when Inworld never answers", () => {
-        beforeEach(() => {
-            vi.useFakeTimers();
-        });
-
-        afterEach(() => {
-            vi.useRealTimers();
-        });
-
-        it("gives up before the waiting browser's own timeout", async () => {
-            vi.mocked(global.fetch).mockImplementation(
-                (_input, init) =>
-                    new Promise((_resolve, reject) => {
-                        init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
-                    })
-            );
-
-            const pending = createInworldCall({ sdp: SDP_OFFER }).catch((e: unknown) => e);
-            await vi.advanceTimersByTimeAsync(INWORLD_REALTIME_DEADLINE_MS);
-
-            expect(INWORLD_REALTIME_DEADLINE_MS).toBeLessThan(15_000);
-            expect(await pending).toMatchObject({ message: expect.stringContaining("/v1/realtime/calls") });
-        });
     });
 });
