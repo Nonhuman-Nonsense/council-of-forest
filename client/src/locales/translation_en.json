@@ -70,9 +70,14 @@
   "staff": {
     "title": "STAFF",
     "panels": {
+      "mode": "Mode",
       "installation": "Installation",
       "details": "Details & hints",
       "logging": "Logging"
+    },
+    "toggle": {
+      "on": "On",
+      "off": "Off"
     },
     "logging": {
       "on": "On",
@@ -98,9 +103,6 @@
     "museum": "Museum",
     "presenter": "Presenter",
     "modeSwitchButton": "Mode switch button",
-    "bridge": {
-      "title": "Bridge"
-    },
     "alerts": {
       "label": "Alert emails",
       "test": "Send test alert",
@@ -126,6 +128,8 @@
       "label": "Installation key",
       "placeholder": "Paste the installation key",
       "save": "Save",
+      "change": "Change",
+      "cancel": "Cancel",
       "notSaved": "Not saved",
       "hint": "The council server's COUNCIL_INSTALLATION_KEY. The bridge keeps it for this server, for printer alert emails; it is never shown again.",
       "status": {
