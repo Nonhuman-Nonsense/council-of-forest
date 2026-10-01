@@ -104,6 +104,19 @@
       "unknown": "{{id}} (finns inte längre på servern)",
       "hint": "Var den här installationen körs. Märker dess AI-användning för fotavtrycksmätaren och rummets eluttag, och avgör vem som får larmmejl om skrivaren."
     },
+    "installationKey": {
+      "label": "Installationsnyckel",
+      "placeholder": "Klistra in installationsnyckeln",
+      "save": "Spara",
+      "notSaved": "Inte sparad",
+      "hint": "Rådsserverns COUNCIL_INSTALLATION_KEY. Bryggan sparar den för den här servern, för larmmejl om skrivaren; den visas aldrig igen.",
+      "status": {
+        "saved": "Sparad",
+        "missing": "Inte inställd",
+        "otherServer": "Sparad för {{server}}; ange den här serverns nyckel",
+        "outdated": "Uppdatera bryggan för att ange den"
+      }
+    },
     "bridge": {
       "title": "Brygga"
     },
@@ -111,7 +124,7 @@
       "label": "Larmmejl",
       "test": "Skicka testlarm",
       "status": {
-        "notConfigured": "Inte inställt på bryggan",
+        "noKey": "Ingen installationsnyckel",
         "chooseVenue": "Välj en plats",
         "failing": "Fungerar inte",
         "on": "På"
