@@ -70,9 +70,14 @@
   "staff": {
     "title": "PERSONAL",
     "panels": {
+      "mode": "Läge",
       "installation": "Installation",
       "details": "Detaljer & tips",
       "logging": "Loggning"
+    },
+    "toggle": {
+      "on": "På",
+      "off": "Av"
     },
     "logging": {
       "on": "På",
@@ -108,6 +113,8 @@
       "label": "Installationsnyckel",
       "placeholder": "Klistra in installationsnyckeln",
       "save": "Spara",
+      "change": "Ändra",
+      "cancel": "Avbryt",
       "notSaved": "Inte sparad",
       "hint": "Rådsserverns COUNCIL_INSTALLATION_KEY. Bryggan sparar den för den här servern, för larmmejl om skrivaren; den visas aldrig igen.",
       "status": {
@@ -116,9 +123,6 @@
         "otherServer": "Sparad för {{server}}; ange den här serverns nyckel",
         "outdated": "Uppdatera bryggan för att ange den"
       }
-    },
-    "bridge": {
-      "title": "Brygga"
     },
     "alerts": {
       "label": "Larmmejl",
