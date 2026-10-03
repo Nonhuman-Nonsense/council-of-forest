@@ -114,11 +114,13 @@ ranges. Its Python library is used at dev time only; the Node app never runs Pyt
     profile with the Dutch electricity mix (from `x-region: europe-west4`).
   - Soniox STT: nothing published; 0.6–2B (Parakeet TDT 0.6B to Whisper large-v3 1.55B), 50
     tokens per audio second, EcoLogits' generic US cloud profile.
-- **Mistral Large 3 correction:** EcoLogits (0.11.1 and `main`) lists `mistral-large-2512` as
-  123B dense, copied from Mistral Large 2. Mistral publishes 675B total / 41B active,
-  mixture-of-experts. `export.py` overrides it, with an 8–16-bit serving range (weights ship in
-  FP8 and BF16; EcoLogits sizes the GPU fleet by weight memory, so 16–32 GPUs): 0.24 Wh →
-  **0.60–1.20 Wh per 400 tokens**. Reported upstream as a GitHub issue (2026-09).
+- **Mistral Large 3:** EcoLogits up to 0.11.1 listed `mistral-large-2512` as 123B dense, copied
+  from Mistral Large 2. We reported it; 0.11.2 (2026-09-29,
+  [PR #262](https://github.com/mlco2/ecologits/pull/262)) takes Mistral's published 675B total /
+  41B active mixture-of-experts and a measured 16 tokens/s. `export.py` keeps only our 8–16-bit
+  serving range (weights ship in FP8 and BF16; EcoLogits assumes 16-bit and has announced
+  changes to how it treats quantization), so 16–32 GPUs: **0.78–1.6 Wh per 400 tokens**.
+  Revisit the range when EcoLogits' quantization change lands.
 - **Training** (`shared/footprint/training.ts`) is shown whole, never per request: no provider
   publishes a model's lifetime request count. Only Mistral publishes figures — Large 2's life-cycle
   analysis (training + 18 months: 20.4 kt CO₂e, 281,000 m³ water, 660 kg Sb eq), shown as the
@@ -163,15 +165,34 @@ projector (BenQ TH682ST) draws ≈ 244 W typical, 320 W max.
 - **Data:** `GET /api/meter?venue=<id>` returns a `MeterSnapshot` (`shared/MeterTypes.ts`):
   usage totals for all councils, the venue and its latest meeting, plus the room's plugs.
   `useMeterFeed` refetches it on every socket (re)connect and folds pushed events in.
-- **Screen:** "This meeting" (large), "In this room, measured" (power now, electricity so far,
-  one line per reporting plug; a plug silent for 20 s drops off, its energy stays in the
-  total; power now shows – when no plug reports), "At <venue>", "All councils" — energy, water, carbon,
-  minerals as midpoint + low–high range — the models answering and their assumed countries,
-  "Before it could speak" (training), and a QR code to the methodology page. Sized in container
-  units (`cqw`), so it scales with the display and rotates without a second set of sizes.
-- **Methodology page:** generated from the same table — what is counted, how EcoLogits works,
-  per model role, location, size, impacts per 400 tokens or per minute of audio, assumptions and
-  sources; training; what is left out; Mistral's and Google's own figures for contrast.
+- **Screen**, a chain of certainty, each section tagged with how its figures are known:
+  1. **Here** (*measured*): power now, electricity so far, one line per reporting plug; a plug
+     silent for 20 s drops off, its energy stays in the total; power now shows – when none report.
+  2. **This meeting** (*counted*): replies written, minutes spoken, minutes listened — exactly
+     what the providers bill for (`countedOf`, by each model's `role`).
+  3. **Elsewhere** (*estimated*): energy, water and carbon for the meeting, each with what it
+     leaves out, and the share of the energy that rests on `guessed` models (`guessedShareOf`).
+  4. **Hardware** (*estimated*): GPU time the meeting occupied (`estimateGpuSeconds`: generation
+     time × GPUs ÷ batch size) — what EcoLogits divides the hardware's minerals by — with the
+     documented mining places in rotation. The Sb eq figure itself is on the methodology page.
+  5. **Who's counting**: one answer by Google, Mistral and EcoLogits, rotating water / carbon /
+     energy (`shared/footprint/counting.ts`).
+  6. **Not counted** and **Not disclosed**, with the one published training figure.
+  7. **Since opening at <venue>**: the same estimates for the whole exhibition.
+  8. A QR code to the methodology page.
+
+  Estimates are only ever shown as ranges — both ends, two significant figures, no midpoint:
+  EcoLogits' ends are bounds from extreme inputs, not a distribution. Sized in container units
+  (`cqw`), so it scales with the display and rotates without a second set of sizes.
+- **Methodology page:** generated from the same tables — how each figure is known, why ranges
+  and why they are still too narrow, who's counting in full (each source's boundary), minerals
+  (why GPU time, Sb eq explained, >99% from making the hardware, the mining places with sources),
+  per-model cards (role, basis, location, size, impacts and GPU time per 400 tokens or minute of
+  audio, assumptions, sources), training, and all councils.
+- **Mining places** (`MINERAL_PLACES`): tantalum at Rubaya (DR Congo), cobalt around Kolwezi
+  (DR Congo), gallium in China, copper at Escondida (Chile) — documented places in each
+  mineral's supply, never a claim about which mine fed our hardware. Wording to be reviewed
+  before the opening.
 
 ---
 
@@ -216,6 +237,7 @@ documented, citable impacts on local communities, and without claiming which min
 ## Open items
 
 - Tune layout and copy on the real display; then remove `?demo`.
+- Review the mining places' wording (`shared/footprint/counting.ts`) before the opening.
 - Comparisons that make numbers tangible (one per metric, true at both small and large scale).
 - Minerals and places content, with reviewed wording about affected communities.
 - Human input: confirm in a dev log (`[HI] usage`) that its transcription usage arrives;
