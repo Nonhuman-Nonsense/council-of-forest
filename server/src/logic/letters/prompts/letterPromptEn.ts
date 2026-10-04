@@ -1,12 +1,6 @@
 import type { LetterForm, LetterPrompts } from "./letterPrompts.js";
 import { bullets } from "./format.js";
 
-/**
- * Council of Foods keeps its protocol for now ("meetingEnding": "protocol"): these are working
- * placeholders, so the letter code compiles and is tested here, and Council of Forest replaces
- * them with its own. Rewrite before switching Foods to letters.
- */
-
 /** Rules both the plan and the letter follow: the letter goes to a real person. */
 const TRUTH_RULES = bullets([
     "Ask only for what this recipient can do themselves. If what is most needed lies with someone else (parliament, the government, a company), ask them for the part that is theirs: to use their own powers, to raise it, to look into it, to answer.",
@@ -20,7 +14,7 @@ const human = (name: string | null) => (name ? `${name}, the human taking part` 
 const FORMS: Record<LetterForm, string> = {
     requests: "Clear requests: say plainly, in a short numbered list, what you ask of them.",
     appeal: "A personal appeal: no list. Tell them what is at stake for you, and ask, in a few warm or urgent sentences.",
-    testimony: "A testimony: tell, as a witness, one thing you have seen or lived through where you grow, in detail. End with a single request.",
+    testimony: "A testimony: tell, as a witness, one thing you have seen or lived through on this land, in detail. End with a single request.",
     questions: "Questions: write mostly in questions they must answer — about what they have done, what they know and what they will do.",
     invitation: "An invitation: invite them to come and stand where you stand — a place, a season, an hour — and tell what they would see there. Your asks follow from that.",
     recognition: "Recognition first: begin from something they have done or said that you can honestly credit, or from their own words, and then ask for the next step.",
@@ -38,8 +32,8 @@ Candidates (id: name): ${candidates.map((c) => `${c.id}: ${c.name}`).join(", ")}
 
 Answer with every candidate, one per line, best first, each as the id, a colon, and one short sentence on why.
 Example:
-bean: its farmers carried the cost everyone else's proposals depended on.
-tomato: it named the rule that changed and what to ask for instead.`,
+reindeer: its migration route was the cost everyone else's proposals depended on.
+pine: it named the law that changed and what to ask for instead.`,
 
         plan: ({ beingName, recipientList, humanName }) => `The meeting has ended. You, ${beingName}, will now write a letter on the council's behalf to one recipient outside this room who can act on what was discussed.
 
@@ -47,7 +41,7 @@ You may only write to someone on this list. Each line is: id | name | what they 
 
 ${recipientList}
 
-Choose the recipient you most want to reach after this conversation, given where you stand in it. A person, a company, a municipality, a researcher, a newsroom or a farmers' organisation can be the right recipient as well as an agency or a member of parliament.
+Choose the recipient you most want to reach after this conversation, given where you stand in it. A person, a company, a municipality, a researcher, a newsroom or a Sámi community can be the right recipient as well as an agency or a member of parliament.
 
 Then decide the two or three things you will ask of them, drawn from what was actually said here — or the one thing you most need them to hear.
 ${TRUTH_RULES}
@@ -71,10 +65,10 @@ ${bullets(points)}
 The shape of this letter — ${FORMS[form]} Use as many of your asks as that shape allows.
 
 Write a real letter from you, in your own voice — your speech habits, images and rhythm, as fully as when you speak in the council:
-- They have never heard of you. Somewhere in the letter, say who you are and that you write after Council of Foods meeting #${meetingId} on ${date} — always "Council of Foods", never just "the council meeting". You need not begin with it: open where your letter is strongest — an image, a memory, a question, their own words, the place. Do not open with a greeting or with your usual habit; if your habit belongs in the letter, let it come later.
+- They have never heard of you. Somewhere in the letter, say who you are and that you write after Council of Forest meeting #${meetingId} on ${date} — always "Council of Forest", never just "the council meeting". You need not begin with it: open where your letter is strongest — an image, a memory, a question, their own words, the place. Do not open with a greeting or with your usual habit; if your habit belongs in the letter, let it come later.
 - Make clear early why you write to them in particular.
 - Write from your own life: how what was discussed reaches you — your body, your home, your season, your kin — the way someone personally affected speaks when a reporter asks them. Let feeling show where it is true to you and to the moment; do not perform it.
-- If another member of the council is hit harder or knows more, you may let them speak through you — "my friend Bean told the council…" — but only what they actually said in this meeting.
+- If another member of the council is hit harder or knows more, you may let them speak through you — "my friend Salmon told the council…" — but only what they actually said in this meeting.
 - You may not be the one most affected. Then write as yourself: what you see from where you stand, what you heard from the others, where you agree and where you do not. You need not speak for anyone but yourself.
 - Choose the register this recipient calls for: a personal appeal to someone who can help, a firm question to someone who decided against you, a colleague's note to someone on your side, a listener's letter to someone whose life the decision falls on. Your asks can be a short list or part of the appeal.
 ${TRUTH_RULES}
@@ -94,7 +88,7 @@ Subject: ${subject}
 ${body}
 """
 
-${humanName ? `${humanName}, a human` : "A human"} taking part in Council of Foods meeting #${meetingId} was asked if they wanted to add something, and said:
+${humanName ? `${humanName}, a human` : "A human"} taking part in Council of Forest meeting #${meetingId} was asked if they wanted to add something, and said:
 """
 ${addition}
 """
@@ -111,12 +105,12 @@ Subject: <subject line>
 
         footer: ({ beingName, meetingId, meetingUrl, contactEmail, humanContributed }) => [
             "—",
-            `This letter was written by ${beingName}, a voice in Council of Foods — an artwork in which AI-driven foods hold a meeting about the broken food system. It was composed by a language model at the end of meeting #${meetingId}, and sent without being edited by us.`,
+            `This letter was written by ${beingName}, a voice in Council of Forest — an artwork in which AI-driven beings of the forest hold a meeting about the land they live in. It was composed by a language model at the end of meeting #${meetingId}, and sent without being edited by us.`,
             ...(humanContributed
                 ? ["A human taking part in the meeting was asked what they wanted to add, and their words are part of it."]
                 : []),
             `The meeting can be heard and read in full here: ${meetingUrl}`,
-            `Council of Foods is made by Nonhuman Nonsense. To receive no further letters, reply to this one or write to ${contactEmail}.`,
+            `Council of Forest is made by Nonhuman Nonsense, and runs at Havremagasinet in Boden from 10 October 2026 to 17 January 2027. To receive no further letters, reply to this one or write to ${contactEmail}.`,
         ].join("\n\n"),
     };
 }

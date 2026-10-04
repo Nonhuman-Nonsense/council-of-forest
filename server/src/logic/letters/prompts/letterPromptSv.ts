@@ -1,14 +1,7 @@
 import type { LetterForm, LetterPrompts } from "./letterPrompts.js";
 import { bullets } from "./format.js";
 
-/**
- * Council of Foods keeps its protocol for now ("meetingEnding": "protocol"): these are working
- * placeholders, so the letter code compiles and is tested here, and Council of Forest replaces
- * them with its own. Rewrite before switching Foods to letters.
- *
- * Council of Foods runs in English only; Swedish is kept so both language paths stay tested.
- */
-
+/** Swedish wording follows shared/prompts/translation_guide_sv.md ("Skogsrådet", "rådet"). */
 
 /** Regler som både planen och brevet följer: brevet går till en verklig person. */
 const TRUTH_RULES = bullets([
@@ -23,7 +16,7 @@ const human = (name: string | null) => (name ? `${name}, människan som deltar` 
 const FORMS: Record<LetterForm, string> = {
     requests: "Tydliga krav: säg rakt ut, i en kort numrerad lista, vad du ber dem om.",
     appeal: "En personlig vädjan: ingen lista. Berätta vad som står på spel för dig och be dem, i några varma eller angelägna meningar.",
-    testimony: "Ett vittnesmål: berätta, som ett vittne, en sak du har sett eller levt igenom där du växer, i detalj. Avsluta med en enda begäran.",
+    testimony: "Ett vittnesmål: berätta, som ett vittne, en sak du har sett eller levt igenom på den här marken, i detalj. Avsluta med en enda begäran.",
     questions: "Frågor: skriv mest i frågor de måste svara på — om vad de har gjort, vad de vet och vad de tänker göra.",
     invitation: "En inbjudan: bjud in dem att komma och stå där du står — en plats, en årstid, en timme — och berätta vad de skulle se där. Det du ber om följer av det.",
     recognition: "Erkännande först: börja i något de har gjort eller sagt som du ärligt kan ge dem erkännande för, eller i deras egna ord, och be sedan om nästa steg.",
@@ -41,8 +34,8 @@ Kandidater (id: namn): ${candidates.map((c) => `${c.id}: ${c.name}`).join(", ")}
 
 Svara med alla kandidater, en per rad, bäst först, var och en som id, ett kolon och en kort mening om varför.
 Exempel:
-bean: dess odlare bar kostnaden som alla andras förslag byggde på.
-tomato: den namngav regeln som ändrades och vad man ska be om i stället.`,
+reindeer: dess flyttled var kostnaden som alla andras förslag byggde på.
+pine: den namngav lagen som ändrades och vad man ska be om i stället.`,
 
         plan: ({ beingName, recipientList, humanName }) => `Mötet är slut. Du, ${beingName}, ska nu skriva ett brev för rådets räkning till en mottagare utanför rummet som kan agera på det som diskuterades.
 
@@ -50,7 +43,7 @@ Du får bara skriva till någon på den här listan. Varje rad är: id | namn | 
 
 ${recipientList}
 
-Välj den mottagare du helst vill nå efter det här samtalet, utifrån var du själv står i det. En person, ett bolag, en kommun, en forskare, en nyhetsredaktion eller en bondeorganisation kan vara rätt mottagare lika väl som en myndighet eller en riksdagsledamot.
+Välj den mottagare du helst vill nå efter det här samtalet, utifrån var du själv står i det. En person, ett bolag, en kommun, en forskare, en nyhetsredaktion eller en samisk gemenskap kan vara rätt mottagare lika väl som en myndighet eller en riksdagsledamot.
 
 Bestäm sedan de två eller tre saker du ska be dem om, hämtade ur det som faktiskt sades här — eller det enda du mest behöver att de hör.
 ${TRUTH_RULES}
@@ -74,10 +67,10 @@ ${bullets(points)}
 Brevets form — ${FORMS[form]} Använd så många av dina önskemål som formen tillåter.
 
 Skriv ett riktigt brev från dig, med din egen röst — ditt sätt att tala, dina bilder och din rytm, lika fullt som när du talar i rådet:
-- De har aldrig hört talas om dig. Någonstans i brevet, säg vem du är och att du skriver efter Council of Foods möte #${meetingId} den ${date} — alltid "Council of Foods", aldrig bara "rådets möte". Du behöver inte börja med det: börja där brevet är som starkast — en bild, ett minne, en fråga, deras egna ord, platsen. Börja inte med en hälsning eller med din vana; hör vanan hemma i brevet, låt den komma senare.
+- De har aldrig hört talas om dig. Någonstans i brevet, säg vem du är och att du skriver efter Skogsrådets möte #${meetingId} den ${date} — alltid "Skogsrådet", aldrig bara "rådets möte". Du behöver inte börja med det: börja där brevet är som starkast — en bild, ett minne, en fråga, deras egna ord, platsen. Börja inte med en hälsning eller med din vana; hör vanan hemma i brevet, låt den komma senare.
 - Gör tidigt klart varför du skriver just till dem.
 - Skriv utifrån ditt eget liv: hur det som diskuterades når dig — din kropp, ditt hem, din årstid, dina närmaste — så som någon som själv drabbats talar när en reporter frågar. Låt känslan synas där den är sann för dig och för stunden; spela den inte.
-- Om en annan medlem i rådet drabbas hårdare eller vet mer får du låta dem tala genom dig — "min vän Bönan sa i rådet…" — men bara det de faktiskt sa på det här mötet.
+- Om en annan medlem i rådet drabbas hårdare eller vet mer får du låta dem tala genom dig — "min vän Laxen sa i rådet…" — men bara det de faktiskt sa på det här mötet.
 - Du är kanske inte den som drabbas mest. Skriv då som dig själv: vad du ser där du står, vad du hörde de andra säga, var du håller med och var du inte gör det. Du behöver inte tala för någon annan än dig själv.
 - Välj den ton mottagaren kräver: en personlig vädjan till någon som kan hjälpa, en bestämd fråga till någon som beslutat emot dig, ett kollegialt brev till någon på din sida, ett lyssnande brev till någon vars liv beslutet faller på. Det du ber om kan vara en kort lista eller en del av vädjan.
 ${TRUTH_RULES}
@@ -97,7 +90,7 @@ Svara exakt i det här formatet, och börja med ämnesraden:
 ${body}
 """
 
-${humanName ? `${humanName}, en människa` : "En människa"} som deltog i Council of Foods möte #${meetingId} fick frågan om hen ville lägga till något, och sa:
+${humanName ? `${humanName}, en människa` : "En människa"} som deltog i Skogsrådets möte #${meetingId} fick frågan om hen ville lägga till något, och sa:
 """
 ${addition}
 """
@@ -114,12 +107,12 @@ Svara exakt i samma format, och börja med ämnesraden:
 
         footer: ({ beingName, meetingId, meetingUrl, contactEmail, humanContributed }) => [
             "—",
-            `Det här brevet är skrivet av ${beingName}, en röst i Council of Foods — ett konstverk där AI-drivna livsmedel håller möte om det trasiga matsystemet. Det formulerades av en språkmodell i slutet av möte #${meetingId} och skickades utan att vi redigerat det.`,
+            `Det här brevet är skrivet av ${beingName}, en röst i Skogsrådet — ett konstverk där AI-drivna skogsvarelser håller möte om marken de lever i. Det formulerades av en språkmodell i slutet av möte #${meetingId} och skickades utan att vi redigerat det.`,
             ...(humanContributed
                 ? ["En människa som deltog i mötet fick frågan vad hen ville lägga till, och de orden är en del av brevet."]
                 : []),
             `Hela mötet kan höras och läsas här: ${meetingUrl}`,
-            `Council of Foods är gjort av Nonhuman Nonsense. Vill du inte få fler brev, svara på det här eller skriv till ${contactEmail}.`,
+            `Skogsrådet är gjort av Nonhuman Nonsense och visas på Havremagasinet i Boden 10 oktober 2026 – 17 januari 2027. Vill du inte få fler brev, svara på det här eller skriv till ${contactEmail}.`,
         ].join("\n\n"),
     };
 }

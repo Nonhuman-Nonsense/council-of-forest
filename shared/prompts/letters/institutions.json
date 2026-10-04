@@ -1,0 +1,1914 @@
+{
+  "metadata": {
+    "status": "draft",
+    "lastChecked": "2026-10-01",
+    "addressCheck": {
+      "verified": "read on the organisation's own website",
+      "search": "found through search; confirm on their website before activating"
+    },
+    "notes": "Public role addresses only. Entries with email null are inactive gaps to fill. Topic ids match shared/prompts/topics_en.json on forest-leo. Reviewed 1 Oct 2026 against shared/prompts/facts_and_sources.md (28 Sept prompt pass). Journalists added 1 Oct 2026 as newsroom desks. Samebyar and SSR added 4 Oct 2026.",
+    "kinds": {
+      "institution": "a role address nobody personally receives; may take repeat letters, subject to its cap",
+      "person": "a named person at a public role address; exactly one letter, ever"
+    },
+    "fields": {
+      "remit": "what they decide on, in plain terms",
+      "why": "one sentence the letter can open with ('we write to you because …') and the being can choose on",
+      "facts": "what is on record about the recipient's own actions, each with a source and the date it was checked; the only things a letter may say they did"
+    }
+  },
+  "recipients": [
+    {
+      "id": "skogsstyrelsen",
+      "name": "Skogsstyrelsen (Swedish Forest Agency)",
+      "category": "agency",
+      "email": "skogsstyrelsen@skogsstyrelsen.se",
+      "language": "sv",
+      "remit": "Supervises the Forestry Act, receives felling notifications, consultation with samebyar before large fellings, woodland key habitats, nature conservation agreements.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.skogsstyrelsen.se/kontakt/",
+      "active": true,
+      "notes": "registrator@skogsstyrelsen.se is the registry address for formal submissions.",
+      "kind": "institution",
+      "why": "you receive the felling notifications and supervise the Forestry Act, so the three-week notice period and what it leaves time to find are yours to administer",
+      "facts": [
+        {
+          "text": "From 1 January 2027 you will handle felling notifications with a three-week review window instead of six, under the forestry law Parliament passed 308 to 21 on 16 June 2026.",
+          "source": "https://www.riksdagen.se/sv/dokument-och-lagar/dokument/betankande/ett-tydligt-regelverk-for-aktivt-skogsbruk_hd01mju29/",
+          "checked": "2026-09-09"
+        },
+        {
+          "text": "Your own statistics put clear-cut-free forestry at about 733,000 hectares in 2024, around 3 per cent of productive forest.",
+          "source": "https://www.skogsstyrelsen.se/statistik/skogsskotsel/atgarder-i-skogsbruket/",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "Svensk Jakt has reported that your 5 per cent target for moose browsing damage (ÄBIN) was largely taken from the forestry industry's own target and never decided politically.",
+          "source": "https://svenskjakt.se/start/nyhet/del-1-fem-procents-abin-skador-aldrig-politiskt-beslutat-myndighet-tog-skogsbrukets-mal/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "naturvardsverket",
+      "name": "Naturvårdsverket (Swedish Environmental Protection Agency)",
+      "category": "agency",
+      "email": "registrator@naturvardsverket.se",
+      "language": "sv",
+      "remit": "Nature reserves and national parks, species protection, the national nature restoration plan, predator management, environmental objectives.",
+      "topics": [
+        "biodiversity",
+        "rightsofnature",
+        "forestry",
+        "tourism",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.naturvardsverket.se/om-oss/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "you hold the national restoration plan and the species protection rules that decide whether anything is allowed to grow back",
+      "facts": [
+        {
+          "text": "In April 2026 you handed licence-hunt decisions for lynx and wolverine to the county administrative boards.",
+          "source": "https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2026/april/ratten-att-fatta-beslut-om-licensjakt-pa-lodjur-och-jarv-overlamnas-till-lansstyrelserna/",
+          "checked": "2026-09-09"
+        },
+        {
+          "text": "In May 2026 you published Sweden's first national list of invasive alien species, 34 species including the garden lupine.",
+          "source": "https://www.naturvardsverket.se/om-oss/aktuellt/nyheter-och-pressmeddelanden/2026/maj/sveriges-forsta-nationella-forteckning-med-34-arter-ger-nya-verktyg-mot-invasiva-frammande-arter/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "havochvatten",
+      "name": "Havs- och vattenmyndigheten (Swedish Agency for Marine and Water Management)",
+      "category": "agency",
+      "email": "havochvatten@havochvatten.se",
+      "language": "sv",
+      "remit": "Fisheries and salmon quotas, national plan for modern environmental conditions on hydropower (omprövning), water quality standards.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.havochvatten.se/om-oss-kontakt-och-karriar/kontakta-oss.html",
+      "active": true,
+      "kind": "institution",
+      "why": "you set the salmon quotas and run the national plan for bringing hydropower under modern environmental conditions",
+      "facts": [
+        {
+          "text": "On 24 June 2026 you stopped Swedish salmon fishing in the Gulf of Bothnia (ICES subdivisions 30–31) until 24 July, once the 2026 quota of 7,152 salmon was used up.",
+          "source": "https://www.havochvatten.se/arkiv/nytt-om-fiskeregler/2026-06-24-forbud-mot-visst-svenskt-fiske-av-lax-i-ostersjon.html",
+          "checked": "2026-09-09"
+        }
+      ]
+    },
+    {
+      "id": "bergsstaten",
+      "name": "Bergsstaten (Mining Inspectorate of Sweden)",
+      "category": "agency",
+      "email": "mineinspect@bergsstaten.se",
+      "language": "sv",
+      "remit": "Grants exploration permits and exploitation concessions under the Minerals Act, including on reindeer grazing land.",
+      "topics": [
+        "mining",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sgu.se/bergsstaten/om-bergsstaten/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "you grant the exploration permits and mining concessions that cross reindeer grazing land, including the Per Geijer decision expected this winter",
+      "facts": [
+        {
+          "text": "LKAB's application for the Per Geijer mining concession is with you; on 25 September 2026 the Norrbotten County Administrative Board recommended granting it, while writing that losing the reindeer migration route cannot be fully compensated. Your decision is expected around the end of November 2026.",
+          "source": "https://www.nsd.se/nyheter/kiruna/artikel/lansstyrelsen-vill-bevilja-lkab-koncession-per-geijer/r0ezx59j",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "sgu",
+      "name": "SGU (Geological Survey of Sweden)",
+      "category": "agency",
+      "email": "sgu@sgu.se",
+      "language": "sv",
+      "remit": "Mineral strategy and critical raw materials, designates national interests for minerals, after-treatment of abandoned mines.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sgu.se/om-sgu/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "you designate the national interests for minerals and advise the state on critical raw materials",
+      "facts": []
+    },
+    {
+      "id": "energimyndigheten",
+      "name": "Energimyndigheten (Swedish Energy Agency)",
+      "category": "agency",
+      "email": "registrator@energimyndigheten.se",
+      "language": "sv",
+      "remit": "Energy policy analysis, wind power national interests and planning support, renewable energy targets.",
+      "topics": [
+        "energyproduction",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.energimyndigheten.se/om-oss/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "you designate the national interests for wind power and carry the state's energy planning",
+      "facts": []
+    },
+    {
+      "id": "svenskakraftnat",
+      "name": "Svenska kraftnät (Swedish transmission system operator)",
+      "category": "agency",
+      "email": "registrator@svk.se",
+      "language": "sv",
+      "remit": "The national grid: new power lines through the north, long-term electricity demand forecasts.",
+      "topics": [
+        "energyproduction",
+        "greentransition",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.svk.se/om-oss/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "you plan the power lines through this landscape, and your own forecast of industrial demand has fallen by a fifth",
+      "facts": []
+    },
+    {
+      "id": "sametinget",
+      "name": "Sametinget (Sámi Parliament)",
+      "category": "agency",
+      "email": "kansli@sametinget.se",
+      "language": "sv",
+      "remit": "Both elected Sámi parliament and state agency: reindeer husbandry administration, Sámi language and culture, consultation under the Consultation Act.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "forestry",
+        "energyproduction",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sametinget.se/kontakt",
+      "active": true,
+      "notes": "Reactivated 4 Oct 2026: avoiding the Sámi institutions altogether while the council speaks about Sámi land is its own way of speaking on their behalf. Deactivated 4 Oct and reactivated the same day.",
+      "kind": "institution",
+      "why": "you are both the elected Sámi parliament and the agency that administers reindeer husbandry, and the council speaks about Sámi land — you should hear what it says, not only be spoken about",
+      "facts": []
+    },
+    {
+      "id": "jordbruksverket",
+      "name": "Jordbruksverket (Swedish Board of Agriculture)",
+      "category": "agency",
+      "email": "jordbruksverket@jordbruksverket.se",
+      "language": "sv",
+      "remit": "Rural development funds, agricultural landscape and grazing, the CAP in Sweden.",
+      "topics": [
+        "biodiversity",
+        "tourism"
+      ],
+      "addressCheck": "search",
+      "source": "https://jordbruksverket.se/kontakta-oss",
+      "active": true,
+      "kind": "institution",
+      "why": "you administer the rural funds and the grazing landscape that the open land depends on",
+      "facts": []
+    },
+    {
+      "id": "trafikverket",
+      "name": "Trafikverket (Swedish Transport Administration)",
+      "category": "agency",
+      "email": "trafikverket@trafikverket.se",
+      "language": "sv",
+      "remit": "Roads and railways: landscape fragmentation, wildlife passages, reindeer and wildlife collisions.",
+      "topics": [
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.trafikverket.se/om-oss/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "your roads and railways cut this landscape into pieces, one permit at a time",
+      "facts": []
+    },
+    {
+      "id": "slu",
+      "name": "SLU (Swedish University of Agricultural Sciences)",
+      "category": "research",
+      "email": "registrator@slu.se",
+      "language": "sv",
+      "remit": "Forest research, the national forest inventory, ArtDatabanken (red list of species).",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.slu.se/om-slu/kontakta-slu/",
+      "active": true,
+      "notes": "Faculty of Forest Science has its own registry: registrator-sfak@slu.se.",
+      "kind": "institution",
+      "why": "your national forest inventory and Artdatabanken produce the numbers everyone argues with, including the red list naming forestry as the largest threat",
+      "facts": [
+        {
+          "text": "Your Artdatabanken's red list 2025 (24 March 2026) counts 5,217 red-listed species and names modern forestry as harming 1,744 of them.",
+          "source": "https://www.slu.se/artdatabanken/publikationer/rodlistor/rodlista-2025/",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "In January 2025 your researchers warned that lodgepole pine runs a very high risk of becoming invasive.",
+          "source": "https://www.svt.se/nyheter/sapmi/slu-varnar-contortatallen-kan-bli-invasiv",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "ministry-li",
+      "name": "Landsbygds- och infrastrukturdepartementet (Ministry of Rural Affairs and Infrastructure)",
+      "category": "government",
+      "email": "li.registrator@regeringskansliet.se",
+      "language": "sv",
+      "remit": "Forestry policy, reindeer husbandry and Sámi policy, rural affairs, infrastructure.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "tourism",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regeringen.se/sveriges-regering/landsbygds--och-infrastrukturdepartementet/",
+      "active": true,
+      "notes": "Ministries may be reorganised by the government formed after the 13 September 2026 election. Recheck names and addresses before opening.",
+      "kind": "institution",
+      "why": "forestry policy and reindeer husbandry are yours, and the forestry act that takes effect in January was written in your building",
+      "facts": [
+        {
+          "text": "The forestry law Ett tydligt regelverk för aktivt skogsbruk (prop. 2025/26:242), which cuts the notice before felling to three weeks from January 2027, was the government's proposal.",
+          "source": "https://www.regeringen.se/rattsliga-dokument/proposition/2026/04/prop.-202526242",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "ministry-kn",
+      "name": "Klimat- och näringslivsdepartementet (Ministry of Climate and Enterprise)",
+      "category": "government",
+      "email": "kn.registrator@regeringskansliet.se",
+      "language": "sv",
+      "remit": "Climate and environment policy, the Minerals Act, energy policy, industrial policy and the green transition.",
+      "topics": [
+        "mining",
+        "energyproduction",
+        "greentransition",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regeringen.se/kontaktuppgifter/kontaktuppgifter-till-departementens-registratorer/",
+      "active": true,
+      "notes": "Same caveat as ministry-li: may be reorganised after the election.",
+      "kind": "institution",
+      "why": "the Minerals Act, energy policy and the green transition are yours, including the uranium ban that was lifted in January",
+      "facts": [
+        {
+          "text": "On 3 September 2026 the government adopted Sweden's draft national nature restoration plan, 39 measure packages; the final plan is due on 1 September 2027.",
+          "source": "https://www.regeringen.se/informationsmaterial/2026/09/sveriges-utkast-till-nationell-restaureringsplan",
+          "checked": "2026-09-09"
+        }
+      ]
+    },
+    {
+      "id": "lst-vasterbotten",
+      "name": "Länsstyrelsen Västerbotten (County Administrative Board)",
+      "category": "regional",
+      "email": "vasterbotten@lansstyrelsen.se",
+      "language": "sv",
+      "remit": "Environmental permits and supervision, nature reserves, predator hunting decisions, the county's part of the biosphere reserve.",
+      "topics": [
+        "biodiversity",
+        "energyproduction",
+        "mining",
+        "tourism",
+        "samilandrights&culture",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.lansstyrelsen.se/vasterbotten/om-oss/kontakta-oss.html",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Inform before letters start.",
+      "kind": "institution",
+      "why": "you issue the environmental permits and manage the reserves inside the biosphere area the council speaks for",
+      "facts": [
+        {
+          "text": "In June 2026 you allowed 12,700 moose to be shot in the year's licence hunt in Västerbotten.",
+          "source": "https://www.lansstyrelsen.se/vasterbotten/om-oss/nyheter-och-press/nyheter---vasterbotten/2026-06-24-12-700-algar-far-fallas-under-arets-licensjakt-pa-alg.html",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "lst-norrbotten",
+      "name": "Länsstyrelsen Norrbotten (County Administrative Board)",
+      "category": "regional",
+      "email": "norrbotten@lansstyrelsen.se",
+      "language": "sv",
+      "remit": "Environmental permits and supervision in Norrbotten, including the mining districts and Boden.",
+      "topics": [
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.lansstyrelsen.se/norrbotten/om-oss/kontakta-oss.html",
+      "active": true,
+      "kind": "institution",
+      "why": "you recommended granting the Per Geijer concession while writing that the lost migration route cannot be fully compensated",
+      "facts": [
+        {
+          "text": "On 25 September 2026 you recommended that LKAB be granted the Per Geijer concession, while writing that losing the reindeer migration route ends the functional connection and cannot be fully compensated.",
+          "source": "https://www.nsd.se/nyheter/kiruna/artikel/lansstyrelsen-vill-bevilja-lkab-koncession-per-geijer/r0ezx59j",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "Your county governor has called for rules on heliskiing since 2023; county boards have no legal power to restrict it.",
+          "source": "https://www.svt.se/nyheter/lokalt/norrbotten/okat-intresse-for-heliskiing-nu-efterlyses-reglering-i-fjallen",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "region-vasterbotten",
+      "name": "Region Västerbotten",
+      "category": "regional",
+      "email": "regionen@regionvasterbotten.se",
+      "language": "sv",
+      "remit": "Regional development strategy, tourism and business development in Västerbotten.",
+      "topics": [
+        "tourism",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.regionvasterbotten.se/det-har-gor-regionen/kontakt",
+      "active": true,
+      "kind": "institution",
+      "why": "you set the regional development strategy, and your own chair said the grid here is full",
+      "facts": [
+        {
+          "text": "In May 2025 your regional council chair said there is no great need for more wind power here and now, because the grid is full.",
+          "source": "https://www.svt.se/nyheter/lokalt/vasterbotten/regionradet-i-vasterbotten-behovs-inte-mer-vindkraft-natet-fullt",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "region-norrbotten",
+      "name": "Region Norrbotten",
+      "category": "regional",
+      "email": "regionnorrbotten@norrbotten.se",
+      "language": "sv",
+      "remit": "Regional development strategy for Norrbotten, including the green industrial investments.",
+      "topics": [
+        "greentransition",
+        "tourism",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.norrbotten.se/sv/om-region-norrbotten/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "you set the regional development strategy that the green industrial investments are built on",
+      "facts": []
+    },
+    {
+      "id": "umea-kommun",
+      "name": "Umeå kommun",
+      "category": "municipality",
+      "email": "umea.kommun@umea.se",
+      "language": "sv",
+      "remit": "Planning and permits at the river mouth, Stornorrfors, part of the biosphere reserve.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.umea.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Inform before letters start.",
+      "kind": "institution",
+      "why": "the river reaches the sea in your municipality, past Stornorrfors, and you plan what happens along it",
+      "facts": [
+        {
+          "text": "Umeå hosts Rally Sweden from 2025 to 2027.",
+          "source": "https://rallysweden.com/en/three-new-years-in-umea-2025-2027/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "vindeln-kommun",
+      "name": "Vindelns kommun",
+      "category": "municipality",
+      "email": "vindelns.kommun@vindeln.se",
+      "language": "sv",
+      "remit": "Local planning and wind power veto along the middle Vindelälven.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.vindeln.se/kontakt",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "the middle Vindelälven runs through your municipality, and wind power needs your consent",
+      "facts": []
+    },
+    {
+      "id": "vannas-kommun",
+      "name": "Vännäs kommun",
+      "category": "municipality",
+      "email": "vannas.kommun@vannas.se",
+      "language": "sv",
+      "remit": "Local planning where Vindelälven meets Umeälven.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://vannas.se/kommun-och-politik/kontakt",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "the Vindelälven meets the Umeälven in your municipality",
+      "facts": []
+    },
+    {
+      "id": "lycksele-kommun",
+      "name": "Lycksele kommun",
+      "category": "municipality",
+      "email": "kommun@lycksele.se",
+      "language": "sv",
+      "remit": "Local planning and wind power veto in the inland of the biosphere reserve.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.lycksele.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Consider a weekly cap.",
+      "kind": "institution",
+      "why": "you plan the inland forest of the biosphere area, and wind power needs your consent",
+      "facts": []
+    },
+    {
+      "id": "sorsele-kommun",
+      "name": "Sorsele kommun",
+      "category": "municipality",
+      "email": "kommun@sorsele.se",
+      "language": "sv",
+      "remit": "Local planning in the upper Vindelälven, Sámi administrative municipality.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "mining",
+        "forestry"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sorsele.se/kommun/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "you are a Sámi administrative municipality on the upper Vindelälven, where tourism and herding share the same ground",
+      "facts": []
+    },
+    {
+      "id": "arjeplog-kommun",
+      "name": "Arjeplogs kommun",
+      "category": "municipality",
+      "email": "kommun@arjeplog.se",
+      "language": "sv",
+      "remit": "Local planning in the mountain part of the biosphere reserve, Sámi administrative municipality.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://arjeplog.se/",
+      "active": true,
+      "notes": "Partner of the biosphere reserve. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "four uranium exploration permits were granted in your municipality in August 2026, on the ground of the 1981 Pleutajokk protest",
+      "facts": [
+        {
+          "text": "In August 2026 four uranium exploration permits were granted in Arjeplog, where the 1981 Pleutajokk protest stopped uranium mining once before.",
+          "source": "https://www.svt.se/nyheter/sapmi/uranfragan-ater-aktuell-i-arjeplog-samtalsamne-bland-ortsbor",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "mala-kommun",
+      "name": "Malå kommun",
+      "category": "municipality",
+      "email": "kommunstyrelsen@mala.se",
+      "language": "sv",
+      "remit": "Local planning; exploration and mining interest in the Skellefte field.",
+      "topics": [
+        "mining",
+        "forestry",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.mala.se/kommun-och-politik/kontakt-och-organisationsbeskrivning/",
+      "active": true,
+      "notes": "No general mailbox; this is the municipal executive board. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "exploration and mining in the Skellefte field reach into your municipality",
+      "facts": []
+    },
+    {
+      "id": "norsjo-kommun",
+      "name": "Norsjö kommun",
+      "category": "municipality",
+      "email": "info@norsjo.se",
+      "language": "sv",
+      "remit": "Local planning; mining in the Skellefte field.",
+      "topics": [
+        "mining",
+        "forestry"
+      ],
+      "addressCheck": "verified",
+      "source": "https://norsjo.se/kommun-politik/kontakta-oss/",
+      "active": true,
+      "notes": "Address found 1 Oct 2026. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "mining and forestry in the Skellefte field reach into your municipality, and you redid your wind plan in 2023",
+      "facts": []
+    },
+    {
+      "id": "boden-kommun",
+      "name": "Bodens kommun",
+      "category": "municipality",
+      "email": "kommunen@boden.se",
+      "language": "sv",
+      "remit": "Hosts the Stegra green steel plant; municipal debt taken on ahead of the industry. Home of Havremagasinet.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.boden.se/kommunen/bodens-kommun/service-och-tillganglighet",
+      "active": true,
+      "notes": "The exhibition's host town. Tell Havremagasinet first.",
+      "kind": "institution",
+      "why": "you borrowed more than a billion kronor ahead of an industry that has not opened yet, and the council meets in your town",
+      "facts": [
+        {
+          "text": "Your loan debt grew from about 80 million kronor in 2017 to 1,790 million at the end of 2025, with a loss of 88 million kronor in 2025.",
+          "source": "https://www.svt.se/nyheter/lokalt/norrbotten/kommunens-lanekostnader-skenar-lattnad-efter-uppgifter-om-stegra",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "sveaskog",
+      "name": "Sveaskog (state-owned forest company)",
+      "category": "company",
+      "email": "kundcenter@sveaskog.se",
+      "language": "sv",
+      "remit": "Sweden's largest forest owner, owned by the state: fellings, set-asides, lodgepole pine plantations, consultation with samebyar.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "biodiversity",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sveaskog.se/kontakt/",
+      "active": true,
+      "notes": "Only a customer-centre address is published.",
+      "kind": "institution",
+      "why": "you hold 14 per cent of Sweden's forest land on behalf of the state, and your clear-cut-free area was 37 hectares in 2024",
+      "facts": [
+        {
+          "text": "In your 2024 annual report, 26 per cent of your holdings are excluded from forestry, and the area you managed without clear-cutting was 37 hectares.",
+          "source": "https://mb.cision.com/Main/1495/4119568/3323538.pdf",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "In January 2023 you cut regeneration felling in Norrbotten by 45 per cent, citing failed co-planning with the samebyar.",
+          "source": "https://www.sveaskog.se/press/2023/minskade-avverkningsnivaer-i-norrbotten-2023/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "sca",
+      "name": "SCA",
+      "category": "company",
+      "email": "info@sca.com",
+      "language": "sv",
+      "remit": "Europe's largest private forest owner, in Norrland: fellings, bioenergy, wind power on its land.",
+      "topics": [
+        "forestry",
+        "greentransition",
+        "samilandrights&culture",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.sca.com/sv/hallbarhet/kontakter-hallbarhet/",
+      "active": true,
+      "kind": "institution",
+      "why": "you are Europe's largest private forest owner here, you keep planting lodgepole pine, and you felled in Ohredahke's core areas after consent was withdrawn",
+      "facts": [
+        {
+          "text": "Ohredahke sameby withdrew its consent to all felling in its core areas on 24 January 2025; Natursidan has counted more than 200 fellings by you there since.",
+          "source": "https://www.natursidan.se/nyheter/over-200-avverkningar-av-sca-trots-nej-fran-sameby/",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "In 2025 you announced you would leave FSC forest certification, then paused the exit after talks with Sámi organisations and FSC.",
+          "source": "https://www.skogsaktuellt.se/artikel/2237790/sca-pausar-uttrde-ur-fsc.html",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "holmen",
+      "name": "Holmen",
+      "category": "company",
+      "email": "info@holmen.com",
+      "language": "sv",
+      "remit": "Large forest owner and hydropower producer; forestry in northern Sweden.",
+      "topics": [
+        "forestry",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.holmen.com/en/contact-us/",
+      "active": true,
+      "kind": "institution",
+      "why": "you own both forest and hydropower in the north, so both halves of this argument are your business",
+      "facts": []
+    },
+    {
+      "id": "vattenfall",
+      "name": "Vattenfall (state-owned energy company)",
+      "category": "company",
+      "email": "press@vattenfall.com",
+      "language": "sv",
+      "remit": "Operates Stornorrfors and most hydropower in the Ume river system; first omprövning applications in 2026.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://group.vattenfall.com/se/nyheter-och-press/presskontakter",
+      "active": true,
+      "notes": "Press desk; no general mailbox published.",
+      "kind": "institution",
+      "why": "you operate Stornorrfors and most of the hydropower in this river system, and your plants must hold modern environmental conditions by 2040",
+      "facts": [
+        {
+          "text": "On 20 February 2026 you filed your first applications for modern environmental conditions for large hydropower; Stornorrfors must hold modern conditions by around 2040.",
+          "source": "https://group.vattenfall.com/se/nyheter-och-press/pressmeddelanden/2026/nu-startar-omprovningen-av-vattenfalls-storskaliga-vattenkraft",
+          "checked": "2026-09-09"
+        },
+        {
+          "text": "In February 2025 the Land and Environment Court dismissed your application to rebuild Juktan as a pumped-storage plant as too unclear.",
+          "source": "https://www.domstol.se/nyheter/2025/02/mark--och-miljodomstolen-avvisar-vattenfalls-ansokan-om-att-bygga-om-juktans-kraftstation/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "lkab",
+      "name": "LKAB (state-owned mining company)",
+      "category": "company",
+      "email": "info@lkab.com",
+      "language": "sv",
+      "remit": "Iron ore in Kiruna and Malmberget, Per Geijer rare earth deposit, fossil-free sponge iron plans.",
+      "topics": [
+        "mining",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "addressCheck": "verified",
+      "source": "https://lkab.com/en/contact-us/sustainability-and-climate/",
+      "active": true,
+      "kind": "institution",
+      "why": "you are state-owned, you produced 86 per cent of the EU's iron ore in 2025, and Per Geijer would leave one herd a fifty-metre corridor",
+      "facts": [
+        {
+          "text": "In 2025 you produced 86 per cent of the EU's iron ore.",
+          "source": "https://lkab.com/en/financial-information/annual-reports/annual-and-sustainability-report-2025/",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "Gabna sameby ended its cooperation agreement with you on 2 December 2025 and rejects the Per Geijer mine.",
+          "source": "https://www.nyteknik.se/industri/sameby-bryter-med-lkab-sager-nej-till-per-geijer-gruvan/4416715",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "On 15 June 2026 you were granted the environmental permit for the HYBRIT demonstration plant in Gällivare.",
+          "source": "https://lkab.com/en/press/lkab-granted-environmental-permit-for-operations-in-gallivare/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "boliden",
+      "name": "Boliden",
+      "category": "company",
+      "email": "info@boliden.com",
+      "language": "sv",
+      "remit": "Mines in the Skellefte field and Aitik; tailings and water.",
+      "topics": [
+        "mining",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://news.cision.com/boliden/contact",
+      "active": true,
+      "kind": "institution",
+      "why": "your mines and tailings in the Skellefte field and at Aitik outlive the ore",
+      "facts": [
+        {
+          "text": "You ran the Laisvall lead mine on the Laisälven from 1943 to 2001.",
+          "source": "https://www.mining-technology.com/projects/laisvall/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "stegra",
+      "name": "Stegra",
+      "category": "company",
+      "email": null,
+      "language": "sv",
+      "remit": "Green steel plant in Boden.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "addressCheck": null,
+      "source": "https://stegra.com/contact",
+      "active": false,
+      "notes": "Contact form only, no email address.",
+      "kind": "institution",
+      "why": "the plant in Boden is what the town borrowed against, and no start date has been confirmed",
+      "facts": []
+    },
+    {
+      "id": "fsc-sverige",
+      "name": "FSC Sverige",
+      "category": "certification",
+      "email": "kontakt@se.fsc.org",
+      "language": "sv",
+      "remit": "Forest certification standard, including consultation on winter grazing land.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://se.fsc.org/se-sv/kontakt",
+      "active": true,
+      "kind": "institution",
+      "why": "your standard is what consent on winter grazing land is supposed to mean in practice",
+      "facts": [
+        {
+          "text": "In 2025 SCA announced it would leave your forest certification, then paused the exit after talks with Sámi organisations and FSC.",
+          "source": "https://www.skogsaktuellt.se/artikel/2237790/sca-pausar-uttrde-ur-fsc.html",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "pefc-sverige",
+      "name": "Svenska PEFC",
+      "category": "certification",
+      "email": "svenskapefc@pefc.se",
+      "language": "sv",
+      "remit": "Forest certification standard used by most small private forest owners.",
+      "topics": [
+        "forestry",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.pefc.se/",
+      "active": true,
+      "kind": "institution",
+      "why": "most small private forest owners are certified under your standard",
+      "facts": []
+    },
+    {
+      "id": "svemin",
+      "name": "Svemin (Swedish mining industry association)",
+      "category": "industry",
+      "email": "info@svemin.se",
+      "language": "sv",
+      "remit": "Lobbies for the mining industry, including faster permitting.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://svemin.se/om-oss/kontakta-oss",
+      "active": true,
+      "kind": "institution",
+      "why": "you argue for faster permitting on behalf of the industry, so the case for speed is yours to defend",
+      "facts": []
+    },
+    {
+      "id": "skogsindustrierna",
+      "name": "Skogsindustrierna (Swedish Forest Industries Federation)",
+      "category": "industry",
+      "email": null,
+      "language": "sv",
+      "remit": "Lobbies for the forest industry.",
+      "topics": [
+        "forestry"
+      ],
+      "addressCheck": null,
+      "source": "https://www.skogsindustrierna.se/om-oss/kontakt/",
+      "active": false,
+      "notes": "Contact form and named staff only.",
+      "kind": "institution",
+      "why": "you speak for the industry whose target the browsing-damage figure was adopted from",
+      "facts": []
+    },
+    {
+      "id": "svensk-vindenergi",
+      "name": "Svensk Vindenergi (wind industry association)",
+      "category": "industry",
+      "email": null,
+      "language": "sv",
+      "remit": "Lobbies for wind power.",
+      "topics": [
+        "energyproduction",
+        "greentransition"
+      ],
+      "addressCheck": null,
+      "source": "https://svenskvindenergi.org/kontakt",
+      "active": false,
+      "notes": "Named staff only.",
+      "kind": "institution",
+      "why": "you speak for an industry that was refused in 93 per cent of municipal decisions in 2025",
+      "facts": []
+    },
+    {
+      "id": "arctic-sweden-visitors-board",
+      "name": "Swedish Lapland Visitors Board",
+      "category": "tourism",
+      "email": "info@swedishlapland.com",
+      "language": "sv",
+      "remit": "Destination management for tourism in Swedish Lapland.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.swedishlaplandvisitorsboard.com/en/about-us/organisation-contact/",
+      "active": true,
+      "notes": "Possibly renamed Arctic Sweden Visitors Board; check name and address.",
+      "kind": "institution",
+      "why": "you sell this landscape as a destination, including ground that is grazing land first",
+      "facts": []
+    },
+    {
+      "id": "naturskyddsforeningen",
+      "name": "Naturskyddsföreningen (Swedish Society for Nature Conservation)",
+      "category": "ngo",
+      "email": "remisser@naturskyddsforeningen.se",
+      "language": "sv",
+      "remit": "Largest environmental organisation in Sweden; policy statements and campaigns on forests and mining.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "mining",
+        "energyproduction",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://www.naturskyddsforeningen.se/om-oss/kontakta-oss/",
+      "active": true,
+      "notes": "No general mailbox; this is the policy-statement address. press@naturskyddsforeningen.se is the alternative.",
+      "kind": "institution",
+      "why": "you are the largest environmental organisation in the country and already fight most of what the council discussed",
+      "facts": []
+    },
+    {
+      "id": "skydda-skogen",
+      "name": "Skydda Skogen (Protect the Forest)",
+      "category": "ngo",
+      "email": "info@skyddaskogen.se",
+      "language": "sv",
+      "remit": "Campaigns against clear-cutting of old-growth forest; monitors felling notifications.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://skyddaskogen.se/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "you track felling notifications and the old-growth forest they cover, and the CJEU case that carries your name decided what species protection means",
+      "facts": [
+        {
+          "text": "Your case led the EU Court of Justice to rule on 4 March 2021 (C-473/19 and C-474/19) that the species-protection bans cover every individual of a protected species.",
+          "source": "https://eur-lex.europa.eu/legal-content/SV/ALL/?uri=CELEX:62019CJ0473",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "wwf-sverige",
+      "name": "Världsnaturfonden WWF",
+      "category": "ngo",
+      "email": "info@wwf.se",
+      "language": "sv",
+      "remit": "Conservation organisation; forest and freshwater programmes.",
+      "topics": [
+        "biodiversity",
+        "forestry",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.wwf.se/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "your forest and freshwater programmes cover exactly this landscape",
+      "facts": []
+    },
+    {
+      "id": "greenpeace-sverige",
+      "name": "Greenpeace Sverige",
+      "category": "ngo",
+      "email": "info.se@greenpeace.org",
+      "language": "sv",
+      "remit": "Campaigns on forests and climate.",
+      "topics": [
+        "forestry",
+        "greentransition",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.greenpeace.org/sweden/om-oss/kontakta-oss/",
+      "active": true,
+      "kind": "institution",
+      "why": "you campaign on forests and climate at the scale where the sum of these decisions is visible",
+      "facts": []
+    },
+    {
+      "id": "faltbiologerna",
+      "name": "Fältbiologerna (youth nature organisation)",
+      "category": "ngo",
+      "email": "info@faltbiologerna.se",
+      "language": "sv",
+      "remit": "Youth organisation; forest defence actions and inventories.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://faltbiologerna.se/om-oss/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "you are the young people who inventory the forests that are about to be cut",
+      "facts": []
+    },
+    {
+      "id": "sportfiskarna",
+      "name": "Sportfiskarna (Swedish Anglers Association)",
+      "category": "ngo",
+      "email": "info@sportfiskarna.se",
+      "language": "sv",
+      "remit": "Pushes for fish passages and hydropower omprövning; salmon rivers.",
+      "topics": [
+        "energyproduction",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sportfiskarna.se/om-oss/kontakt/",
+      "active": true,
+      "kind": "institution",
+      "why": "you have pushed for fish passages and the hydropower review longer than anyone, and the salmon count at Norrfors is the result",
+      "facts": []
+    },
+    {
+      "id": "eu-dg-env",
+      "name": "European Commission, DG Environment",
+      "category": "eu",
+      "email": null,
+      "language": "sv",
+      "remit": "Nature Restoration Regulation, deforestation regulation, LULUCF.",
+      "topics": [
+        "biodiversity",
+        "forestry",
+        "rightsofnature"
+      ],
+      "addressCheck": null,
+      "source": "https://commission.europa.eu/about/departments-and-executive-agencies/environment_en",
+      "active": false,
+      "notes": "No public functional mailbox found. Letters would be in English.",
+      "kind": "institution",
+      "why": "the Nature Restoration Regulation and the deforestation rules are yours, and Sweden has asked you to wait",
+      "facts": []
+    },
+    {
+      "id": "eu-dg-grow",
+      "name": "European Commission, DG GROW",
+      "category": "eu",
+      "email": null,
+      "language": "sv",
+      "remit": "Critical Raw Materials Act and strategic projects such as Per Geijer.",
+      "topics": [
+        "mining",
+        "greentransition"
+      ],
+      "addressCheck": null,
+      "source": "https://commission.europa.eu/about/departments-and-executive-agencies/internal-market-industry-entrepreneurship-and-smes_en",
+      "active": false,
+      "notes": "Not researched yet.",
+      "kind": "institution",
+      "why": "you gave Per Geijer strategic project status under the Critical Raw Materials Act, which starts the 27-month clock",
+      "facts": []
+    },
+    {
+      "id": "lulea-stift",
+      "name": "Svenska kyrkan, Luleå stift (Church of Sweden, Diocese of Luleå)",
+      "category": "company",
+      "email": "lulea.stift@svenskakyrkan.se",
+      "language": "sv",
+      "remit": "Church forest owner in the north; the Church of Sweden's reconciliation process with the Sámi.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.svenskakyrkan.se/luleastift/kontakt",
+      "active": true,
+      "notes": "Added 1 Oct 2026: the prompts now name the Church of Sweden as stopping contorta planting. No address found for the national kyrkokansliet.",
+      "kind": "institution",
+      "why": "you own forest here, and the Church of Sweden has said it will stop planting lodgepole pine as part of its reconciliation with the Sámi",
+      "facts": []
+    },
+    {
+      "id": "transportstyrelsen",
+      "name": "Transportstyrelsen (Swedish Transport Agency)",
+      "category": "agency",
+      "email": "kontakt@transportstyrelsen.se",
+      "language": "sv",
+      "remit": "Flight rules: the only body that can restrict heliskiing, and it rejected Ran sameby's appeal against Rally Sweden.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.transportstyrelsen.se/sv/om-oss/kontakta-oss/",
+      "active": true,
+      "notes": "Added 1 Oct 2026: heliskiing and Rally Sweden are both in the Tourism topic.",
+      "kind": "institution",
+      "why": "you are the only body that can restrict heliskiing, and you rejected Ran sameby's appeal against the rally while noting the impact on winter grazing",
+      "facts": [
+        {
+          "text": "In early 2026 you rejected Ran sameby's appeal against the Rally Sweden permit, while noting that the impact on winter grazing is 'not insignificant'.",
+          "source": "https://www.transportstyrelsen.se/sv/om-oss/pressrum/nyhetsarkiv/2026/besked-i-rallyfragan-overklagandet-avslas/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "ssab",
+      "name": "SSAB",
+      "category": "company",
+      "email": "info@ssab.com",
+      "language": "sv",
+      "remit": "HYBRIT partner with LKAB and Vattenfall; the state-backed fossil-free steel route that Stegra is contrasted with.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.ssab.com/sv-se/nyhetsrum/kontakter",
+      "active": true,
+      "notes": "Added 1 Oct 2026: HYBRIT vs Stegra is now an agenda point in Green Transition.",
+      "kind": "institution",
+      "why": "HYBRIT is yours with LKAB and Vattenfall, the slow state-backed route the fast private one is measured against",
+      "facts": [
+        {
+          "text": "Your electric arc furnace at Oxelösund has slipped to early 2027 because of grid connection delays.",
+          "source": "https://gmk.center/en/news/ssab-postpones-startup-of-electric-arc-furnace-in-okselosund-until-2017/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "tillvaxtverket",
+      "name": "Tillväxtverket (Swedish Agency for Economic and Regional Growth)",
+      "category": "agency",
+      "email": "tillvaxtverket@tillvaxtverket.se",
+      "language": "sv",
+      "remit": "National tourism strategy and regional growth funding; the source of the figure that about 60% of foreign guest nights depend on flights.",
+      "topics": [
+        "tourism",
+        "greentransition"
+      ],
+      "addressCheck": "search",
+      "source": "https://tillvaxtverket.se/tillvaxtverket/omtillvaxtverket/kontakt.1582.html",
+      "active": true,
+      "notes": "Added 1 Oct 2026.",
+      "kind": "institution",
+      "why": "you hold the national tourism strategy, and the finding that six in ten foreign guest nights depend on flights",
+      "facts": [
+        {
+          "text": "Your 2019 report attributes about 60 per cent of foreign guest nights in Sweden to air travel.",
+          "source": "https://tillvaxtverket.se/tillvaxtverket/publikationer/arkiveradepublikationer/publikationer2019/flygetsrollforbesoksnaringochmiljoisverige.1342.html",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "skelleftea-kommun",
+      "name": "Skellefteå kommun",
+      "category": "municipality",
+      "email": "kundtjanst@skelleftea.se",
+      "language": "sv",
+      "remit": "Cut its wind plan from 23 areas to 2; hosts the former Northvolt plant, now Lyten.",
+      "topics": [
+        "energyproduction",
+        "greentransition",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://skelleftea.se/kontakt",
+      "active": true,
+      "notes": "Added 1 Oct 2026: the Energy topic names the wind-plan cut.",
+      "kind": "institution",
+      "why": "you cut your wind plan from 23 areas to 2, and the plant that went bankrupt and was sold stands in your municipality",
+      "facts": [
+        {
+          "text": "You cut your wind power plan from 23 areas to 2.",
+          "source": "https://www.svt.se/nyheter/lokalt/vasterbotten/vindkraftsplanen-bantas-kraftigt-i-skelleftea-fran-23-till-2",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "storuman-kommun",
+      "name": "Storumans kommun",
+      "category": "municipality",
+      "email": "ks@storuman.se",
+      "language": "sv",
+      "remit": "Juktan pumped storage and the Blaiken mine clean-up; wind planning.",
+      "topics": [
+        "energyproduction",
+        "mining",
+        "tourism"
+      ],
+      "addressCheck": "search",
+      "source": "https://storuman.se/kommun/fler-kontaktuppgifter/",
+      "active": true,
+      "notes": "Added 1 Oct 2026. Municipal executive board address. Small municipality: consider a weekly cap.",
+      "kind": "institution",
+      "why": "the Juktan pumped storage application and the Blaiken mine clean-up are both in your municipality",
+      "facts": []
+    },
+    {
+      "id": "robertsfors-kommun",
+      "name": "Robertsfors kommun",
+      "category": "municipality",
+      "email": "kommun@robertsfors.se",
+      "language": "sv",
+      "remit": "Redid its wind plan in 2023 (\"sold ourselves far too cheaply\").",
+      "topics": [
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.kommunkontakt.net/kontakt/177/Robertsfors-Kommun",
+      "active": true,
+      "notes": "Added 1 Oct 2026. Small municipality: consider a weekly cap. Confirm on the municipality's own site.",
+      "kind": "institution",
+      "why": "you redid your wind plan in 2023, saying you had sold yourselves far too cheaply",
+      "facts": [
+        {
+          "text": "In November 2023 you redid your wind power plan, saying the municipalities had sold themselves far too cheaply.",
+          "source": "https://www.svt.se/nyheter/lokalt/vasterbotten/kommuner-i-vasterbotten-gor-nya-vindkraftsplaner-kraver-mer-betalt-salt-ut-oss-for-billigt--wlu8l9",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "norra-skog",
+      "name": "Norra Skog (forest owners' association)",
+      "category": "company",
+      "email": null,
+      "language": "sv",
+      "remit": "Association of about 27,000 private forest owners in the north; the voice of the median 11-hectare holding.",
+      "topics": [
+        "forestry",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.norraskog.se/kontakt/",
+      "active": false,
+      "notes": "Added 1 Oct 2026 as a gap: contact form only, no public address. Private forest owners are the largest owner group (49%) and have no recipient on this list.",
+      "kind": "institution",
+      "why": "your 27,000 members are the median eleven-hectare holding that most of this forest actually is",
+      "facts": []
+    },
+    {
+      "id": "jagareforbundet",
+      "name": "Svenska Jägareförbundet (Swedish Association for Hunting and Wildlife Management)",
+      "category": "ngo",
+      "email": null,
+      "language": "sv",
+      "remit": "Moose and predator management; browsing-damage targets; sought to join Ran sameby's post-Girjas case.",
+      "topics": [
+        "biodiversity",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://jagareforbundet.se/kontakt/",
+      "active": false,
+      "notes": "Added 1 Oct 2026 as a gap: only membership and invoice addresses are published.",
+      "kind": "institution",
+      "why": "moose and predator management is your ground, and the browsing-damage target came from this argument",
+      "facts": []
+    },
+    {
+      "id": "visitsweden",
+      "name": "Visit Sweden",
+      "category": "tourism",
+      "email": null,
+      "language": "sv",
+      "remit": "National tourism marketing; the \"no general overtourism\" position.",
+      "topics": [
+        "tourism"
+      ],
+      "addressCheck": "search",
+      "source": "https://corporate.visitsweden.com/om-oss/kontakta-oss/",
+      "active": false,
+      "notes": "Added 1 Oct 2026 as a gap: the address on their contact page is obfuscated against scraping.",
+      "kind": "institution",
+      "why": "you market this country as nature, and you say there is no general overtourism",
+      "facts": [
+        {
+          "text": "You reported a record summer in 2025, 30.8 million guest nights, and said there is no general overtourism in Sweden.",
+          "source": "https://corporate.visitsweden.com/press/2025-den-starkaste-turistsommaren-nagonsin-i-sverige-ingen-overturism/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "norran",
+      "name": "Norran (Skellefteå)",
+      "kind": "institution",
+      "category": "media",
+      "email": "tipsa@norran.se",
+      "language": "sv",
+      "remit": "Local newsroom for the Skellefte field, Northvolt/Lyten and the wind plans.",
+      "topics": [
+        "mining",
+        "greentransition",
+        "forestry",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.norran.se/",
+      "active": true,
+      "why": "the Skellefte field, the bankrupt battery plant and the wind plans are your patch",
+      "facts": []
+    },
+    {
+      "id": "vk",
+      "name": "Västerbottens-Kuriren",
+      "kind": "institution",
+      "category": "media",
+      "email": "redaktion@vk.se",
+      "language": "sv",
+      "remit": "Regional newsroom for Umeå and the Vindelälven municipalities.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition",
+        "rightsofnature",
+        "tourism",
+        "energyproduction",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://kundservice.vk.se/fragor-och-svar/redaktionen/tipsa-redaktionen/",
+      "active": true,
+      "why": "the Vindelälven municipalities are your readers, and this is their landscape",
+      "facts": []
+    },
+    {
+      "id": "svt-vasterbotten",
+      "name": "SVT Nyheter Västerbotten",
+      "kind": "institution",
+      "category": "media",
+      "email": "vasterbotten@svt.se",
+      "language": "sv",
+      "remit": "Public broadcaster, Västerbotten: forestry, reindeer herding, wind and tourism.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture",
+        "greentransition",
+        "rightsofnature",
+        "tourism",
+        "energyproduction",
+        "mining"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.svt.se/nyheter/lokalt/vasterbotten/kontakta-svt-nyheter-vasterbotten",
+      "active": true,
+      "why": "you report from every municipality in this county, including the ones with no newspaper left",
+      "facts": []
+    },
+    {
+      "id": "svt-norrbotten",
+      "name": "SVT Nyheter Norrbotten",
+      "kind": "institution",
+      "category": "media",
+      "email": "norrbotten@svt.se",
+      "language": "sv",
+      "remit": "Public broadcaster, Norrbotten: mining, Boden's steel plant, Sámi rights.",
+      "topics": [
+        "mining",
+        "greentransition",
+        "samilandrights&culture",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.svt.se/nyheter/lokalt/norrbotten/tipsa-oss",
+      "active": true,
+      "why": "the mines, the Boden steel plant and the land-rights fights are your patch",
+      "facts": []
+    },
+    {
+      "id": "sameradion",
+      "name": "Sameradion & SVT Sápmi",
+      "kind": "institution",
+      "category": "media",
+      "email": "sameradion@sverigesradio.se",
+      "language": "sv",
+      "remit": "Sámi newsroom in Kiruna; covers herding, land rights and the mines.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "forestry",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "search",
+      "source": "https://sverigesradio.se/sameradion",
+      "active": true,
+      "notes": "oddasat@svt.se and oddasat@sverigesradio.se are the shared news desk addresses.",
+      "why": "you cover herding, land rights and the mines in the language of the people they happen to",
+      "facts": []
+    },
+    {
+      "id": "nsd",
+      "name": "NSD (Norrländska Socialdemokraten)",
+      "kind": "institution",
+      "category": "media",
+      "email": "redaktion@nsd.se",
+      "language": "sv",
+      "remit": "Norrbotten newsroom; Boden and the green industry.",
+      "topics": [
+        "greentransition",
+        "mining",
+        "energyproduction"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.nsd.se/information/artikel/kontakta-nsd/grm7dw1r",
+      "active": true,
+      "why": "Boden's debt and the green industry are your patch",
+      "facts": []
+    },
+    {
+      "id": "norrbottens-kuriren",
+      "name": "Norrbottens-Kuriren",
+      "kind": "institution",
+      "category": "media",
+      "email": "redaktionen@kuriren.com",
+      "language": "sv",
+      "remit": "Norrbotten newsroom in Luleå.",
+      "topics": [
+        "greentransition",
+        "mining",
+        "energyproduction",
+        "samilandrights&culture"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.kuriren.nu/",
+      "active": true,
+      "why": "the industrial build-out of Norrbotten is your patch",
+      "facts": []
+    },
+    {
+      "id": "sveriges-natur",
+      "name": "Sveriges Natur (magazine)",
+      "kind": "institution",
+      "category": "media",
+      "email": null,
+      "language": "sv",
+      "remit": "Naturskyddsföreningen's magazine; reports on forestry and mining policy.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sverigesnatur.org/kontakta-oss/",
+      "active": false,
+      "notes": "Two spellings found (sverige.natur@ and sveriges.natur@naturskyddsforeningen.se). Check before use.",
+      "why": "you report on forestry and mining policy for the people who already care",
+      "facts": []
+    },
+    {
+      "id": "ran-sameby",
+      "name": "Rans sameby",
+      "category": "sami",
+      "email": "rans.sameby@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby with year-round land in Sorsele and winter grazing down the Vindelälven valley to the coast.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/vasterbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds walk the Vindelälven valley from the mountains to the coast around Umeå, you won the Nordmaling case, you are suing the state for the hunting and fishing rights on your land, and Rally Sweden runs across your winter grazing — the council speaks about your land, and owes you its words directly",
+      "facts": [
+        {
+          "text": "In 2011 the Supreme Court found in the Nordmaling case that you have the right to winter grazing on private land there, based on long use.",
+          "source": "https://www.domstol.se/hogsta-domstolen/avgoranden/2011/37976/",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "On 28 May 2024 you sued the state in Lycksele district court for the exclusive right to hunting and fishing above the cultivation boundary.",
+          "source": "https://www.svt.se/nyheter/lokalt/vasterbotten/rans-sameby-i-norra-vasterbotten-stammer-staten",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "In early 2026 the Swedish Transport Agency rejected your appeal against the Rally Sweden permit, while noting the impact on winter grazing is 'not insignificant'.",
+          "source": "https://www.transportstyrelsen.se/sv/om-oss/pressrum/nyhetsarkiv/2026/besked-i-rallyfragan-overklagandet-avslas/",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "gran-sameby",
+      "name": "Grans sameby",
+      "category": "sami",
+      "email": "styr@granbyn.se",
+      "language": "sv",
+      "remit": "Mountain sameby with year-round land around Ammarnäs and winter grazing along the Vindelälven valley.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/vasterbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds share the Vindelälven valley with the beings of this council, from the mountains around Ammarnäs to the winter forests below — what the council discusses happens on your land",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "vapsten-sameby",
+      "name": "Vapstens sameby",
+      "category": "sami",
+      "email": "info@vapstensameby.se",
+      "language": "sv",
+      "remit": "Mountain sameby in southern Västerbotten, around Tärnaby and down towards Lycksele.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/vasterbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds' year walks through the forests and mountains of southern Västerbotten that this council argues over, and you carry what wind power, felling and roads take from it",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "mala-sameby",
+      "name": "Malå sameby",
+      "category": "sami",
+      "email": "malasameby@gmail.com",
+      "language": "sv",
+      "remit": "Forest sameby in Malå, in the Skellefte mining field.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "biodiversity",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/vasterbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "you are a forest sameby in the middle of the Skellefte mining field, where the council's arguments about mines and forests land on your grazing",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "svaipa-sameby",
+      "name": "Svaipa sameby",
+      "category": "sami",
+      "email": "svaipasameby@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby in Arjeplog.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "energyproduction",
+        "tourism",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds use the mountains of Arjeplog, where four uranium exploration permits were granted in August 2026, on the ground of the 1981 protest",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "maskaure-sameby",
+      "name": "Maskaure sameby",
+      "category": "sami",
+      "email": "sameby@maskaure.se",
+      "language": "sv",
+      "remit": "Sameby in Arjeplog.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "forestry",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds use the forests and mountains of Arjeplog, where uranium exploration has returned in 2026",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "gabna-sameby",
+      "name": "Gabna sameby",
+      "category": "sami",
+      "email": "samebygabna@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby in Kiruna; its migration route crosses the planned Per Geijer mine.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "greentransition",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your last migration corridor past the planned Per Geijer mine is about fifty metres wide, and the council speaks of it as if it were its own loss — you should hear it from the council directly",
+      "facts": [
+        {
+          "text": "You ended your 2013 cooperation agreement with LKAB on 2 December 2025 and say no to the Per Geijer mine.",
+          "source": "https://www.nyteknik.se/industri/sameby-bryter-med-lkab-sager-nej-till-per-geijer-gruvan/4416715",
+          "checked": "2026-09-28"
+        },
+        {
+          "text": "On 25 September 2026 the Norrbotten County Administrative Board recommended granting the concession, while writing that losing your migration route cannot be fully compensated.",
+          "source": "https://www.nsd.se/nyheter/kiruna/artikel/lansstyrelsen-vill-bevilja-lkab-koncession-per-geijer/r0ezx59j",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "laevas-sameby",
+      "name": "Laevas sameby",
+      "category": "sami",
+      "email": "laevas@laevas.se",
+      "language": "sv",
+      "remit": "Mountain sameby in Kiruna.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "greentransition",
+        "biodiversity"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your herds use the land around Kiruna, where the mines, the railway and the town's move all pass through grazing land",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "ohredahke-sameby",
+      "name": "Ohredahke sameby",
+      "category": "sami",
+      "email": "ohredahke@outlook.com",
+      "language": "sv",
+      "remit": "Sameby in Frostviken, Jämtland; in conflict with SCA over felling in its core areas.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/jamtland_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "you withdrew your consent to felling in your core areas, and the fellings went on — the council has spoken about your no, and you should hear what it said",
+      "facts": [
+        {
+          "text": "On 24 January 2025 you withdrew your consent to all felling in your core areas; Natursidan has counted more than 200 fellings by SCA there since.",
+          "source": "https://www.natursidan.se/nyheter/over-200-avverkningar-av-sca-trots-nej-fran-sameby/",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "girjas-sameby",
+      "name": "Girjas sameby",
+      "category": "sami",
+      "email": "girjas.norrkaitum@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby in Gällivare and Kiruna; won the Girjas case in the Supreme Court in 2020.",
+      "topics": [
+        "samilandrights&culture",
+        "rightsofnature",
+        "mining",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "your case before the Supreme Court in 2020 showed that the right to the land is older than the papers, and every argument this council has about rights rests on it",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "sirges-sameby",
+      "name": "Sirges sameby",
+      "category": "sami",
+      "email": "sirgessameby@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby in Jokkmokk; one of the post-Girjas plaintiffs.",
+      "topics": [
+        "samilandrights&culture",
+        "rightsofnature",
+        "tourism",
+        "energyproduction"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "you are one of the samebyar suing the state for the hunting and fishing rights on your land after Girjas, and the council has argued over exactly that right",
+      "facts": [
+        {
+          "text": "JK insists the Reindeer Husbandry Act overrides immemorial rights in the post-Girjas cases (April 2026).",
+          "source": "https://www.svt.se/nyheter/sapmi/jk-star-fast-vid-krav-tillampa-rennaringslagen-i-malen",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "unna-tjerusj-sameby",
+      "name": "Unna tjerusj sameby",
+      "category": "sami",
+      "email": "unnatjerusj@gmail.com",
+      "language": "sv",
+      "remit": "Mountain sameby in Gällivare; one of the post-Girjas plaintiffs.",
+      "topics": [
+        "samilandrights&culture",
+        "rightsofnature",
+        "tourism",
+        "mining"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "you are one of the samebyar suing the state for the hunting and fishing rights on your land after Girjas, and the council has argued over exactly that right",
+      "facts": [
+        {
+          "text": "JK insists the Reindeer Husbandry Act overrides immemorial rights in the post-Girjas cases (April 2026).",
+          "source": "https://www.svt.se/nyheter/sapmi/jk-star-fast-vid-krav-tillampa-rennaringslagen-i-malen",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "talma-sameby",
+      "name": "Talma sameby",
+      "category": "sami",
+      "email": "info@talma.nu",
+      "language": "sv",
+      "remit": "Mountain sameby in Kiruna; the first post-Girjas plaintiff (2022).",
+      "topics": [
+        "samilandrights&culture",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": true,
+      "kind": "institution",
+      "why": "you were the first sameby to sue the state for the hunting and fishing rights after Girjas, in 2022, and the council has argued over exactly that right",
+      "facts": [
+        {
+          "text": "JK insists the Reindeer Husbandry Act overrides immemorial rights in the post-Girjas cases (April 2026).",
+          "source": "https://www.svt.se/nyheter/sapmi/jk-star-fast-vid-krav-tillampa-rennaringslagen-i-malen",
+          "checked": "2026-09-28"
+        }
+      ],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap."
+    },
+    {
+      "id": "ubmeje-sameby",
+      "name": "Ubmeje tjeälddie (Umbyn sameby)",
+      "category": "sami",
+      "email": null,
+      "language": "sv",
+      "remit": "Mountain sameby in Storuman and down the Ume river valley.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/vasterbotten_sb",
+      "active": false,
+      "kind": "institution",
+      "why": "your herds use the upper Ume river valley, beside the Vindelälven, and winter on the reindeer grazing land around Umeå",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap. Sametinget lists a board member's personal address; inactive until the sameby has an address of its own."
+    },
+    {
+      "id": "baste-sameby",
+      "name": "Baste čearru",
+      "category": "sami",
+      "email": null,
+      "language": "sv",
+      "remit": "Mountain sameby in Gällivare; one of the post-Girjas plaintiffs.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature",
+        "tourism"
+      ],
+      "addressCheck": "verified",
+      "source": "https://sametinget.se/norrbotten_sb",
+      "active": false,
+      "kind": "institution",
+      "why": "you are one of the samebyar suing the state for the hunting and fishing rights on your land after Girjas",
+      "facts": [],
+      "notes": "Added 4 Oct 2026: writing to the Sámi communities directly rather than only about them. Address from Sametinget's list of samebyar. Small organisation: consider a weekly cap. Sametinget lists a board member's personal address; inactive until the sameby has an address of its own."
+    },
+    {
+      "id": "ssr",
+      "name": "Svenska Samernas Riksförbund (SSR)",
+      "category": "sami",
+      "email": "info@sapmi.se",
+      "language": "sv",
+      "kind": "institution",
+      "remit": "The national association of the samebyar and Sámi organisations; speaks for reindeer herding in politics and law.",
+      "why": "you speak for the samebyar in national politics, where the riksintresse review, the forestry law and the mining rules are being decided",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "mining",
+        "energyproduction",
+        "rightsofnature",
+        "biodiversity"
+      ],
+      "addressCheck": "search",
+      "source": "https://www.sapmi.se/kontakta-oss/",
+      "active": true,
+      "facts": [],
+      "notes": "Added 4 Oct 2026."
+    }
+  ]
+}
