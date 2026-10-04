@@ -54,6 +54,10 @@
   "letterPlanLength": 4000,
   "letterWriteLength": 6000,
   "letterAuthorCooldown": 5,
+  "letterSenderDomain": "council-of-forest.com",
+  "letterReplyDomain": "reply.council-of-forest.com",
+  "letterSenderAddresses": { "treeharvester": "tree.harvester", "windturbine": "wind.turbine" },
+  "letterDailyLimit": 60,
   "humanInputRealtime": {
     "languages": {
       "en": {
