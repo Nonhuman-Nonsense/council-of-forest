@@ -33,7 +33,8 @@
   },
   "human": {
     "placeholder": "Skriv din fråga eller börja inspelning...",
-    "panelist": "Vad har {{name}} att säga om det här?"
+    "panelist": "Vad har {{name}} att säga om det här?",
+    "letter": "Lägg till något i mejlet från {{name}}, eller säg bara nej..."
   },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
@@ -258,6 +259,12 @@
     "body": "Det här mötet pågår just nu någon annanstans,\nkom tillbaka senare för att se om det är avslutat, eller starta ett nytt möte.",
     "goBack": "Gå tillbaka",
     "startNew": "Starta nytt möte"
+  },
+  "letter": {
+    "from": "Från",
+    "to": "Till",
+    "subject": "Ämne",
+    "unsent": "Det här brevet skrevs, men skickades inte."
   },
   "summary": {
     "download": "Ladda ned PDF",
