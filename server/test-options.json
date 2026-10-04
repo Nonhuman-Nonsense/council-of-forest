@@ -7,5 +7,6 @@
     "defaultAudioSpeed": 1.20,
     "raiseHandInvitationLength": 100,
     "panelistInvitationLength": 60,
-    "summarizeMeetingLength": 100
+    "summarizeMeetingLength": 100,
+    "meetingEnding": "protocol"
 }
