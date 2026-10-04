@@ -32,9 +32,9 @@ const VOTES_URL = "https://data.riksdagen.se/voteringlista/";
 const KEY_VOTES = [
   {
     bet: "MJU29", punkt: "2", date: "16 June 2026",
-    ja: "On 16 June 2026 you voted for the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which cuts the notice before felling from six weeks to three; it passed 308 to 21",
-    nej: "On 16 June 2026 you voted against the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which cuts the notice before felling from six weeks to three; it passed 308 to 21",
-    avstar: "On 16 June 2026 you abstained on the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which cuts the notice before felling from six weeks to three; it passed 308 to 21",
+    ja: "On 16 June 2026 you voted for the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which from January 2027 separates felling notices from environmental consultation, shortens the notice before felling from six weeks to three, moves appeals to the land and environment courts, and caps what an owner must spend on finding out which protected species live on the land; it passed 308 to 21",
+    nej: "On 16 June 2026 you voted against the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which from January 2027 separates felling notices from environmental consultation, shortens the notice before felling from six weeks to three, moves appeals to the land and environment courts, and caps what an owner must spend on finding out which protected species live on the land; it passed 308 to 21",
+    avstar: "On 16 June 2026 you abstained on the forestry law Ett tydligt regelverk för aktivt skogsbruk (MJU29), which from January 2027 separates felling notices from environmental consultation, shortens the notice before felling from six weeks to three, moves appeals to the land and environment courts, and caps what an owner must spend on finding out which protected species live on the land; it passed 308 to 21",
   },
   {
     bet: "NU7", punkt: "1", date: "5 November 2025",
