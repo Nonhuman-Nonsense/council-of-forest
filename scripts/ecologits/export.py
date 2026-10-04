@@ -20,7 +20,7 @@ import math
 from importlib.metadata import version as installed_version
 
 from ecologits.electricity_mix_repository import electricity_mixes
-from ecologits.impacts.llm import compute_llm_impacts, compute_llm_impacts_dag
+from ecologits.impacts.llm import BATCH_SIZE, GPU_MEMORY, HARDWARE_LIFESPAN, compute_llm_impacts, compute_llm_impacts_dag
 from ecologits.model_repository import ParametersMoE, models
 from ecologits.tracers.utils import PROVIDER_CONFIG_MAP, llm_impacts
 from ecologits.utils.range_value import RangeValue
@@ -30,18 +30,29 @@ IMPACTS = {
     "energy": ("request_energy", None, "energy"),
     "gwp": ("request_usage_gwp", "request_embodied_gwp", "gwp"),
     "adpe": ("request_usage_adpe", "request_embodied_adpe", "adpe"),
-    "pe": ("request_usage_pe", "request_embodied_pe", "pe"),
     "wcf": ("request_usage_wcf", None, "wcf"),
 }
-UNITS = {"energy": "kWh", "gwp": "kgCO2eq", "adpe": "kgSbeq", "pe": "MJ", "wcf": "L"}
+UNITS = {"energy": "kWh", "gwp": "kgCO2eq", "adpe": "kgSbeq", "wcf": "L"}
+
+# What each model does at the council, and how much is known about it:
+#   "ecologits"  EcoLogits' own model entry
+#   "corrected"  EcoLogits' method on a published size where its entry is wrong
+#   "guessed"    no published size or data: EcoLogits' method on our analogy
+ROLES = ("writing", "speaking", "listening")
+BASES = ("ecologits", "corrected", "guessed")
 
 INWORLD_TTS_SOURCES = [
     "https://arxiv.org/abs/2507.21138",
     "https://cloud.google.com/customers/inworld",
+    "https://docs.inworld.ai/portal/regions",
 ]
+INWORLD_HOSTING = (
+    "Runs on Google Cloud in Inworld's default US deployment (api.inworld.ai; EU and India only on enterprise "
+    "contracts), cloud region unpublished: EcoLogits' google_genai data-centre profile (USA) is assumed."
+)
 INWORLD_TTS_ASSUMPTIONS = [
     "Inworld TTS is an autoregressive SpeechLM generating 50 audio tokens per second of speech (TTS-1 technical report).",
-    "Runs on Google Cloud, region unpublished: EcoLogits' google_genai data-centre profile (USA) is assumed.",
+    INWORLD_HOSTING,
 ]
 
 ELEVENLABS_ASSUMPTIONS = [
@@ -59,32 +70,60 @@ SONIOX_ASSUMPTIONS = [
 MODELS = {
     "inworld|mistral/mistral-large-3": {
         "ecologits": ("mistralai", "mistral-large-2512"),
-        # EcoLogits (0.11.1 and main as of 2026-09) lists mistral-large-2512 as 123B dense, with
-        # Mistral Large 2's sources. Mistral publishes Large 3 as a 675B / 41B-active MoE.
-        "parameters": {"total": 675, "active": 41},
-        # Weights ship in FP8 and BF16; EcoLogits' default is 16-bit. The GPU count, and with it
-        # most of the estimate, depends on which one serves.
+        # Weights ship in FP8 and BF16; EcoLogits (0.11.2) assumes 16-bit for every model and has
+        # announced changes to how it treats quantization. The GPU count, and with it most of
+        # the estimate, depends on which one serves.
         "quantizationBits": (8, 16),
+        # Mistral's API serves from Sweden by default, or the US on its US endpoint; which one
+        # Inworld calls is not published. Each end of the range takes the zone that gives it.
+        "zones": ("SWE", "USA"),
+        "role": "writing",
+        "basis": "ecologits",
         "assumptions": [
-            "Routed through Inworld to Mistral's own API; EcoLogits' Mistral data-centre profile applies.",
-            "Architecture corrected from EcoLogits' entry (123B dense, copied from Mistral Large 2) to Mistral's published 675B total / 41B active mixture-of-experts.",
-            "Served with 8-bit (FP8, published) to 16-bit weights: EcoLogits sizes the GPU fleet by memory, so this halves or doubles the GPUs a request occupies (16 to 32 H100-class GPUs).",
+            "Routed through Inworld to Mistral's own API (Inworld reports the attempt as mistral/mistral-large-3 on its own credentials); EcoLogits' Mistral data-centre profile applies.",
+            "Mistral's API runs in Sweden by default and in the US on its US endpoint; which Inworld uses is not published, so the range spans both electricity mixes.",
+            "EcoLogits listed Mistral Large 3 with Mistral Large 2's size until 0.11.2, which took Mistral's published 675B total / 41B active mixture-of-experts after we reported it.",
+            "Served with 8-bit (FP8, published) to 16-bit weights: EcoLogits sizes the GPU fleet by memory, so this halves or doubles the GPUs a request occupies (16 to 32 H100-class GPUs). EcoLogits itself assumes 16-bit.",
         ],
         "sources": [
-            "https://mistral.ai/news/mistral-3/",
-            "https://docs.mistral.ai/models/mistral-large-3-25-12",
-            "https://huggingface.co/mistralai/Mistral-Large-3-675B-Instruct-2512",
+            "https://help.mistral.ai/en/articles/156206-when-using-mistral-ai-s-api-where-is-my-data-stored",
+            "https://github.com/mlco2/ecologits/pull/262",
             "https://huggingface.co/mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4",
         ],
     },
     "inworld|google-ai-studio/gemini-2.5-flash": {
         "ecologits": ("google_genai", "gemini-2.5-flash"),
+        "role": "writing",
+        "basis": "ecologits",
         "assumptions": ["Routed through Inworld to Google AI Studio; EcoLogits' Google data-centre profile applies."],
+    },
+    # The letters (server/src/logic/letters): Opus plans and drafts, Sonnet weaves in the human's words.
+    "inworld|anthropic/claude-opus-5-5": {
+        "ecologits": ("anthropic", "claude-opus-5-5"),
+        "role": "writing",
+        "basis": "ecologits",
+        "assumptions": [
+            "Routed through Inworld to Anthropic; EcoLogits' Anthropic data-centre profile applies.",
+            "Anthropic publishes no model size; EcoLogits' own estimate for the model is used, with its range.",
+            "Reasoning tokens are billed and counted as output tokens.",
+        ],
+    },
+    "inworld|anthropic/claude-sonnet-5-5": {
+        "ecologits": ("anthropic", "claude-sonnet-5-5"),
+        "role": "writing",
+        "basis": "ecologits",
+        "assumptions": [
+            "Routed through Inworld to Anthropic; EcoLogits' Anthropic data-centre profile applies.",
+            "Anthropic publishes no model size; EcoLogits' own estimate for the model is used, with its range.",
+            "Reasoning tokens are billed and counted as output tokens.",
+        ],
     },
     "inworld|inworld-tts-1.5-max": {
         "custom": {"parameters": 8.8, "datacenter": "google_genai"},
         "usageMeasure": "audio_seconds",
         "tokensPerUnit": 50,
+        "role": "speaking",
+        "basis": "guessed",
         "assumptions": INWORLD_TTS_ASSUMPTIONS + ["Same size as TTS-1-Max (8.8B, dense); TTS-1.5 size is unpublished."],
         "sources": INWORLD_TTS_SOURCES,
     },
@@ -92,6 +131,8 @@ MODELS = {
         "custom": {"parameters": 1.6, "datacenter": "google_genai"},
         "usageMeasure": "audio_seconds",
         "tokensPerUnit": 50,
+        "role": "speaking",
+        "basis": "guessed",
         "assumptions": INWORLD_TTS_ASSUMPTIONS + ["Same size as TTS-1 (1.6B, dense); TTS-1.5 size is unpublished."],
         "sources": INWORLD_TTS_SOURCES,
     },
@@ -99,6 +140,8 @@ MODELS = {
         "custom": {"parameters": RangeValue(min=1.6, max=8.8), "datacenter": "google_genai"},
         "usageMeasure": "audio_seconds",
         "tokensPerUnit": 50,
+        "role": "speaking",
+        "basis": "guessed",
         "assumptions": INWORLD_TTS_ASSUMPTIONS + ["Size unpublished: the range of TTS-1 and TTS-1-Max (1.6–8.8B) is assumed."],
         "sources": INWORLD_TTS_SOURCES,
     },
@@ -106,6 +149,8 @@ MODELS = {
         "custom": {"parameters": RangeValue(min=0.6, max=2.0), "datacenter": "huggingface_hub"},
         "usageMeasure": "audio_seconds",
         "tokensPerUnit": 50,
+        "role": "listening",
+        "basis": "guessed",
         "assumptions": SONIOX_ASSUMPTIONS,
         "sources": [
             "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
@@ -113,10 +158,30 @@ MODELS = {
             "https://soniox.com/docs/data-residency",
         ],
     },
+    "inworld|inworld/inworld-stt-1": {
+        "custom": {"parameters": RangeValue(min=0.6, max=2.0), "datacenter": "google_genai"},
+        "usageMeasure": "audio_seconds",
+        "tokensPerUnit": 50,
+        "role": "listening",
+        "basis": "guessed",
+        "assumptions": [
+            "Inworld publishes no size or architecture for STT-1: assumed in the range of open speech-recognition models, like Soniox (0.6–2B).",
+            "Modelled as 50 tokens per audio second (Whisper's encoder frame rate), with generation capped at real time since recognition is streamed.",
+            INWORLD_HOSTING,
+        ],
+        "sources": [
+            "https://docs.inworld.ai/stt/overview",
+            "https://docs.inworld.ai/portal/regions",
+            "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2",
+            "https://huggingface.co/openai/whisper-large-v3",
+        ],
+    },
     "elevenlabs|eleven_flash_v2_5": {
         "custom": {"parameters": RangeValue(min=1.6, max=8.8), "datacenter": "google_genai", "zone": "NLD"},
         "usageMeasure": "audio_seconds",
         "tokensPerUnit": 50,
+        "role": "speaking",
+        "basis": "guessed",
         "assumptions": ELEVENLABS_ASSUMPTIONS,
         "sources": INWORLD_TTS_SOURCES[:1] + ["https://elevenlabs.io/docs/overview/administration/data-residency"],
     },
@@ -148,7 +213,7 @@ def resolve(key, spec):
         deployment = model.deployment
         return {
             "datacenter": provider,
-            "zone": PROVIDER_CONFIG_MAP[provider].datacenter_location,
+            "zones": tuple(spec.get("zones", (PROVIDER_CONFIG_MAP[provider].datacenter_location,))),
             "active": ends(active),
             "total": ends(total),
             "bits": tuple(spec.get("quantizationBits", (16, 16))),
@@ -161,7 +226,7 @@ def resolve(key, spec):
     custom = spec["custom"]
     return {
         "datacenter": custom["datacenter"],
-        "zone": custom.get("zone", PROVIDER_CONFIG_MAP[custom["datacenter"]].datacenter_location),
+        "zones": (custom.get("zone", PROVIDER_CONFIG_MAP[custom["datacenter"]].datacenter_location),),
         "active": ends(custom["parameters"]),
         "total": ends(custom["parameters"]),
         "bits": tuple(spec.get("quantizationBits", (16, 16))),
@@ -172,9 +237,9 @@ def resolve(key, spec):
     }
 
 
-def dag(inputs, end, tokens, request_seconds):
+def dag(inputs, end, tokens, request_seconds, zone):
     config = PROVIDER_CONFIG_MAP[inputs["datacenter"]]
-    mix = electricity_mixes.find_electricity_mix(zone=inputs["zone"])
+    mix = electricity_mixes.find_electricity_mix(zone=zone)
     return compute_llm_impacts_dag(
         model_active_parameter_count=inputs["active"][end],
         model_total_parameter_count=inputs["total"][end],
@@ -192,18 +257,39 @@ def dag(inputs, end, tokens, request_seconds):
     )
 
 
+def embodied_value(result, impact):
+    embodied = IMPACTS[impact][1]
+    return result[embodied] if embodied else 0
+
+
 def impact_value(result, impact):
     usage, embodied, _ = IMPACTS[impact]
     return result[usage] + (result[embodied] if embodied else 0)
 
 
 def coefficients(inputs, end):
+    """
+    The model's constants at one end of its range. With more than one possible zone, each impact
+    takes the zone that gives that end: the lowest at the low end, the highest at the high end —
+    per impact, since a cleaner grid can still use more water.
+    """
+    by_zone = [zone_coefficients(inputs, end, zone) for zone in inputs["zones"]]
+    pick = min if end == 0 else max
+    combined = dict(by_zone[0])
+    for part in ("perToken", "perGenerationSecond", "embodiedPerGenerationSecond"):
+        combined[part] = {
+            i: pick(by_zone, key=lambda c: (c["perToken"][i], c["perGenerationSecond"][i]))[part][i] for i in IMPACTS
+        }
+    return combined
+
+
+def zone_coefficients(inputs, end, zone):
     # Latency 0: generation time is 0, only the per-token part remains.
-    per_token_run = dag(inputs, end, 1, 0.0)
+    per_token_run = dag(inputs, end, 1, 0.0, zone)
     # A huge token count keeps the measured latency binding, so two latencies isolate the per-second part.
     tokens, short, long = 1e9, 10.0, 1000.0
-    short_run, long_run = dag(inputs, end, tokens, short), dag(inputs, end, tokens, long)
-    unbounded_one, unbounded_zero = dag(inputs, end, 1, math.inf), dag(inputs, end, 0, math.inf)
+    short_run, long_run = dag(inputs, end, tokens, short, zone), dag(inputs, end, tokens, long, zone)
+    unbounded_one, unbounded_zero = dag(inputs, end, 1, math.inf, zone), dag(inputs, end, 0, math.inf, zone)
     return {
         "secondsPerToken": unbounded_one["generation_latency"] - unbounded_zero["generation_latency"],
         "firstTokenSeconds": unbounded_zero["generation_latency"],
@@ -211,26 +297,34 @@ def coefficients(inputs, end):
         "perGenerationSecond": {
             i: (impact_value(long_run, i) - impact_value(short_run, i)) / (long - short) for i in IMPACTS
         },
+        # The part of perGenerationSecond that is hardware manufacturing (EcoLogits' embodied impacts).
+        "embodiedPerGenerationSecond": {
+            i: (embodied_value(long_run, i) - embodied_value(short_run, i)) / (long - short) for i in IMPACTS
+        },
+        # GPUs the model needs, all busy while a batch of BATCH_SIZE requests is generated.
+        "gpus": per_token_run["gpu_required_count"],
     }
 
 
 def golden(key, spec, inputs, units, request_seconds):
     tokens = units * spec.get("tokensPerUnit", 1)
     latency = math.inf if request_seconds is None else request_seconds
-    if "ecologits" in spec and "parameters" not in spec:
+    # EcoLogits' public entry point, unless our inputs differ from its own: a corrected size, or
+    # a quantization range (llm_impacts assumes 16-bit).
+    if "ecologits" in spec and "parameters" not in spec and inputs["bits"] == (16, 16) and "zones" not in spec:
         provider, name = spec["ecologits"]
         result = llm_impacts(provider, name, tokens, latency)
         if result.has_errors:
             raise SystemExit(f"{key}: {result.errors}")
     else:
         config = PROVIDER_CONFIG_MAP[inputs["datacenter"]]
-        mix = electricity_mixes.find_electricity_mix(zone=inputs["zone"])
 
         def value(pair):
             low, high = pair
             return RangeValue(min=low, max=high) if low != high else low
 
-        def run(bits):
+        def run(bits, zone):
+            mix = electricity_mixes.find_electricity_mix(zone=zone)
             return compute_llm_impacts(
                 model_active_parameter_count=value(inputs["active"]),
                 model_total_parameter_count=value(inputs["total"]),
@@ -248,22 +342,34 @@ def golden(key, spec, inputs, units, request_seconds):
             )
 
         # compute_llm_impacts ranges over parameters only; a quantization range is the low end
-        # of an 8-bit run and the high end of a 16-bit one.
+        # of an 8-bit run and the high end of a 16-bit one, and a zone range the lowest and
+        # highest of each impact over the zones.
         low_bits, high_bits = inputs["bits"]
-        low_run, high_run = run(low_bits), run(high_bits)
+        low_runs = [run(low_bits, zone) for zone in inputs["zones"]]
+        high_runs = [run(high_bits, zone) for zone in inputs["zones"]]
         return {
             "units": units,
             "requestSeconds": request_seconds,
             "impacts": {
-                i: [ends(getattr(low_run, IMPACTS[i][2]).value)[0], ends(getattr(high_run, IMPACTS[i][2]).value)[1]]
+                i: [min(field(r, i)[0] for r in low_runs), max(field(r, i)[1] for r in high_runs)] for i in IMPACTS
+            },
+            "manufacturing": {
+                i: [min(field(r.embodied, i)[0] for r in low_runs), max(field(r.embodied, i)[1] for r in high_runs)]
                 for i in IMPACTS
             },
         }
     return {
         "units": units,
         "requestSeconds": request_seconds,
-        "impacts": {i: list(ends(getattr(result, IMPACTS[i][2]).value)) for i in IMPACTS},
+        "impacts": {i: list(field(result, i)) for i in IMPACTS},
+        "manufacturing": {i: list(field(result.embodied, i)) for i in IMPACTS},
     }
+
+
+def field(impacts, impact):
+    """(low, high) of one criterion in an EcoLogits result; (0, 0) where it reports none (embodied energy, water)."""
+    value = getattr(impacts, IMPACTS[impact][2], None)
+    return ends(value.value) if value is not None else (0, 0)
 
 
 def export(expected_version):
@@ -276,17 +382,28 @@ def export(expected_version):
         "ecologitsVersion": actual,
         "license": "EcoLogits (https://github.com/mlco2/ecologits) is MPL-2.0",
         "units": UNITS,
+        # EcoLogits' fixed hardware assumptions, behind the meter's GPU-time figure.
+        "hardware": {
+            "gpu": f"NVIDIA H100 ({GPU_MEMORY} GB)",
+            "batchSize": BATCH_SIZE,
+            "lifetimeSeconds": HARDWARE_LIFESPAN,
+        },
         "models": {},
     }
     for key, spec in MODELS.items():
+        if spec.get("role") not in ROLES or spec.get("basis") not in BASES:
+            raise SystemExit(f"{key}: needs a role {ROLES} and a basis {BASES}")
         inputs = resolve(key, spec)
-        if electricity_mixes.find_electricity_mix(zone=inputs["zone"]) is None:
-            raise SystemExit(f"{key}: EcoLogits has no electricity mix for {inputs['zone']}")
+        for zone in inputs["zones"]:
+            if electricity_mixes.find_electricity_mix(zone=zone) is None:
+                raise SystemExit(f"{key}: EcoLogits has no electricity mix for {zone}")
         out["models"][key] = {
             "ecologitsModel": "/".join(spec["ecologits"]) if "ecologits" in spec else None,
+            "role": spec["role"],
+            "basis": spec["basis"],
             "usageMeasure": spec.get("usageMeasure", "output_tokens"),
             "tokensPerUnit": spec.get("tokensPerUnit", 1),
-            "datacenterZone": inputs["zone"],
+            "datacenterZones": list(inputs["zones"]),
             "activeParameters": list(inputs["active"]),
             "totalParameters": list(inputs["total"]),
             "quantizationBits": list(inputs["bits"]),
@@ -294,7 +411,7 @@ def export(expected_version):
             "high": coefficients(inputs, 1),
             "assumptions": spec.get("assumptions", []),
             "warnings": inputs["warnings"],
-            "sources": inputs["sources"] + spec.get("sources", []),
+            "sources": list(dict.fromkeys(inputs["sources"] + spec.get("sources", []))),
             "samples": [golden(key, spec, inputs, u, s) for u, s in SAMPLES],
         }
     return out

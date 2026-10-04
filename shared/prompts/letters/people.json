@@ -1,0 +1,740 @@
+{
+  "metadata": {
+    "status": "draft, hand-collected",
+    "lastChecked": "2026-10-01",
+    "notes": "The people on the letter list who are not in a parliamentary register: researchers, regional and municipal politicians, county governors and agency leadership. Public role addresses only; one letter per person, ever. Entries with email null are gaps or deliberate non-entries with the institutional route noted. WARNING: Sweden held municipal and regional elections on 13 September 2026; every municipal and regional politician here must be re-verified once the new assemblies take office in October 2026.",
+    "addressCheck": {
+      "verified": "read on the person's own staff page",
+      "search": "found through search; confirm before activating",
+      "pattern": "derived from the organisation's address pattern; never activate unconfirmed",
+      "none": "no public address found"
+    },
+    "fields": {
+      "remit": "what they decide on or study, in plain terms",
+      "why": "one sentence the letter can open with ('we write to you because …') and the being can choose on",
+      "facts": "what is on record about the recipient's own actions, each with a source and the date it was checked; the only things a letter may say they did"
+    }
+  },
+  "recipients": [
+    {
+      "id": "res-fredrik-widemo",
+      "name": "Fredrik Widemo",
+      "kind": "person",
+      "category": "research",
+      "email": "fredrik.widemo@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Wildlife, Fish and Environment",
+      "remit": "Wildlife ecology: moose, browsing damage, co-management of ungulates; the ÄBIN target debate.",
+      "topics": [
+        "biodiversity",
+        "forestry"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/profilsidor/w/fredrik-widemo/",
+      "active": true,
+      "why": "you study moose and browsing damage, and found no clear link between moose density and damage in Norrland — against the target the forestry industry set",
+      "facts": []
+    },
+    {
+      "id": "res-per-sandstrom",
+      "name": "Per Sandström",
+      "kind": "person",
+      "category": "research",
+      "email": "per.sandstrom@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Forest Resource Management",
+      "remit": "Ground lichen and reindeer husbandry plans; built the RenGIS tool used by every sameby.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/profilsidor/s/per-sandstrom/",
+      "active": true,
+      "why": "you built the tool every sameby plans with, and you have measured what happened to the ground lichen",
+      "facts": []
+    },
+    {
+      "id": "res-lars-ostlund",
+      "name": "Lars Östlund",
+      "kind": "person",
+      "category": "research",
+      "email": "lars.ostlund@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Forest Ecology and Management",
+      "remit": "Forest history: a thousand years of northern forest use, and conflicts between forestry and conservation.",
+      "topics": [
+        "forestry",
+        "samilandrights&culture",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/profilsidor/o/lars-ostlund/",
+      "active": true,
+      "why": "you know what this forest looked like for the thousand years before it was managed as a crop",
+      "facts": []
+    },
+    {
+      "id": "res-hjalmar-laudon",
+      "name": "Hjalmar Laudon",
+      "kind": "person",
+      "category": "research",
+      "email": "hjalmar.laudon@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Forest Ecology and Management",
+      "remit": "How forestry and climate affect streams and lakes; runs the Krycklan catchment study in Västerbotten.",
+      "topics": [
+        "forestry",
+        "energyproduction",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/profilsidor/l/hjalmar-laudon/",
+      "active": true,
+      "why": "you have measured what forestry does to the water here, in the same catchment, for over twenty years",
+      "facts": []
+    },
+    {
+      "id": "res-gustav-hellstrom",
+      "name": "Gustav Hellström",
+      "kind": "person",
+      "category": "research",
+      "email": "gustav.hellstrom@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Wildlife, Fish and Environment",
+      "remit": "Fish migration and tracking, including salmon past Stornorrfors.",
+      "topics": [
+        "energyproduction",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/en/profilepages/h/gustav-hellstrom/",
+      "active": true,
+      "why": "you follow the salmon through Stornorrfors and know what the ladder does and does not fix",
+      "facts": []
+    },
+    {
+      "id": "res-camilla-widmark",
+      "name": "Camilla Widmark",
+      "kind": "person",
+      "category": "research",
+      "email": "camilla.widmark@slu.se",
+      "language": "sv",
+      "organisation": "SLU, Forest Economics",
+      "remit": "Forest economics: competing land uses, and what conservation and herding cost in timber revenue.",
+      "topics": [
+        "forestry",
+        "greentransition",
+        "samilandrights&culture"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/institutioner/skogsekonomi/institutionen-for-skogsekonomi/kontakt/",
+      "active": true,
+      "why": "you can put a number on what lichen-adapted forestry costs, which is the number this argument turns on",
+      "facts": []
+    },
+    {
+      "id": "res-mark-marissink",
+      "name": "Mark Marissink",
+      "kind": "person",
+      "category": "research",
+      "email": "mark.marissink@slu.se",
+      "language": "sv",
+      "organisation": "SLU Artdatabanken",
+      "remit": "Director of SLU Artdatabanken, which publishes the red list naming forestry as the top threat.",
+      "topics": [
+        "biodiversity",
+        "forestry"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.slu.se/artdatabanken/om-oss/kontakt/kontaktlista/",
+      "active": true,
+      "why": "your red list names modern forestry as the threat to 1,744 species, which is the sentence everyone quotes and few act on",
+      "facts": [
+        {
+          "text": "The red list 2025 published by the Artdatabanken you lead (24 March 2026) counts 5,217 red-listed species and names modern forestry as harming 1,744 of them.",
+          "source": "https://www.slu.se/artdatabanken/publikationer/rodlistor/rodlista-2025/",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "res-jon-moen",
+      "name": "Jon Moen",
+      "kind": "person",
+      "category": "research",
+      "email": "jon.moen@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Ecology and Environmental Science",
+      "remit": "Land-use conflict in the north: herding against forestry, wind, mining and protected areas.",
+      "topics": [
+        "greentransition",
+        "forestry",
+        "energyproduction",
+        "samilandrights&culture",
+        "biodiversity",
+        "tourism",
+        "rightsofnature",
+        "mining"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/en/staff/jon-moen/",
+      "active": true,
+      "why": "you study exactly the collision the council stages — herding against forestry, wind, mining and reserves",
+      "facts": []
+    },
+    {
+      "id": "res-tim-horstkotte",
+      "name": "Tim Horstkotte",
+      "kind": "person",
+      "category": "research",
+      "email": "tim.horstkotte@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Ecology and Environmental Science",
+      "remit": "Reindeer husbandry and forestry as one system; lodgepole pine and winter grazing.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "verified",
+      "source": "https://www.umu.se/en/staff/tim-horstkotte/",
+      "active": true,
+      "why": "you have shown what lodgepole pine and even-aged forest do to winter grazing",
+      "facts": [
+        {
+          "text": "Your study with colleagues (Hagenberg et al., Ecosystems 2025) found that reindeer grazing holds back mountain birch at the treeline.",
+          "source": "https://link.springer.com/article/10.1007/s10021-025-01025-z",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "res-per-anders-esseen",
+      "name": "Per-Anders Esseen",
+      "kind": "person",
+      "category": "research",
+      "email": "per-anders.esseen@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Ecology and Environmental Science",
+      "remit": "Hair lichens: how climate and clear-cutting decide whether they survive on old trees.",
+      "topics": [
+        "forestry",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/en/staff/per-anders-esseen/",
+      "active": true,
+      "why": "you know which trees hair lichens need, and that clear-cutting removes them faster than they grow",
+      "facts": []
+    },
+    {
+      "id": "res-johan-olofsson",
+      "name": "Johan Olofsson",
+      "kind": "person",
+      "category": "research",
+      "email": "johan.olofsson@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Ecology and Environmental Science",
+      "remit": "Reindeer grazing and mountain vegetation, including grazing at the rising treeline.",
+      "topics": [
+        "biodiversity",
+        "samilandrights&culture",
+        "tourism"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "verified",
+      "source": "https://www.umu.se/en/staff/johan-olofsson/",
+      "active": true,
+      "why": "you have shown that reindeer grazing protects the most sensitive mountain plants, which inverts the usual story",
+      "facts": [
+        {
+          "text": "Your study with colleagues (Hagenberg et al., Ecosystems 2025) found that reindeer grazing holds back mountain birch at the treeline.",
+          "source": "https://link.springer.com/article/10.1007/s10021-025-01025-z",
+          "checked": "2026-09-28"
+        }
+      ]
+    },
+    {
+      "id": "res-christer-nilsson",
+      "name": "Christer Nilsson",
+      "kind": "person",
+      "category": "research",
+      "email": "christer.nilsson@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Ecology and Environmental Science",
+      "remit": "River restoration; coordinated the Vindel River LIFE project that reopened 26 tributaries.",
+      "topics": [
+        "energyproduction",
+        "biodiversity",
+        "rightsofnature"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/en/staff/christer-nilsson/",
+      "active": true,
+      "why": "you coordinated the restoration that reopened 26 tributaries of this river, so you know what repair costs and what it cannot return",
+      "facts": []
+    },
+    {
+      "id": "res-camilla-sandstrom",
+      "name": "Camilla Sandström",
+      "kind": "person",
+      "category": "research",
+      "email": "camilla.sandstrom@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Political Science",
+      "remit": "Forest and environmental policy; governance of contested land. Member of the Climate Policy Council.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "greentransition",
+        "rightsofnature"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/en/staff/camilla-sandstrom/",
+      "active": true,
+      "why": "you study how forest policy is actually made, and you sit on the Climate Policy Council",
+      "facts": [
+        {
+          "text": "You have been appointed to the Swedish Climate Policy Council.",
+          "source": "https://www.umu.se/nyheter/umeaforskare-ny-ledamot-i-klimatpolitiska-radet_12109309",
+          "checked": "2026-10-04"
+        }
+      ]
+    },
+    {
+      "id": "res-kristina-sehlin-macneil",
+      "name": "Kristina Sehlin MacNeil",
+      "kind": "person",
+      "category": "research",
+      "email": "kristina.sehlin-macneil@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Várdduo — Centre for Sámi Research",
+      "remit": "Extractive violence and power relations affecting Indigenous peoples; deputy director of Várdduo.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "rightsofnature",
+        "greentransition"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/en/staff/kristina-sehlin-macneil/",
+      "active": true,
+      "why": "you named the cycle that runs from extraction through structural violence to the threats that follow a court win",
+      "facts": []
+    },
+    {
+      "id": "res-asa-ossbo",
+      "name": "Åsa Össbo",
+      "kind": "person",
+      "category": "research",
+      "email": "asa.ossbo@umu.se",
+      "language": "sv",
+      "organisation": "Umeå University, Várdduo — Centre for Sámi Research",
+      "remit": "Historian of hydropower as industrial colonialism in the reindeer herding area, 1910–1968.",
+      "topics": [
+        "energyproduction",
+        "samilandrights&culture",
+        "greentransition"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umu.se/vardduo-centrum-for-samisk-forskning/",
+      "active": true,
+      "why": "you documented hydropower in the herding area as colonialism, which is the history under every new project here",
+      "facts": [
+        {
+          "text": "Your dissertation Nya vatten, dunkla speglingar (2014) analysed hydropower expansion in the reindeer herding area 1910–1968 as industrial colonialism.",
+          "source": "https://vardduo.bokorder.se/sv-SE/article/3516/nya-vatten-dunkla-speglingar",
+          "checked": "2026-10-04"
+        }
+      ]
+    },
+    {
+      "id": "res-malin-brannstrom",
+      "name": "Malin Brännström",
+      "kind": "person",
+      "category": "research",
+      "email": null,
+      "language": "sv",
+      "organisation": "Silvermuseet / formerly Umeå University",
+      "remit": "Legal scholar on herding rights as property rights, and why the Forestry Act balances them away.",
+      "topics": [
+        "samilandrights&culture",
+        "forestry",
+        "rightsofnature"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://silvermuseet.se/malin-brannstrom/",
+      "active": false,
+      "notes": "No public address found; reported to have moved to Silvermuseet in Arjeplog. Worth finding — the single closest expert to the Sámi topic.",
+      "why": "you showed that herding rights are property rights in case law but a public interest in the Forestry Act, which is why they are balanced away rather than secured",
+      "facts": []
+    },
+    {
+      "id": "pol-peter-olofsson",
+      "name": "Peter Olofsson (S)",
+      "kind": "person",
+      "category": "regional-politics",
+      "email": "peter.olofsson@regionvasterbotten.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the regional board, Region Västerbotten; said of wind power that \"the network is full\".",
+      "topics": [
+        "greentransition",
+        "tourism",
+        "energyproduction"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://regionvasterbotten.tromanpublik.se/",
+      "active": true,
+      "notes": "Term 2023–2026. Re-verify after the new regional assembly takes office in October 2026.",
+      "why": "you chair the region whose own chair said the grid here is full, while the north is still sold as the answer",
+      "facts": []
+    },
+    {
+      "id": "pol-anders-oberg",
+      "name": "Anders Öberg (S)",
+      "kind": "person",
+      "category": "regional-politics",
+      "email": "anders.oberg@norrbotten.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the regional board, Region Norrbotten.",
+      "topics": [
+        "greentransition",
+        "mining",
+        "energyproduction"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://norrbotten.tromanpublik.se/",
+      "active": true,
+      "notes": "Term 2023–2026. Re-verify after the new regional assembly takes office in October 2026.",
+      "why": "you chair the region the green transition was promised to, and the one left with what it built",
+      "facts": []
+    },
+    {
+      "id": "pol-helene-hellmark-knutsson",
+      "name": "Helene Hellmark Knutsson",
+      "kind": "person",
+      "category": "regional-politics",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "County governor of Västerbotten (appointed to 2029): permits, nature conservation, and the state's presence in the county.",
+      "topics": [
+        "greentransition",
+        "forestry",
+        "energyproduction",
+        "samilandrights&culture",
+        "biodiversity",
+        "tourism",
+        "rightsofnature",
+        "mining"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://www.lansstyrelsen.se/vasterbotten/om-oss/om-lansstyrelsen-i-vasterbottens-lan/landshovding-helene-hellmark-knutsson.html",
+      "active": false,
+      "notes": "No personal address published; letters reach the governor through vasterbotten@lansstyrelsen.se.",
+      "why": "your county board issues the permits and manages the reserves inside the biosphere area",
+      "facts": []
+    },
+    {
+      "id": "pol-lotta-finstorp",
+      "name": "Lotta Finstorp",
+      "kind": "person",
+      "category": "regional-politics",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "County governor of Norrbotten; has asked the government for heliskiing rules since 2023.",
+      "topics": [
+        "mining",
+        "greentransition",
+        "samilandrights&culture",
+        "tourism"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://www.lansstyrelsen.se/norrbotten/om-oss/om-lansstyrelsen-i-norrbottens-lan.html",
+      "active": false,
+      "notes": "No personal address published; letters reach the governor through norrbotten@lansstyrelsen.se.",
+      "why": "you have asked the government for heliskiing rules since 2023 and not been given them",
+      "facts": []
+    },
+    {
+      "id": "pol-hans-lindberg",
+      "name": "Hans Lindberg (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": "hans.lindberg@umea.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Umeå.",
+      "topics": [
+        "greentransition",
+        "energyproduction",
+        "biodiversity"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.umea.se/kommunochpolitik/kommunensorganisation/kommunstyrelsen.4.533ba3d3171b940e900197.html",
+      "active": true,
+      "notes": "Term to October 2026. Municipal elections were held on 13 September 2026 — re-verify before the first letter.",
+      "why": "the river reaches the sea in your municipality, past the turbine",
+      "facts": []
+    },
+    {
+      "id": "pol-lorents-burman",
+      "name": "Lorents Burman (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": "lorents.burman@skelleftea.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Skellefteå.",
+      "topics": [
+        "greentransition",
+        "energyproduction",
+        "mining"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://skelleftea.se/invanare/startsida/kommun-och-politik/om-skelleftea-kommun/kommunalrad-och-kommundirektor",
+      "active": true,
+      "notes": "Term to October 2026 — re-verify.",
+      "why": "you cut your wind plan from 23 areas to 2, and the plant that failed and was sold stands in your municipality",
+      "facts": []
+    },
+    {
+      "id": "pol-roland-sjogren",
+      "name": "Roland Sjögren",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": "roland.sjogren@lycksele.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Lycksele.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.lycksele.se/kommun/innehall/nyheter/ny-ordforande-i-kommunstyrelsen/",
+      "active": true,
+      "notes": "Term to October 2026 — re-verify.",
+      "why": "you govern the inland forest where felling, herding and tourism meet on the same ground",
+      "facts": []
+    },
+    {
+      "id": "pol-pia-sjoberg",
+      "name": "Pia Sjöberg (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": "pia.sjoberg.pol@sorsele.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Sorsele.",
+      "topics": [
+        "tourism",
+        "samilandrights&culture",
+        "forestry",
+        "mining"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.sorsele.se/kommun-och-politik/kommunalraadet-har-ordet/",
+      "active": true,
+      "notes": "Term to October 2026 — re-verify.",
+      "why": "you govern a Sámi administrative municipality on the upper Vindelälven",
+      "facts": []
+    },
+    {
+      "id": "pol-ulrik-dahlgren",
+      "name": "Ulrik Dahlgren",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": "ulrik.dahlgren@storuman.se",
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Storuman: Juktan pumped storage and the Blaiken clean-up.",
+      "topics": [
+        "energyproduction",
+        "mining",
+        "tourism"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "search",
+      "source": "https://www.storuman.se/kommun/Kommun--politik",
+      "active": true,
+      "notes": "Term to October 2026 — re-verify.",
+      "why": "the Juktan application and the Blaiken clean-up are both yours, one promising power and one still being paid for",
+      "facts": []
+    },
+    {
+      "id": "pol-mathias-haglund",
+      "name": "Mathias Haglund (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Vindeln.",
+      "topics": [
+        "forestry",
+        "tourism",
+        "energyproduction"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "pattern",
+      "source": "https://vindeln.se/kommun-och-politik/politisk-styrning/kommunstyrelsen",
+      "active": false,
+      "notes": "Address not published; the municipality's pattern is fornamn.efternamn@vindeln.se. Confirm before activating.",
+      "why": "the middle Vindelälven runs through your municipality, and wind power needs your consent",
+      "facts": []
+    },
+    {
+      "id": "pol-isak-utsi",
+      "name": "Isak Utsi (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Arjeplog: four uranium exploration permits granted in 2026.",
+      "topics": [
+        "samilandrights&culture",
+        "mining",
+        "tourism"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://arjeplog.se/kommun-och-politik/kommunens-organisation/kommunstyrelsen/",
+      "active": false,
+      "notes": "No address published; kommun@arjeplog.se reaches the board.",
+      "why": "four uranium exploration permits were granted in your municipality in 2026, where the 1981 protest stopped the last one",
+      "facts": []
+    },
+    {
+      "id": "pol-beatrice-oman",
+      "name": "Béatrice Öman (S)",
+      "kind": "person",
+      "category": "municipal-politics",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "Chair of the municipal executive board, Boden (since 13 October 2025): the steel plant and the debt.",
+      "topics": [
+        "greentransition",
+        "energyproduction"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://www.boden.se/bodensare/bo-i-boden/kommunstyrelsen",
+      "active": false,
+      "notes": "No address published; kommunen@boden.se reaches the board. Re-verify after the autumn 2026 term change.",
+      "why": "you govern the town that borrowed more than a billion kronor ahead of a plant with no start date, and where this council meets",
+      "facts": []
+    },
+    {
+      "id": "agency-staffan-norin",
+      "name": "Staffan Norin",
+      "kind": "person",
+      "category": "agency-head",
+      "email": null,
+      "language": "sv",
+      "organisation": null,
+      "remit": "Director-General of Skogsstyrelsen since 1 March 2026, and based in Umeå.",
+      "topics": [
+        "forestry",
+        "biodiversity",
+        "samilandrights&culture"
+      ],
+      "limits": {
+        "once": true
+      },
+      "addressCheck": "none",
+      "source": "https://www.skogsstyrelsen.se/om-oss/organisation/ledning-och-styrelse/",
+      "active": false,
+      "notes": "Agencies do not publish their director-general's address. A letter to skogsstyrelsen@skogsstyrelsen.se addressed to the Director-General is registered and reaches them — which is why the other agency heads are not listed separately.",
+      "why": "you took over the agency in March 2026 and administer a law that cuts the review window to three weeks in January",
+      "facts": []
+    }
+  ]
+}

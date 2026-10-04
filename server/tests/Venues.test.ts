@@ -23,11 +23,17 @@ describe('COUNCIL_VENUES', () => {
         ['closing before opening', JSON.stringify([{ ...exampleMuseum, openingHours: { ...exampleMuseum.openingHours, from: '17:00', to: '10:00' } }])],
         ['an unknown weekday', JSON.stringify([{ ...exampleMuseum, openingHours: { ...exampleMuseum.openingHours, days: ['someday'] } }])],
         ['duplicate ids', JSON.stringify([exampleMuseum, exampleMuseum])],
+        ['a plug number that is not a whole number', JSON.stringify([{ ...exampleMuseum, plugs: [{ plug: 1.5, label: 'Projector' }] }])],
+        ['a plug number twice at one venue', JSON.stringify([{ ...exampleMuseum, plugs: [{ plug: 1, label: 'Projector' }, { plug: 1, label: 'Sound' }] }])],
+        ['a plug number at two venues', JSON.stringify([
+            { ...exampleMuseum, plugs: [{ plug: 1, label: 'Projector' }] },
+            { ...exampleMuseum, id: 'other-museum', plugs: [{ plug: 1, label: 'Projector' }] },
+        ])],
     ])('rejects %s', (_name, raw) => {
         expect(VenuesEnv.safeParse(raw).success).toBe(false);
     });
 
-    it('treats blank mail and bridge settings in .env as unset', () => {
+    it('treats blank mail and installation settings in .env as unset', () => {
         const env = EnvSchema.parse({
             COUNCIL_DB_URL: 'mongodb://localhost:27017',
             COUNCIL_DB_PREFIX: 'test',
@@ -35,12 +41,12 @@ describe('COUNCIL_VENUES', () => {
             INWORLD_API_KEY: 'x',
             COUNCIL_BREVO_API_KEY: '',
             COUNCIL_MAIL_FROM: '',
-            COUNCIL_BRIDGE_KEY: ' ',
+            COUNCIL_INSTALLATION_KEY: ' ',
             COUNCIL_VENUES: '',
         });
         expect(env.COUNCIL_BREVO_API_KEY).toBeUndefined();
         expect(env.COUNCIL_MAIL_FROM).toBeUndefined();
-        expect(env.COUNCIL_BRIDGE_KEY).toBeUndefined();
+        expect(env.COUNCIL_INSTALLATION_KEY).toBeUndefined();
         expect(env.COUNCIL_VENUES).toBeUndefined();
     });
 });

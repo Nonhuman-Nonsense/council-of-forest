@@ -10,7 +10,8 @@ import {
     getSetupAgentRealtimeBootstrap,
     resolveChairRealtimeCallProvider,
 } from "./realtimeProviders.js";
-import { grantRealtimeUsageToken } from "./realtimeUsage.js";
+import { grantRealtimeUsageToken, setupIdFor } from "./realtimeUsage.js";
+import { meterEvents } from "@services/meterEvents.js";
 import { resolveVenueId } from "@utils/venues.js";
 import type {
     HumanInputRealtimeBootstrapRequest,
@@ -84,7 +85,7 @@ export function registerRealtimeRoutes(app: Express): void {
 
         try {
             if (feature === "setup-agent") {
-                const { language, venueId } = body as SetupAgentRealtimeBootstrapRequest;
+                const { language, venueId, setupId: requestedSetupId } = body as SetupAgentRealtimeBootstrapRequest;
                 if (typeof language !== "string" || language.trim().length === 0) {
                     res.status(400).json(new BadRequestError().toApiBody("api POST /api/realtime/bootstrap"));
                     return;
@@ -92,10 +93,17 @@ export function registerRealtimeRoutes(app: Express): void {
 
                 const data = await getSetupAgentRealtimeBootstrap(language);
                 await Logger.info("api", `POST /api/realtime/bootstrap successful (${feature}:${data.provider})`);
+                const setupId = setupIdFor(typeof requestedSetupId === "string" ? requestedSetupId : undefined);
+                const venue = resolveVenueId(venueId);
                 res.status(200).json({
                     ...data,
-                    usageToken: grantRealtimeUsageToken({ feature, venueId: resolveVenueId(venueId) }),
+                    usageToken: grantRealtimeUsageToken({ feature, venueId: venue, setupId }),
+                    setupId,
                 });
+                // A new visitor's setup: the venue's meter starts its current meeting over.
+                if (venue && setupId !== requestedSetupId) {
+                    meterEvents.emit("setupStarted", { venueId: venue, setupId });
+                }
                 return;
             }
 

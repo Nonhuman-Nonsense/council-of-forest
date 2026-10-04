@@ -118,6 +118,19 @@ export type Capabilities = {
    * and nobody wants the printer going mid-talk.
    */
   printSummary: boolean;
+  /**
+   * Tick a counter in the page title, which a kiosk never shows, so the kiosk
+   * window's watchdog (museum/kiosk) can tell a live page from a crashed or hung
+   * one and restart Chrome. A visitor's own browser tab would show it ticking.
+   */
+  kioskHeartbeat: boolean;
+  /**
+   * A meeting that ends in a letter may send it by email (docs/council-letters.md), when the
+   * human was there to answer. Only the museum: on the web anyone could write to real people
+   * from their sofa, and a screening's letters are a demonstration. Elsewhere the letter is
+   * still written and shown, marked unsent.
+   */
+  sendsLetters: boolean;
 };
 
 const WEB: Capabilities = {
@@ -140,6 +153,8 @@ const WEB: Capabilities = {
   typedSetup: true,
   installationReload: false,
   printSummary: false,
+  kioskHeartbeat: false,
+  sendsLetters: false,
 };
 
 const MUSEUM: Capabilities = {
@@ -162,6 +177,8 @@ const MUSEUM: Capabilities = {
   typedSetup: false,
   installationReload: true,
   printSummary: true,
+  kioskHeartbeat: true,
+  sendsLetters: true,
 };
 
 /**
@@ -172,6 +189,9 @@ const MUSEUM: Capabilities = {
  *
  * It doesn't print protocols either: a screening shows the protocol to the
  * room, and a printer starting up mid-talk only interrupts.
+ *
+ * Nor does it send letters: a screening's letter is a demonstration, not one
+ * written with a visitor.
  *
  * Adding human panelists is the exception: a presenter has a keyboard, and
  * putting people on the council by hand is part of showing the piece off. The
@@ -186,6 +206,7 @@ const PRESENTER: Capabilities = {
   autoplay: false,
   typedSetup: true,
   printSummary: false,
+  sendsLetters: false,
 };
 
 const CAPABILITIES: Record<AppMode, Capabilities> = {

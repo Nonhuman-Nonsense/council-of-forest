@@ -2,7 +2,8 @@ import type { StoredMeeting } from "@models/DBModels.js";
 import type { UsageTotalsRow } from "@shared/MeterTypes.js";
 import { USAGE_MEASURES, type UsageEvent, type UsageMeasures, type UsageRecord } from "@shared/UsageTypes.js";
 
-import { usageEventsCollection, usageTotalsCollection } from "@services/DbService.js";
+import { usageEventsCollection } from "@services/DbService.js";
+import { meterEvents } from "@services/meterEvents.js";
 import { Logger } from "@utils/Logger.js";
 
 /**
@@ -13,26 +14,15 @@ import { Logger } from "@utils/Logger.js";
  * not be written.
  */
 
-export const GLOBAL_USAGE_SCOPE = "global";
-
-export function venueUsageScope(venueId: string): string {
-    return `venue:${venueId}`;
-}
-
-type UsageListener = (event: UsageEvent) => void;
-const listeners = new Set<UsageListener>();
-
-/** Subscribe to recorded usage (the live meter). Returns an unsubscribe function. */
-export function onUsageRecorded(listener: UsageListener): () => void {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-}
-
-/** The meeting fields a usage record is tagged with. */
-export function usageTagsFor(meeting: Pick<StoredMeeting, "_id" | "venueId">): Pick<UsageRecord, "meetingId" | "venueId"> {
+/** The meeting fields a usage record is tagged with, and the message it was for when known. */
+export function usageTagsFor(
+    meeting: Pick<StoredMeeting, "_id" | "venueId">,
+    messageIndex?: number,
+): Pick<UsageRecord, "meetingId" | "venueId" | "messageIndex"> {
     return {
         meetingId: meeting._id,
         ...(meeting.venueId ? { venueId: meeting.venueId } : {}),
+        ...(messageIndex !== undefined && messageIndex >= 0 ? { messageIndex } : {}),
     };
 }
 
@@ -49,40 +39,14 @@ function cleanMeasures(measures: UsageMeasures): UsageMeasures {
 
 export async function recordUsage(record: UsageRecord): Promise<void> {
     const measures = cleanMeasures(record.measures);
-    if (Object.keys(measures).length === 0) {
-        return;
-    }
-
-    const events = usageEventsCollection;
-    const totals = usageTotalsCollection;
     // No database (unit tests, or before initDb): nothing to record into.
-    if (!events || !totals) {
+    if (Object.keys(measures).length === 0 || !usageEventsCollection) {
         return;
     }
 
     const event: UsageEvent = { ...record, measures, ts: new Date() };
-
     try {
-        await events.insertOne({ ...event });
-
-        const scopes = [GLOBAL_USAGE_SCOPE];
-        if (record.venueId) {
-            scopes.push(venueUsageScope(record.venueId));
-        }
-        const increments: Record<string, number> = { requests: 1 };
-        for (const [measure, value] of Object.entries(measures)) {
-            increments[`measures.${measure}`] = value;
-        }
-        await Promise.all(scopes.map((scope) =>
-            totals.updateOne(
-                { _id: `${scope}|${record.provider}|${record.model}` },
-                {
-                    $inc: increments,
-                    $setOnInsert: { scope, provider: record.provider, model: record.model },
-                },
-                { upsert: true },
-            )
-        ));
+        await usageEventsCollection.insertOne({ ...event });
     } catch (error) {
         void Logger.warn("usage", `Failed to record ${record.feature} usage (${record.provider}/${record.model})`, {
             error,
@@ -90,13 +54,19 @@ export async function recordUsage(record: UsageRecord): Promise<void> {
         });
         return;
     }
+    meterEvents.emit("usage", event);
+}
 
-    for (const listener of listeners) {
-        try {
-            listener(event);
-        } catch (error) {
-            void Logger.warn("usage", "Usage listener failed", { error });
-        }
+/**
+ * Gives a setup's usage the meeting it led to, so the meeting's totals include the conversation
+ * that set it up. Side channel, like recording: never throws.
+ */
+export async function linkSetupUsage(setupId: string, meetingId: number): Promise<void> {
+    if (!usageEventsCollection) return;
+    try {
+        await usageEventsCollection.updateMany({ setupId, meetingId: { $exists: false } }, { $set: { meetingId } });
+    } catch (error) {
+        void Logger.warn("usage", `Failed to link setup usage to meeting ${meetingId}`, { error, from: { meetingId } });
     }
 }
 
@@ -211,31 +181,35 @@ export function parseRealtimeUsage(usage: unknown): RealtimeUsagePart[] {
     return parts.filter((part) => part.model !== "" && Object.keys(part.measures).length > 0);
 }
 
-function toTotalsRow(doc: { provider: string; model: string; requests: number; measures: UsageMeasures }): UsageTotalsRow {
-    return { provider: doc.provider, model: doc.model, requests: doc.requests, measures: cleanMeasures(doc.measures) };
-}
-
-/** Summed usage per model for a scope (global or a venue). */
-export async function getUsageTotals(scope: string): Promise<UsageTotalsRow[]> {
-    const totals = usageTotalsCollection;
-    if (!totals) return [];
-    const docs = await totals.find({ scope }).toArray();
-    return docs.map(toTotalsRow);
-}
-
-/** Summed usage per model for one meeting, from the event log. */
-export async function getMeetingUsageTotals(meetingId: number): Promise<UsageTotalsRow[]> {
+/**
+ * Summed usage per model of the events matching `filter`: everything, a venue or a meeting.
+ * `byMessage` splits a meeting's rows per message too, so the meter can count each message
+ * once it has been played. Summed on read rather than kept as running totals — fast enough at
+ * installation scale, and any total can be recomputed from the event log.
+ */
+export async function getUsageTotals(
+    filter: { venueId?: string; meetingId?: number; setupId?: string } = {},
+    { byMessage = false }: { byMessage?: boolean } = {},
+): Promise<UsageTotalsRow[]> {
     const events = usageEventsCollection;
     if (!events) return [];
     const measureSums = Object.fromEntries(USAGE_MEASURES.map((m) => [m, { $sum: `$measures.${m}` }]));
-    const groups = await events.aggregate<{ _id: { provider: string; model: string }; requests: number } & Record<string, number>>([
-        { $match: { meetingId } },
-        { $group: { _id: { provider: "$provider", model: "$model" }, requests: { $sum: 1 }, ...measureSums } },
+    const key = { provider: "$provider", model: "$model", ...(byMessage ? { messageIndex: "$messageIndex" } : {}) };
+    const groups = await events.aggregate<{
+        _id: { provider: string; model: string; messageIndex?: number | null };
+        requests: number;
+        lastUsedAt: Date;
+    } & Record<string, number>>([
+        { $match: filter },
+        { $group: { _id: key, requests: { $sum: 1 }, lastUsedAt: { $max: "$ts" }, ...measureSums } },
+        { $sort: { "_id.provider": 1, "_id.model": 1, "_id.messageIndex": 1 } },
     ]).toArray();
-    return groups.map((group) => toTotalsRow({
+    return groups.map((group) => ({
         provider: group._id.provider,
         model: group._id.model,
         requests: group.requests,
-        measures: Object.fromEntries(USAGE_MEASURES.map((m) => [m, group[m]])),
+        measures: cleanMeasures(Object.fromEntries(USAGE_MEASURES.map((m) => [m, group[m]]))),
+        lastUsedAt: group.lastUsedAt.toISOString(),
+        ...(typeof group._id.messageIndex === "number" ? { messageIndex: group._id.messageIndex } : {}),
     }));
 }

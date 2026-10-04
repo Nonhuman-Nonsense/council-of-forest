@@ -30,6 +30,8 @@ describe("capabilitiesFor", () => {
         typedSetup: true,
         installationReload: false,
         printSummary: false,
+        kioskHeartbeat: false,
+        sendsLetters: false,
       },
     },
     {
@@ -54,6 +56,8 @@ describe("capabilitiesFor", () => {
         typedSetup: false,
         installationReload: true,
         printSummary: true,
+        kioskHeartbeat: true,
+        sendsLetters: true,
       },
     },
     {
@@ -78,6 +82,8 @@ describe("capabilitiesFor", () => {
         typedSetup: true,
         installationReload: true,
         printSummary: false,
+        kioskHeartbeat: true,
+        sendsLetters: false,
       },
     },
   ];
@@ -108,7 +114,7 @@ describe("capabilitiesFor", () => {
    * timer, setup can be driven by hand, and nothing prints. Everything else is museum, and this
    * pins that so the two cannot drift apart one flag at a time.
    */
-  it("differs from museum only in its timers, its typed setup and printing", () => {
+  it("differs from museum only in its timers, its typed setup, printing and sending letters", () => {
     const museum = capabilitiesFor("museum");
     const presenter = capabilitiesFor("presenter");
     const differing = Object.keys(museum).filter(
@@ -121,6 +127,7 @@ describe("capabilitiesFor", () => {
       "idleAnswersForVisitor",
       "idleNudge",
       "printSummary",
+      "sendsLetters",
       "typedSetup",
     ].sort());
   });

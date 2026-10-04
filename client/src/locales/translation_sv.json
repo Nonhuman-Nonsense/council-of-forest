@@ -33,7 +33,8 @@
   },
   "human": {
     "placeholder": "Skriv din fråga eller börja inspelning...",
-    "panelist": "Vad har {{name}} att säga om det här?"
+    "panelist": "Vad har {{name}} att säga om det här?",
+    "letter": "Lägg till något i mejlet från {{name}}, eller säg bara nej..."
   },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
@@ -70,9 +71,14 @@
   "staff": {
     "title": "PERSONAL",
     "panels": {
+      "mode": "Läge",
       "installation": "Installation",
       "details": "Detaljer & tips",
       "logging": "Loggning"
+    },
+    "toggle": {
+      "on": "På",
+      "off": "Av"
     },
     "logging": {
       "on": "På",
@@ -104,14 +110,26 @@
       "unknown": "{{id}} (finns inte längre på servern)",
       "hint": "Var den här installationen körs. Märker dess AI-användning för fotavtrycksmätaren och rummets eluttag, och avgör vem som får larmmejl om skrivaren."
     },
-    "bridge": {
-      "title": "Brygga"
+    "installationKey": {
+      "label": "Installationsnyckel",
+      "placeholder": "Klistra in installationsnyckeln",
+      "save": "Spara",
+      "change": "Ändra",
+      "cancel": "Avbryt",
+      "notSaved": "Inte sparad",
+      "hint": "Rådsserverns COUNCIL_INSTALLATION_KEY. Bryggan sparar den för den här servern, för larmmejl om skrivaren; den visas aldrig igen.",
+      "status": {
+        "saved": "Sparad",
+        "missing": "Inte inställd",
+        "otherServer": "Sparad för {{server}}; ange den här serverns nyckel",
+        "outdated": "Uppdatera bryggan för att ange den"
+      }
     },
     "alerts": {
       "label": "Larmmejl",
       "test": "Skicka testlarm",
       "status": {
-        "notConfigured": "Inte inställt på bryggan",
+        "noKey": "Ingen installationsnyckel",
         "chooseVenue": "Välj en plats",
         "failing": "Fungerar inte",
         "on": "På"
@@ -241,6 +259,12 @@
     "body": "Det här mötet pågår just nu någon annanstans,\nkom tillbaka senare för att se om det är avslutat, eller starta ett nytt möte.",
     "goBack": "Gå tillbaka",
     "startNew": "Starta nytt möte"
+  },
+  "letter": {
+    "from": "Från",
+    "to": "Till",
+    "subject": "Ämne",
+    "unsent": "Det här brevet skrevs, men skickades inte."
   },
   "summary": {
     "download": "Ladda ned PDF",

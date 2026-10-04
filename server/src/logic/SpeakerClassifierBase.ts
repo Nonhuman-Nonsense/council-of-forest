@@ -92,12 +92,12 @@ export async function requestSpeakerClassifierCompletion(
     logLabel: string,
     /** The meeting to tag the call's usage with. */
     meeting: StoredMeeting,
+    messageIndex?: number,
 ): Promise<string> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), OUTBOUND_HTTP_TIMEOUT_MS);
 
     try {
-        const startedAt = Date.now();
         const response = await withNetworkRetry(
             () =>
                 fetch(INWORLD_CHAT_COMPLETIONS_URL, {
@@ -125,15 +125,11 @@ export async function requestSpeakerClassifierCompletion(
 
         const data = (await response.json()) as RouterChatCompletionResponse;
         void recordUsage({
-            source: "server",
             feature: "classifier",
             provider: "inworld",
             model: serverOptions.speakerClassifierModel,
-            measures: {
-                ...parseChatCompletionUsage(data.usage),
-                request_seconds: (Date.now() - startedAt) / 1000,
-            },
-            ...usageTagsFor(meeting),
+            measures: parseChatCompletionUsage(data.usage),
+            ...usageTagsFor(meeting, messageIndex),
         });
         const content = data.choices?.[0]?.message?.content;
         return typeof content === "string" ? content : "";

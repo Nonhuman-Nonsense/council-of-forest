@@ -44,6 +44,16 @@
     "sv": "Förvänta dig svenskt tal."
   },
   "audioConcurrency": 10,
+  "meetingEnding": "letter",
+  "letterSiteUrl": "https://council-of-forest.com",
+  "letterMaxCandidates": 16,
+  "letterModel": "anthropic/claude-opus-5-5",
+  "letterReasoning": "medium",
+  "letterWeaveModel": "anthropic/claude-sonnet-5-5",
+  "letterWeaveReasoning": "low",
+  "letterPlanLength": 4000,
+  "letterWriteLength": 6000,
+  "letterAuthorCooldown": 5,
   "humanInputRealtime": {
     "languages": {
       "en": {

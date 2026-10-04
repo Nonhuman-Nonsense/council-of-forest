@@ -1,4 +1,4 @@
-import type { StoredMeeting, StoredAudio, Counter, StoredRoomPower, StoredUsageEvent, UsageTotals } from "@models/DBModels.js";
+import type { StoredMeeting, StoredAudio, Counter, StoredRoomPower, StoredRoomPowerHour, StoredUsageEvent } from "@models/DBModels.js";
 import { MongoClient, Db, Collection, InsertOneResult } from "mongodb";
 import { Logger } from "@utils/Logger.js";
 import { config } from "../config.js";
@@ -17,8 +17,8 @@ export let meetingsCollection: Collection<StoredMeeting>;
 export let audioCollection: Collection<StoredAudio>;
 export let counters: Collection<Counter>;
 export let usageEventsCollection: Collection<StoredUsageEvent> | undefined;
-export let usageTotalsCollection: Collection<UsageTotals> | undefined;
 export let roomPowerCollection: Collection<StoredRoomPower> | undefined;
+export let roomPowerHoursCollection: Collection<StoredRoomPowerHour> | undefined;
 
 export const initDb = async (dbUrl?: string, dbPrefix?: string): Promise<void> => {
   // Config is already validated by the time we import this, but allow overrides for testing
@@ -45,13 +45,15 @@ export const initDb = async (dbUrl?: string, dbPrefix?: string): Promise<void> =
   counters = db.collection<Counter>("counters");
   const usageEvents = db.collection<StoredUsageEvent>("usage_events");
   usageEventsCollection = usageEvents;
-  usageTotalsCollection = db.collection<UsageTotals>("usage_totals");
   roomPowerCollection = db.collection<StoredRoomPower>("room_power");
+  const roomPowerHours = db.collection<StoredRoomPowerHour>("room_power_hours");
+  roomPowerHoursCollection = roomPowerHours;
   activeConnectionKey = connectionKey;
 
   await initializeCounters();
   await ensureMeetingIndexes();
   await ensureUsageIndexes(usageEvents);
+  await roomPowerHours.createIndex({ venueId: 1, hour: 1 }, { name: "room_power_hours_venueId_hour" });
   Logger.info("init", "Database ready.");
 };
 
@@ -126,8 +128,8 @@ export const closeDb = async (): Promise<void> => {
   mongoClient = null;
   activeConnectionKey = null;
   usageEventsCollection = undefined;
-  usageTotalsCollection = undefined;
   roomPowerCollection = undefined;
+  roomPowerHoursCollection = undefined;
 };
 
 const initializeCounters = async (): Promise<void> => {

@@ -116,6 +116,8 @@ export class AudioSystem {
         // Merge context language into options for consistent usage internally
         const effectiveOptions: AudioSystemOptions = { ...serverOptions, language };
         const from = this.reportContextFor(meeting);
+        /** Where the message sits, so its voice is counted on the meter once it has been played. */
+        const messageIndex = meeting.conversation?.findIndex((entry) => entry.id === message.id) ?? -1;
 
         if (effectiveOptions.skipAudio) return;
 
@@ -194,26 +196,23 @@ export class AudioSystem {
             if (generateNew || buffers.length === 0) {
                 Logger.info("AudioSystem", `Generating new audio for message ${message.id} (${resolvedSpeaker.voiceProvider}/${resolvedSpeaker.voice})`, { from });
                 // Generate audio for all chunks in parallel
-                const results = await Promise.all(textChunks.map(async chunk => {
-                    const startedAt = Date.now();
-                    const result = isInworld
-                        ? await this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions, true, inworldReplacedWords)
-                        : await this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions);
-                    return { ...result, requestSeconds: (Date.now() - startedAt) / 1000 };
-                }));
+                const results = await Promise.all(textChunks.map(chunk =>
+                    isInworld
+                        ? this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions, true, inworldReplacedWords)
+                        : this.generateProviderAudio(chunk, resolvedSpeaker, effectiveOptions)
+                ));
                 buffers = results.map(r => r.audio);
                 providerWords = results.map(r => r.words);
                 generateNew = true;
 
                 chunkDurations = await Promise.all(buffers.map(b => this.getAudioDuration(b)));
-                results.forEach(({ usage: { characters, region, ...usage }, requestSeconds }, i) => {
+                results.forEach(({ usage: { characters, region, ...usage } }, i) => {
                     void recordUsage({
-                        source: "server",
                         feature: "tts",
                         ...usage,
                         ...(region ? { region } : {}),
-                        measures: { characters, audio_seconds: chunkDurations?.[i], request_seconds: requestSeconds },
-                        ...usageTagsFor(meeting),
+                        measures: { characters, audio_seconds: chunkDurations?.[i] },
+                        ...usageTagsFor(meeting, messageIndex),
                     });
                 });
             }
@@ -279,12 +278,11 @@ export class AudioSystem {
                         try {
                             const chunkWordsWithTimings = await Promise.all(buffers.map(b => this.getWhisperWordsWrapper(b)));
                             void recordUsage({
-                                source: "server",
                                 feature: "subtitle-timing",
                                 provider: "openai",
                                 model: WHISPER_MODEL,
                                 measures: { audio_seconds: durations.reduce((sum, d) => sum + Math.max(d, 0), 0) },
-                                ...usageTagsFor(meeting),
+                                ...usageTagsFor(meeting, messageIndex),
                             });
                             const whisperSentences = mapSentencesToWords(
                                 sentenceTexts,

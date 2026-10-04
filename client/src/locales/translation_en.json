@@ -33,7 +33,8 @@
   },
   "human": {
     "placeholder": "Type your question or start recording...",
-    "panelist": "What does {{name}} have to say about this?"
+    "panelist": "What does {{name}} have to say about this?",
+    "letter": "Add something to {{name}}'s email, or just say no..."
   },
   "ptt": {
     "holdToSpeak": "Push the button to speak",
@@ -70,9 +71,14 @@
   "staff": {
     "title": "STAFF",
     "panels": {
+      "mode": "Mode",
       "installation": "Installation",
       "details": "Details & hints",
       "logging": "Logging"
+    },
+    "toggle": {
+      "on": "On",
+      "off": "Off"
     },
     "logging": {
       "on": "On",
@@ -98,14 +104,11 @@
     "museum": "Museum",
     "presenter": "Presenter",
     "modeSwitchButton": "Mode switch button",
-    "bridge": {
-      "title": "Bridge"
-    },
     "alerts": {
       "label": "Alert emails",
       "test": "Send test alert",
       "status": {
-        "notConfigured": "Not set up on bridge",
+        "noKey": "No installation key",
         "chooseVenue": "Choose a venue",
         "failing": "Failing",
         "on": "On"
@@ -121,6 +124,21 @@
       "none": "No venue",
       "unknown": "{{id}} (no longer on the server)",
       "hint": "Where this installation runs. Tags its AI usage for the footprint meter and room power plugs, and decides who gets printer alert emails."
+    },
+    "installationKey": {
+      "label": "Installation key",
+      "placeholder": "Paste the installation key",
+      "save": "Save",
+      "change": "Change",
+      "cancel": "Cancel",
+      "notSaved": "Not saved",
+      "hint": "The council server's COUNCIL_INSTALLATION_KEY. The bridge keeps it for this server, for printer alert emails; it is never shown again.",
+      "status": {
+        "saved": "Saved",
+        "missing": "Not set",
+        "otherServer": "Saved for {{server}}; enter this server's key",
+        "outdated": "Update the bridge to enter it"
+      }
     },
     "print": {
       "toggle": "Print summaries",
@@ -241,6 +259,12 @@
     "body": "This meeting is currently in session somewhere else,\ncheck back later to see if it finished, or start a new meeting.",
     "goBack": "Go back",
     "startNew": "Start new meeting"
+  },
+  "letter": {
+    "from": "From",
+    "to": "To",
+    "subject": "Subject",
+    "unsent": "This letter was written, but not sent."
   },
   "summary": {
     "download": "Download PDF",

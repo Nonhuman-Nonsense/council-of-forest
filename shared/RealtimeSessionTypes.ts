@@ -22,6 +22,11 @@ export interface RealtimeBootstrapResponse {
      * meter). Added by the bootstrap route, so provider bootstraps leave it unset.
      */
     usageToken?: string;
+    /**
+     * Setup-agent: the visit's setup, which its usage is tagged with until the meeting it leads
+     * to exists. Sent back on the next bootstrap and with the new meeting (footprint meter).
+     */
+    setupId?: string;
 }
 
 export interface HumanInputRealtimeBootstrapRequest {
@@ -29,10 +34,10 @@ export interface HumanInputRealtimeBootstrapRequest {
     language: string;
 }
 
-/** `POST /api/usage/realtime`: raw `response.usage` objects from one realtime session. */
+/** `POST /api/usage/realtime`: the raw `response.usage` of one completed realtime response. */
 export interface RealtimeUsageReport {
     usageToken: string;
-    responses: unknown[];
+    usage: unknown;
 }
 
 export interface RealtimeCallResponse {
@@ -53,6 +58,8 @@ export interface SetupAgentRealtimeBootstrapRequest {
     language: string;
     /** Venue chosen on #staff; tags the session's usage. Meetings carry their own. */
     venueId?: string;
+    /** The setup this session continues (a reconnect); a new one is started without it. */
+    setupId?: string;
 }
 
 export interface SetupAgentRealtimeCallRequest {

@@ -18,8 +18,6 @@ export const USAGE_MEASURES = [
     "characters",
     /** Seconds of audio produced (TTS) or processed (transcription). */
     "audio_seconds",
-    /** Wall-clock time of the request, which footprint models such as EcoLogits use. */
-    "request_seconds",
 ] as const;
 
 export type UsageMeasure = typeof USAGE_MEASURES[number];
@@ -37,8 +35,6 @@ export type UsageFeature =
     | "human-input";
 
 export interface UsageRecord {
-    /** Server-side calls are recorded by the server; realtime calls are reported by the client. */
-    source: "server" | "client";
     feature: UsageFeature;
     /** Who we called, e.g. "inworld". */
     provider: string;
@@ -48,7 +44,17 @@ export interface UsageRecord {
     /** Data-centre region, when the provider tells us (e.g. ElevenLabs' `x-region` header). */
     region?: string;
     meetingId?: number;
+    /**
+     * The conversation position the usage produced or served, so the meter can count it once
+     * that message has been played. Absent for live usage (realtime agents, visitor questions).
+     */
+    messageIndex?: number;
     venueId?: string;
+    /**
+     * The setup-agent conversation the usage was for. It starts before any meeting exists, so its
+     * usage is tagged with this and given the meeting's id once the meeting is created.
+     */
+    setupId?: string;
 }
 
 export interface UsageEvent extends UsageRecord {
