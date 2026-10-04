@@ -260,6 +260,10 @@
     "goBack": "Gå tillbaka",
     "startNew": "Starta nytt möte"
   },
+  "letterReply": {
+    "heading": "Svar på brevet från {{name}} · möte #{{meetingId}}",
+    "optOut": "{{name}} bad att inte få fler brev."
+  },
   "letter": {
     "from": "Från",
     "to": "Till",
