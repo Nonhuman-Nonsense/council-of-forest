@@ -155,30 +155,107 @@ closing line with the bridge, letter_pending          + meeting.letter = { autho
 
 ### Outbox
 
-The meeting session never sends. It writes an outbox record; a server worker sends.
+Built 4 Oct 2026 (step 5) — `server/src/logic/letters/outbox.ts`, run by a worker in the server
+(`outboxWorker.ts`) every 30 seconds. The meeting never sends.
 
-- Status `queued → sending → sent | failed`, set to `sending` before the Brevo call:
-  at-most-once, a crash never sends twice.
-- Unique per meeting, so a regenerated summary cannot queue a second letter.
-- Limits enforced here, not only in the prompt: a person is used once and never offered again;
-  an institution has a daily and optional weekly cap.
-- Same record is where replies attach later.
+- **Queueing.** The worker finds every finished letter marked to send (`meeting.letter.send`)
+  that is not yet in the `letters` collection and queues it there, keyed by the meeting — so a
+  letter is queued once, and a crash at the end of a meeting cannot lose it.
+- **The last check** before queueing refuses a letter with no subject, an empty or far too long
+  one, or one containing an email address or a link that is not ours. A refused letter stays in
+  the outbox as `refused`, with the reason, and is reported to the errorbot.
+- **Sending.** The worker claims the oldest queued letter (`sending`) before calling Brevo, so
+  two turns never send it twice, and sends it tagged with its meeting (`letter-1400`). Then
+  `sent` (with Brevo's message id and the mode); a refusal from Brevo is `failed` and reported,
+  except a temporary one (5xx, 429), which goes back in the queue up to three times.
+- **Interrupted sends resolve themselves.** A send with no answer — a crash, a timeout, a dropped
+  connection — may or may not have gone out, so it stays `sending`. Ten minutes later the worker
+  asks Brevo for its tag: sent if Brevo has it, back in the queue if not. If Brevo cannot be
+  asked, it tries again each turn and reports once after an hour.
+- **Before each send:** a recipient on the blocklist (`letter_blocklist`: opted out, bounced) is
+  `skipped`, and so is a person who already received a letter sent live — two meetings may
+  choose the same person at once.
+- **Limits** count only letters sent live: a person once, ever; an institution once a day. The
+  blocklist is never offered either.
+- **Daily ceiling** (`letterDailyLimit`, 60): a safety net for a bug, far above the expected
+  handful a day. Reaching it holds the rest in the outbox (sent once the 24 hours allow) and
+  reports it.
+- **Sending mode** (env `COUNCIL_LETTERS`): `off` (the default: queue, send nothing — also the
+  kill switch), `test` (every letter to `COUNCIL_LETTERS_TEST_TO`, the real recipient in the
+  subject) and `live`. Queued letters survive a switch.
+- The outbox record is where replies attach (step 6).
 
 ### Mail
 
-- **Footer:** `server/src/logic/letters/footer.ts`, words in `global-options.json` — EN and SV, appended by the server after the
-  generated letter. The model never writes it and never sees it, so the disclosure cannot be
-  paraphrased away or dropped when a letter runs long. It says four things: what wrote the
-  letter, that a visitor added to it, where the meeting can be heard, and how to stop receiving
-  them. Nothing in it argues.
-- `MailService` takes a per-call sender; `COUNCIL_MAIL_FROM` stays for printer alerts.
-- **Sending mode** (env, `COUNCIL_LETTERS`): `off` (letters written and queued, nothing sent),
-  `test` (every letter goes to our own inbox instead of the recipient, with the real recipient
-  in the subject) and `live`. `test` is how the whole chain is checked end to end before
-  opening; `off` is the kill switch on a bad day. Queued letters survive a switch.
-- All being senders on the authenticated domain in Brevo (SPF/DKIM).
-- Reply-to encodes the meeting, e.g. `reindeer+1400@…`, so replies can be matched from day one
-  even before they are handled.
+- **From** the being that wrote it, by its name in the meeting's language: `Renen
+  <reindeer@council-of-forest.com>` (`letterSenderDomain`; `letterSenderAddresses` for
+  `tree.harvester` and `wind.turbine`). All on the domain authenticated in Brevo (SPF, DKIM,
+  DMARC). `COUNCIL_MAIL_FROM` stays for printer alerts.
+- **Reply-To** names the being and the meeting: `reindeer.1400@reply.council-of-forest.com`
+  (`letterReplyDomain`) — a separate domain, because Brevo only receives on a domain it does not
+  send from. Mail written straight to `reindeer@council-of-forest.com` is forwarded to
+  hello@nonhuman-nonsense.com by the domain's DNS; it is not printed.
+- **Footer:** `server/src/logic/letters/footer.ts`, words in the prompt files (EN and SV),
+  appended by the server after the generated letter. The model never writes or sees it, so the
+  disclosure cannot be paraphrased away or dropped when a letter runs long. It says what wrote
+  the letter, that a human added to it, where the meeting can be heard, and to reply to stop
+  receiving them. Nothing in it argues.
+- Plain text, no HTML.
+
+### Receiving
+
+Built 4 Oct 2026 (step 6) — `server/src/logic/letters/replies.ts`, routes in
+`server/src/api/letterRoutes.ts`.
+
+- **Replies.** Brevo's inbound parsing receives every email to the reply domain and posts it
+  to `POST /api/letters/brevo/<COUNCIL_LETTERS_WEBHOOK_SECRET>/inbound`, already split into the
+  message, the signature and the quoted letter. The address names the meeting
+  (`reindeer.1400@…`), which finds the letter it answers; an email to no letter of ours is
+  dropped. Each is kept once (by its Message-ID) in `letter_replies`, with its contact details
+  removed and the letter it answers, and sorted:
+  - **spam** — Brevo's spam score 6 or more;
+  - **automatic** — headers (`Auto-Submitted`, `X-Autoreply`, `Precedence`), a mailer daemon, or
+    an out-of-office subject;
+  - otherwise the classifier model: **reply**, **opt-out** or **automatic**.
+- **Opt-outs** put the recipient on the blocklist, and are printed like any reply.
+- **Printing.** The museum page asks the bridge once a minute for replies to its venue's
+  letters not yet printed (`/v1/installation/letter-replies`; the bridge asks the server's
+  `/api/installation/letter-replies` with the installation key), renders each in the letter's
+  language — who wrote back, to which being, what they wrote — prints it once under its own
+  job key, and tells the server. A reply whose letter had no venue prints at any venue.
+  Automatic replies and spam are kept, never printed. The sender's address is never printed.
+- **Delivery events.** Brevo's transactional webhook posts to
+  `POST /api/letters/brevo/<secret>/events`: a hard bounce, an invalid address, a block, a spam
+  complaint or an unsubscribe of a letter sent live puts its recipient on the blocklist.
+  Letters carry their meeting as a tag (`letter-1400`), which finds them.
+
+### Setting up Brevo
+
+1. **Sending domain.** *Senders, Domains & Dedicated IPs → Domains → Add a domain*:
+   `council-of-forest.com`. Add the records Brevo shows (the `brevo-code` TXT, DKIM, and
+   `_dmarc` TXT `v=DMARC1; p=none; …`). Brevo sends with its own bounce address and signs with
+   the domain's DKIM, which is what makes DMARC pass; the domain's SPF need not include Brevo.
+   Brevo's *authorised IPs*, if on, must list the server's outgoing IP, or every send is refused.
+2. **Senders**, one per being: `reindeer@`, `bumblebee@`, `tree.harvester@`, `salmon@`,
+   `mountain@`, `pine@`, `wind.turbine@`, `lichen@` council-of-forest.com.
+3. **API key** (*SMTP & API → API Keys*) → `COUNCIL_BREVO_API_KEY` on the server.
+4. **Forwarding.** A catch-all `*@council-of-forest.com` → `hello@nonhuman-nonsense.com`
+   (registrar forwarding or Cloudflare Email Routing), for mail written straight to a being.
+5. **Reply domain.** Add `reply.council-of-forest.com` as a domain in Brevo, and in DNS:
+   `reply` MX 10 `inbound1.sendinblue.com.` and MX 20 `inbound2.sendinblue.com.`.
+6. **Webhooks**, once the server runs with `COUNCIL_LETTERS_WEBHOOK_SECRET` set:
+
+   ```bash
+   curl -X POST https://api.brevo.com/v3/webhooks -H "api-key: $COUNCIL_BREVO_API_KEY" -H "Content-Type: application/json" \
+     -d '{"type":"inbound","events":["inboundEmailProcessed"],"domain":"reply.council-of-forest.com","url":"https://council-of-forest.com/api/letters/brevo/<secret>/inbound","description":"Council of Forest replies"}'
+   curl -X POST https://api.brevo.com/v3/webhooks -H "api-key: $COUNCIL_BREVO_API_KEY" -H "Content-Type: application/json" \
+     -d '{"type":"transactional","events":["hardBounce","invalid","blocked","spam","unsubscribed"],"url":"https://council-of-forest.com/api/letters/brevo/<secret>/events","description":"Council of Forest delivery events"}'
+   ```
+
+7. **Test** with `COUNCIL_LETTERS=test` and `COUNCIL_LETTERS_TEST_TO`: run a museum meeting,
+   check the sender, reply-to and SPF/DKIM/DMARC (*Show original*), reply to the letter and see
+   the reply print. Then `COUNCIL_LETTERS=live`.
+8. **The museum bridge** must run this version (it passes replies on to the page).
 
 ### What varies between letters
 
@@ -464,7 +541,7 @@ nothing to be asked for. Two things to know about the generated file:
 - **Committee data is from the term that ended with the 13 September election.** The new
   Riksdag was seated on 28 September and its committees are not appointed yet, so the script
   falls back to the previous term (within two years) and records which term each code comes
-  from. **Re-run once the committees are appointed** — before the heads-up letter goes out.
+  from. **Re-run once the committees are appointed.**
 
 **MPs are matched by committee and constituency, never by party.** Otherwise the beings pick
 sides and break the prompts' own "characters never campaign" rule (see
@@ -514,8 +591,8 @@ total**.
 - Letters lean on the topic prompts' claim that the Church of Sweden "is stopping" lodgepole
   pine and say it "has" — check the wording in the topic prompts.
 - MEPs have no facts yet (no EU vote export); letters to them say nothing about their record.
-- Is the heads-up letter needed for institutions, and does it replace their opt-out line?
-- Confirm Brevo inbound parsing accepts plus-addressed replies (`reindeer+1400@…`).
+- Confirm Brevo's inbound parsing accepts any local part on the reply domain
+  (`reindeer.1400@reply.…`), and the event names in the transactional webhook call above.
 - Confirm the "search-only" institution addresses on each organisation's own site before activating.
 - Later: inbound replies stored with the letter and printed; sent state and replies on the
   replay page; Council of Foods letters.
@@ -533,7 +610,7 @@ Everything is live on 10 October, sending included. Each step ends tested and us
    c. ~~Hand-add researchers, local politicians, county governors.~~ Done 1 Oct 2026.
       Re-verify municipal and regional politicians in October; ministers once there is a
       government.
-   d. Inform the biosphere reserve and Havremagasinet; heads-up letter to institutions.
+   d. Inform the biosphere reserve and Havremagasinet. (No heads-up letter to institutions.)
    e. Brevo: authenticate the domain (SPF, DKIM, DMARC), add a sender per being, set up the
       reply inbox. Decide the footer contact address.
 1. ~~**Letters core.**~~ Done 3 Oct 2026 on `foods-leo`: loader with validation, the three
@@ -554,7 +631,11 @@ Everything is live on 10 October, sending included. Each step ends tested and us
    letter laid out as the summary document (from / to / subject / body / footer) for the page,
    the PDF and the printer, printed only if the human was there to answer; `sendsLetters`
    (museum only) passed at meeting creation.
-5. **Outbox and sending.** Collection, worker, once-ever and capped limits, per-being sender,
-   plus-addressed reply-to, footer, `COUNCIL_LETTERS` mode. Run in `test` mode end to end, then
-   `live` on opening day with a slow ramp.
-6. **Replies** (after opening). Inbound parsing, store with the letter, print for the wall.
+5. ~~**Outbox and sending.**~~ Built 4 Oct 2026: outbox and worker, the last check, per-being
+   sender, reply-to by meeting, blocklist, live-only limits, daily ceiling, `COUNCIL_LETTERS`.
+   Run in `test` mode end to end, then `live` on opening day.
+6. ~~**Receiving.**~~ Built 4 Oct 2026, as planned: Brevo's inbound parsing posts replies to the server (a URL with a secret);
+   each is sorted — a reply, an opt-out, an automatic reply, spam — and stored with its letter.
+   Replies and opt-outs are printed by the museum client of the letter's venue (contact details
+   removed); opt-outs go on the blocklist; automatic replies are kept but not printed. Hard
+   bounces and spam complaints (Brevo's delivery webhook) go on the blocklist too.

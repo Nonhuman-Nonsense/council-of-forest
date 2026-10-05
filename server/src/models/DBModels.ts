@@ -47,6 +47,72 @@ export interface MeetingLetter {
     sendReason?: string | null;
 }
 
+/**
+ * A letter on its way out (docs/council-letters.md → Outbox): one per meeting, so a letter can
+ * never be queued twice. The worker claims it (`sending`) before calling Brevo, so a crash can
+ * lose a letter but never send it twice.
+ */
+export interface OutboxLetter extends Document {
+    /** The meeting the letter ends. */
+    _id: number;
+    status: "queued" | "sending" | "sent" | "failed" | "refused" | "skipped";
+    /** Why a letter was refused (the mechanical check), skipped (its recipient may no longer be written to) or failed. */
+    reason?: string;
+    recipientId: string;
+    recipientKind: "institution" | "person";
+    to: string;
+    from: { name: string; email: string };
+    replyTo: string;
+    subject: string;
+    /** The letter, any words set apart, and the footer. */
+    text: string;
+    venueId?: string;
+    queuedAt: Date;
+    claimedAt?: Date;
+    sentAt?: Date;
+    /** Sends Brevo answered with a temporary error (5xx, 429); the letter goes back in the queue until a few have. */
+    attempts?: number;
+    /** Set once a long-unresolved interrupted send has been reported, so it is reported once. */
+    reportedStuck?: boolean;
+    /** The sending mode it went out in: only `live` letters reached their recipient. */
+    mode?: "test" | "live";
+    brevoMessageId?: string;
+}
+
+/**
+ * An email that came back to a letter's reply address (docs/council-letters.md → Receiving).
+ * Replies and opt-outs are printed at the letter's venue; automatic replies and spam are kept,
+ * never printed.
+ */
+export interface LetterReply extends Document {
+    /** From the email's Message-ID, so Brevo posting it again changes nothing. */
+    _id: string;
+    meetingId: number;
+    recipientId: string;
+    venueId?: string;
+    /** The letter it answers, as it is printed with the reply. */
+    letter: { authorId: string; authorName: string; recipientName: string; subject: string; language: string };
+    /** Who wrote back, by name; their address is kept out of anything printed. */
+    from: { address: string; name: string | null };
+    subject: string;
+    /** What they wrote, without the quoted letter, their signature or contact details. */
+    message: string;
+    receivedAt: Date;
+    kind: "reply" | "opt-out" | "automatic" | "spam";
+    reason?: string;
+    printedAt?: Date;
+}
+
+/** A recipient who may not be written to again: they opted out, or their address bounced. */
+export interface BlockedRecipient extends Document {
+    _id: string;
+    reason: "opt-out" | "bounce" | "complaint" | "manual";
+    at: Date;
+    /** The meeting whose letter it answered, when it came from a reply or a bounce. */
+    meetingId?: number;
+    note?: string;
+}
+
 export interface StoredUsageEvent extends UsageEvent, Document {}
 
 /** Latest reading of one room power plug at one venue; `_id` is `<venueId>|<plug>`. */

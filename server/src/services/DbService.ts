@@ -1,4 +1,4 @@
-import type { StoredMeeting, StoredAudio, Counter, StoredRoomPower, StoredRoomPowerHour, StoredUsageEvent } from "@models/DBModels.js";
+import type { StoredMeeting, StoredAudio, Counter, StoredRoomPower, StoredRoomPowerHour, StoredUsageEvent, OutboxLetter, BlockedRecipient, LetterReply } from "@models/DBModels.js";
 import { MongoClient, Db, Collection, InsertOneResult } from "mongodb";
 import { Logger } from "@utils/Logger.js";
 import { config } from "../config.js";
@@ -19,6 +19,12 @@ export let counters: Collection<Counter>;
 export let usageEventsCollection: Collection<StoredUsageEvent> | undefined;
 export let roomPowerCollection: Collection<StoredRoomPower> | undefined;
 export let roomPowerHoursCollection: Collection<StoredRoomPowerHour> | undefined;
+/** Letters on their way out, one per meeting (logic/letters/outbox.ts). */
+export let lettersCollection: Collection<OutboxLetter>;
+/** Recipients who may not be written to again. */
+export let letterBlocklistCollection: Collection<BlockedRecipient>;
+/** What came back to the letters (logic/letters/replies.ts). */
+export let letterRepliesCollection: Collection<LetterReply>;
 
 export const initDb = async (dbUrl?: string, dbPrefix?: string): Promise<void> => {
   // Config is already validated by the time we import this, but allow overrides for testing
@@ -48,12 +54,18 @@ export const initDb = async (dbUrl?: string, dbPrefix?: string): Promise<void> =
   roomPowerCollection = db.collection<StoredRoomPower>("room_power");
   const roomPowerHours = db.collection<StoredRoomPowerHour>("room_power_hours");
   roomPowerHoursCollection = roomPowerHours;
+  lettersCollection = db.collection<OutboxLetter>("letters");
+  letterBlocklistCollection = db.collection<BlockedRecipient>("letter_blocklist");
+  letterRepliesCollection = db.collection<LetterReply>("letter_replies");
   activeConnectionKey = connectionKey;
 
   await initializeCounters();
   await ensureMeetingIndexes();
   await ensureUsageIndexes(usageEvents);
   await roomPowerHours.createIndex({ venueId: 1, hour: 1 }, { name: "room_power_hours_venueId_hour" });
+  await lettersCollection.createIndex({ status: 1, queuedAt: 1 }, { name: "letters_status_queuedAt" });
+  await lettersCollection.createIndex({ recipientId: 1, status: 1 }, { name: "letters_recipientId_status" });
+  await letterRepliesCollection.createIndex({ kind: 1, printedAt: 1 }, { name: "letter_replies_kind_printedAt" });
   Logger.info("init", "Database ready.");
 };
 

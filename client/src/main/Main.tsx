@@ -32,6 +32,7 @@ import FullscreenButton from "./FullscreenButton";
 import ModeSwitchButton from "@/museum/ModeSwitchButton";
 import ButtonLedDebugOverlay, { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
+import LetterReplyPrinter from "@/museum/print/LetterReplyPrinter";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
 import { useWakeLock } from "@/audio/wakeLock";
@@ -104,7 +105,7 @@ export default function Main(props: MainProps) {
   useWakeLock(isMeetingPath(location.pathname) && !isPaused);
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { capabilities, pttHardwareEnabled, modeSwitchButtonEnabled } = useCouncilSettings();
+  const { capabilities, pttHardwareEnabled, modeSwitchButtonEnabled, printSummariesEnabled } = useCouncilSettings();
   const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
   useMuseumCursorHide();
@@ -216,6 +217,7 @@ export default function Main(props: MainProps) {
         </Suspense>
       )}
       {pttHardwareEnabled && <HardwareButton />}
+      {capabilities.printSummary && printSummariesEnabled && <LetterReplyPrinter />}
       {ledDebugOverlay && <ButtonLedDebugOverlay />}
       {!isMeetingPath(location.pathname) && <ButtonBanner />}
       <Forest
