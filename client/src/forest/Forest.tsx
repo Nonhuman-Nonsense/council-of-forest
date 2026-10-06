@@ -30,6 +30,10 @@ function ratioFor(id: string): number {
     return r;
 }
 
+// Transitions stay off while the window is being resized and come back this long
+// after the last resize event (a fullscreen toggle fires a burst of them).
+const resizeSettleMs = 300;
+
 function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
     const isMobile = useMobile();
@@ -42,7 +46,6 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     const [translate, setTranslate] = useState<(string | number)[]>([0, 0]);
     const [animateTransformOrigin, setAnimateTransformOrigin] = useState(false);
     const [disableAnimations, setDisableAnimations] = useState(false);
-    const isResizeRecalc = useRef(false);
     // How much of the viewport width a zoomed-in character may fill before the
     // zoom gets capped by width instead of height (portrait screens + wide characters).
     const maxZoomWidthPercent = 90;
@@ -66,16 +69,23 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     );
 
     useEffect(() => {
+        let settleTimer: ReturnType<typeof setTimeout> | undefined;
         const handleResize = () => {
+            // The transform is in viewport units, so a resize changes it — snap rather
+            // than animate. Re-enable on a timer, not on the next zoom: when zoomed out
+            // the recalc below is a no-op, so nothing else would turn transitions back on.
             setDisableAnimations(true);
+            clearTimeout(settleTimer);
+            settleTimer = setTimeout(() => setDisableAnimations(false), resizeSettleMs);
             // Viewport aspect ratio changed (e.g. rotation) — recompute so the zoom
             // stays capped correctly instead of reusing a stale scale value.
-            isResizeRecalc.current = true;
             setZoomInOnBeing((prev) => (prev ? { ...prev } : prev));
         };
         window.addEventListener('resize', handleResize);
-        // Cleanup function to remove the event listener
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(settleTimer);
+        };
     }, []); // Empty dependency array ensures this effect runs only once on mount and unmount
 
     const container: CSSProperties = {
@@ -158,13 +168,6 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
             setAnimateTransformOrigin(m !== "none" && m !== "matrix(1, 0, 0, 1, 0, 0)");
         } else {
             setAnimateTransformOrigin(false);
-        }
-        // A resize-triggered recalculation should keep animations disabled — only a
-        // real speaker change should animate the transform.
-        if (isResizeRecalc.current) {
-            isResizeRecalc.current = false;
-        } else {
-            setDisableAnimations(false);
         }
     }, [zoomInOnBeing]);
 
