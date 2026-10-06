@@ -140,6 +140,10 @@
         "failed": "Inte skickat"
       }
     },
+    "splitAudio": {
+      "toggle": "Delat ljud",
+      "hint": "Vänster: bara ljudbild och varelser. Höger: hela mixen, med rösterna. Varje sida är mono, för en Y-kabel från ljudutgången."
+    },
     "print": {
       "toggle": "Skriv ut protokoll",
       "printerLabel": "Skrivare",

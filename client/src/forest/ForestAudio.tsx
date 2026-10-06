@@ -4,6 +4,7 @@ import { log } from "@/logger";
 import forestCharacters from "@shared/prompts/forest_characters.json";
 import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 import { isMeetingPath } from "@/navigation";
+import { audioBusesFor } from "@/audio/audioRouting";
 import {
     characterAmbienceUrl,
     characterAudioSources,
@@ -48,7 +49,7 @@ function useAudioLoop({ url, audioContext, enabled = true, onStarted }: AudioLoo
 
         const controller = new AbortController();
         const gain = ctx.createGain();
-        gain.connect(ctx.destination);
+        gain.connect(audioBusesFor(ctx).scene);
         gainNode.current = gain;
 
         let source: AudioBufferSourceNode | null = null;
