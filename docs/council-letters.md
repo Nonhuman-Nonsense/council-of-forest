@@ -184,6 +184,11 @@ Built 4 Oct 2026 (step 5) — `server/src/logic/letters/outbox.ts`, run by a wor
   kill switch), `test` (every letter to `COUNCIL_LETTERS_TEST_TO`, the real recipient in the
   subject) and `live`. Queued letters survive a switch.
 - The outbox record is where replies attach (step 6).
+- **Archive copies** (`COUNCIL_LETTERS_ARCHIVE_TO`, unset: none): every letter sent live goes
+  there as a Bcc on the same send; every email that comes back — reply, opt-out, automatic, spam
+  — is copied there, labelled `[kind · meeting · author → recipient]`, with Reply-To set to the
+  person who wrote; and each recipient put on the blocklist is announced there once. A copy that
+  fails is reported and changes nothing else.
 
 ### Mail
 
@@ -225,7 +230,8 @@ Built 4 Oct 2026 (step 6) — `server/src/logic/letters/replies.ts`, routes in
   `/api/installation/letter-replies` with the installation key), renders each in the letter's
   language — who wrote back, to which being, what they wrote — prints it once under its own
   job key, and tells the server. A reply whose letter had no venue prints at any venue.
-  Automatic replies and spam are kept, never printed. The sender's address is never printed.
+  Automatic replies and spam are kept, never printed. A printed reply shows its sender's name
+  and address, as a letter shows its recipient's.
 - **Delivery events.** Brevo's transactional webhook posts to
   `POST /api/letters/brevo/events`: a hard bounce, an invalid address, a block, a spam
   complaint or an unsubscribe of a letter sent live puts its recipient on the blocklist — only

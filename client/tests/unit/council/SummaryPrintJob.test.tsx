@@ -54,14 +54,14 @@ describe("SummaryPrintJob", () => {
     const [meetingId, createPdf] = mockPrintProtocolOnce.mock.calls[0];
     expect(meetingId).toBe(42);
     await expect(createPdf()).resolves.toBe(blob);
-    expect(mockCreateProtocolPdf).toHaveBeenCalledWith(getByTestId("protocol-document"));
+    expect(mockCreateProtocolPdf).toHaveBeenCalledWith(getByTestId("protocol-document"), expect.anything());
   });
 
   it("prints a letter as only the letter: who it is from and to and what it says, without the email's footer", () => {
     const { getByTestId } = render(<SummaryPrintJob meetingId={42} textMessages={[letterSummary(true)]} />);
 
     expect(mockPrintProtocolOnce).toHaveBeenCalledTimes(1);
-    const printed = getByTestId("protocol-document").textContent ?? "";
+    const printed = getByTestId("summary-print-job").textContent ?? "";
     for (const expected of ["Reindeer", "Skogsstyrelsen", "Three weeks", "please wait"]) {
       expect(printed).toContain(expected);
     }

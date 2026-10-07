@@ -9,6 +9,7 @@ import {
     meetingsCollection,
 } from "@services/DbService.js";
 import { keyMatches } from "@utils/sharedKey.js";
+import { sendEmail } from "@services/MailService.js";
 import { Logger } from "@utils/Logger.js";
 import { loadRecipients, loadTopicIds } from "@logic/letters/recipients.js";
 import {
@@ -60,15 +61,17 @@ const replyDeps = () => ({
     blocklist: letterBlocklistCollection,
     options: getGlobalOptions(),
     loadRecipients: async () => loadRecipients(await loadTopicIds()),
+    ...(config.COUNCIL_LETTERS_ARCHIVE_TO ? { archive: { to: config.COUNCIL_LETTERS_ARCHIVE_TO, send: sendEmail } } : {}),
 });
 
-/** What a bridge prints: the reply and the letter it answers, never the sender's address. */
+/** What a bridge prints: the reply, who sent it, and the letter it answers. */
 function printView(reply: LetterReply): PrintableLetterReply {
     return {
         id: reply._id,
         meetingId: reply.meetingId,
         kind: reply.kind === "opt-out" ? "opt-out" : "reply",
         fromName: reply.from.name,
+        fromAddress: reply.from.address,
         subject: reply.subject,
         message: reply.message,
         receivedAt: reply.receivedAt.toISOString(),

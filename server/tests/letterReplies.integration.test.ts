@@ -5,6 +5,7 @@ import { letterBlocklistCollection, letterRepliesCollection, lettersCollection, 
 import { markReplyPrinted, receiveDeliveryEvents, receiveReplies, repliesToPrint, type InboundEmail, type ReplyDeps } from "@logic/letters/replies.js";
 import type { OutboxLetter } from "@models/DBModels.js";
 import { MockFactory } from "./factories/MockFactory.js";
+import { Logger } from "@utils/Logger.js";
 
 /**
  * What comes back to the letters (docs/council-letters.md → Receiving): replies are kept with the
@@ -88,6 +89,50 @@ describe("letter replies", () => {
         await receiveReplies(deps(), [email(1400, { SpamScore: 6.09 })]);
 
         expect(await letterRepliesCollection.findOne({})).toMatchObject({ kind: "reply" });
+    });
+
+    describe("copies to the archive", () => {
+        const archived = (copies: ReturnType<typeof vi.fn>) => copies.mock.calls.map(([copy]) => copy);
+
+        it("sends a copy of each reply once, labelled, answering the person who wrote", async () => {
+            await sentLetter(1400);
+            const send = vi.fn(async () => "id");
+            const same = email(1400);
+
+            await receiveReplies({ ...deps(), archive: { to: "archive@example.org", send } }, [same]);
+            await receiveReplies({ ...deps(), archive: { to: "archive@example.org", send } }, [same]);
+
+            expect(archived(send)).toEqual([expect.objectContaining({
+                to: ["archive@example.org"],
+                subject: expect.stringMatching(/^\[reply · meeting 1400 · Renen → Skogsstyrelsen\] Re: Tre veckor/),
+                replyTo: "anna.andersson@skogsstyrelsen.se",
+                text: expect.stringContaining("Tack för brevet."),
+            })]);
+        });
+
+        it("copies automatic replies and spam too, and still keeps a reply when the copy fails", async () => {
+            vi.spyOn(Logger, "error").mockResolvedValue(undefined);
+            await sentLetter(1400);
+            const send = vi.fn().mockRejectedValueOnce(new Error("Brevo down")).mockResolvedValue("id");
+
+            await receiveReplies({ ...deps(), archive: { to: "archive@example.org", send } }, [
+                email(1400),
+                email(1400, { SpamScore: 20 }),
+            ]);
+
+            expect(await letterRepliesCollection.countDocuments()).toBe(2);
+            expect(archived(send).map((copy) => copy.subject.split(" ")[0])).toEqual(["[reply", "[spam"]);
+        });
+
+        it("tells the archive once when a recipient goes on the blocklist", async () => {
+            await sentLetter(1400);
+            const send = vi.fn(async () => "id");
+            const event = { event: "hard_bounce", email: "registrator@example.org", tags: ["letter-1400"] };
+
+            await receiveDeliveryEvents({ ...deps(), archive: { to: "archive@example.org", send } }, [event, event]);
+
+            expect(archived(send)).toEqual([expect.objectContaining({ subject: "[blocklist · meeting 1400] skogsstyrelsen (bounce)" })]);
+        });
     });
 
     it("keeps an email Brevo posts twice only once", async () => {
@@ -199,17 +244,17 @@ describe("letter replies", () => {
             expect((await post(path, { event: "delivered" }, headers)).status).toBe(status);
         });
 
-        it("hands the bridge the replies to print, with its key, and never the sender's address", async () => {
+        it("hands the bridge the replies to print, with its key, and who sent them", async () => {
             await sentLetter(1400);
             await receiveReplies(deps(), [email(1400)]);
             const key = { "X-Installation-Key": "installation-key-for-tests-0123" };
 
             expect((await fetch(`${base}/api/installation/letter-replies?venueId=havremagasinet`)).status).toBe(401);
             const response = await fetch(`${base}/api/installation/letter-replies?venueId=havremagasinet`, { headers: key });
-            const { replies } = await response.json() as { replies: Array<{ id: string; fromName: string }> };
+            const { replies } = await response.json() as { replies: Array<{ id: string; fromName: string; fromAddress: string }> };
             expect(replies).toHaveLength(1);
             expect(replies[0].fromName).toBe("Anna Andersson");
-            expect(JSON.stringify(replies)).not.toContain("anna.andersson@");
+            expect(replies[0].fromAddress).toMatch(/^anna\.andersson@/);
 
             expect((await post("/api/installation/letter-replies/printed", { id: replies[0].id }, key)).status).toBe(200);
             const after = await (await fetch(`${base}/api/installation/letter-replies?venueId=havremagasinet`, { headers: key })).json();

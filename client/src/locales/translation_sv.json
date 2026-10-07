@@ -150,7 +150,21 @@
       "attentionLabel": "Behöver åtgärdas",
       "since": "sedan {{time}}",
       "testPage": "Skriv ut testsida",
-      "testPageText": "## Testsida\n\nOm du kan läsa detta fungerar utskriften: webbläsaren skickade sidan till bryggan, och bryggan skickade den till skrivaren.\n\nMötesprotokoll skrivs ut på samma sätt, så snart ett live-möte i museiläge har fått sitt protokoll.",
+      "testLetter": {
+        "from": "Renen",
+        "fromEmail": "reindeer@council-of-forest.com",
+        "to": "Generaldirektören",
+        "toEmail": "skogsstyrelsen@skogsstyrelsen.se",
+        "organisation": "Skogsstyrelsen",
+        "subject": "Lavskogarna vid Juhttátahkka",
+        "body": "Bästa generaldirektör,\n\nJag är Renen, och jag talade i dag i Skogsrådet. Vi talade om de gamla skogarna där hänglaven växer, och om avverkningen som planeras där. Jag skriver till dig eftersom tillstånden går genom din myndighet.\n\nI den djupaste vintern, när snön är hård, är laven i de gamla träden det som håller mina kalvar vid liv. Ett kalhygge tar den för hundra år. Jag ber dig inte stoppa all avverkning. Jag ber dig vänta, och lyssna på renskötarna som vet var vi går.\n\nVill du besöka skogen med dem innan nästa tillstånd avgörs? Skriv tillbaka till mig och berätta vad du såg.\n\nMed respekt,\nRenen"
+      },
+      "testReply": {
+        "from": "Anna Andersson",
+        "fromEmail": "anna.andersson@skogsstyrelsen.se",
+        "subject": "Sv: Lavskogarna vid Juhttátahkka",
+        "body": "Hej Renen,\n\nTack för ditt brev. Vi har tagit emot det och lämnat det vidare till de handläggare som arbetar med avverkningsanmälningar i ditt område.\n\nVänliga hälsningar,\nAnna Andersson\nSkogsstyrelsen"
+      },
       "testPageResult": {
         "sending": "Skickar…",
         "queued": "Skickat till skrivaren",
@@ -263,13 +277,16 @@
     "startNew": "Starta nytt möte"
   },
   "letterReply": {
-    "heading": "Svar på brevet från {{name}} · möte #{{meetingId}}",
     "optOut": "{{name}} bad att inte få fler brev."
   },
   "letter": {
     "from": "Från",
     "to": "Till",
     "subject": "Ämne",
+    "sent": "Skickat",
+    "message": "Meddelande",
+    "replyFrom": "Svar från",
+    "received": "Mottaget",
     "unsent": "Det här brevet skrevs, men skickades inte."
   },
   "summary": {

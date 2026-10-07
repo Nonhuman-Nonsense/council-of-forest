@@ -27,8 +27,9 @@ export default tseslint.config(
       'node_modules/**',
       'playwright-report/**',
       'coverage/**',
-      // Generated font bundle
+      // Generated font bundles
       'src/Tinos.ts',
+      'src/Arimo.ts',
       // Vendored library (built UMD/ES bundles are not authored here)
       'react-audio-visualize-master/**',
       // Node prebuild scripts (console, process)

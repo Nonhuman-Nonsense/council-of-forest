@@ -150,7 +150,21 @@
       "attentionLabel": "Needs attention",
       "since": "since {{time}}",
       "testPage": "Print test page",
-      "testPageText": "## Test page\n\nIf you can read this, printing works: this browser sent the page to the bridge, and the bridge sent it to the printer.\n\nMeeting protocols print the same way, as soon as a live meeting in museum mode has its summary.",
+      "testLetter": {
+        "from": "Reindeer",
+        "fromEmail": "reindeer@council-of-forest.com",
+        "to": "Director-General",
+        "toEmail": "skogsstyrelsen@skogsstyrelsen.se",
+        "organisation": "Swedish Forest Agency",
+        "subject": "The lichen forests near Juhttátahkka",
+        "body": "Dear Director-General,\n\nI am the Reindeer, and I spoke today at Council of Forest. We talked about the old forests where the hanging lichen grows, and about the felling planned there. I write to you because those permits pass through your agency.\n\nIn the deepest winter, when the snow is hard, the lichen in the old trees is what keeps my calves alive. A clear-cut takes it for a hundred years. I am not asking you to stop all felling. I am asking you to wait, and to listen to the herders who know where we walk.\n\nWill you visit the forest with them before the next permit is decided? Write back to me and tell me what you saw.\n\nWith respect,\nThe Reindeer"
+      },
+      "testReply": {
+        "from": "Anna Andersson",
+        "fromEmail": "anna.andersson@skogsstyrelsen.se",
+        "subject": "Re: The lichen forests near Juhttátahkka",
+        "body": "Dear Reindeer,\n\nThank you for your letter. We have received it and passed it on to the officers who handle felling notifications in your area.\n\nKind regards,\nAnna Andersson\nSwedish Forest Agency"
+      },
       "testPageResult": {
         "sending": "Sending…",
         "queued": "Sent to printer",
@@ -263,13 +277,16 @@
     "startNew": "Start new meeting"
   },
   "letterReply": {
-    "heading": "Reply to {{name}}'s letter · meeting #{{meetingId}}",
     "optOut": "{{name}} asked to receive no more letters."
   },
   "letter": {
     "from": "From",
     "to": "To",
     "subject": "Subject",
+    "sent": "Sent",
+    "message": "Message",
+    "replyFrom": "Reply from",
+    "received": "Received",
     "unsent": "This letter was written, but not sent."
   },
   "summary": {
