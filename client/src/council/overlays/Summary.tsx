@@ -247,7 +247,6 @@ function Summary({
             style={teleprompterContentStyle}
             data-testid="summary-teleprompter-content"
           >
-            <hr />
             <div style={{ display: "flex", flexDirection: "row", margin: "20px 0", justifyContent: "space-between" }}>
               <div style={{ display: "flex", flexDirection: "column", textAlign: "left", flex: "1", paddingLeft: "15px" }}>
                 <h2 style={{ margin: 0 }}>{t('app.council').toUpperCase()}</h2>
