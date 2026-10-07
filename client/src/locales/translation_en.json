@@ -151,19 +151,19 @@
       "since": "since {{time}}",
       "testPage": "Print test page",
       "testLetter": {
-        "from": "Tomato",
-        "fromEmail": "tomato@council-of-foods.com",
-        "to": "Minister for Rural Affairs",
-        "toEmail": "registrator@example.org",
-        "organisation": "Ministry of Rural Affairs",
-        "subject": "Who waits for summer?",
-        "body": "Dear Minister,\n\nI am the Tomato, and I spoke at the Council of Foods today. We talked about who decides what is grown, and who pays when the soil is spent. I write to you because the next farm budget is yours to shape.\n\nI grow under glass most of the year, fed by gas and shipped in trucks that never sleep. I would rather grow where I am eaten, in the season I belong to. That needs farmers who can afford to wait for summer, and rules that reward them for it.\n\nWill you meet with the growers near you before the budget is set? Write back to me and tell me what they said.\n\nWith warm regards,\nThe Tomato"
+        "from": "Reindeer",
+        "fromEmail": "reindeer@council-of-forest.com",
+        "to": "Director-General",
+        "toEmail": "skogsstyrelsen@skogsstyrelsen.se",
+        "organisation": "Swedish Forest Agency",
+        "subject": "The lichen forests near Juhttátahkka",
+        "body": "Dear Director-General,\n\nI am the Reindeer, and I spoke today at Council of Forest. We talked about the old forests where the hanging lichen grows, and about the felling planned there. I write to you because those permits pass through your agency.\n\nIn the deepest winter, when the snow is hard, the lichen in the old trees is what keeps my calves alive. A clear-cut takes it for a hundred years. I am not asking you to stop all felling. I am asking you to wait, and to listen to the herders who know where we walk.\n\nWill you visit the forest with them before the next permit is decided? Write back to me and tell me what you saw.\n\nWith respect,\nThe Reindeer"
       },
       "testReply": {
-        "from": "Alex Morgan",
-        "fromEmail": "alex.morgan@example.org",
-        "subject": "Re: Who waits for summer?",
-        "body": "Dear Tomato,\n\nThank you for your letter. We have received it and passed it on to the team preparing the farm budget.\n\nKind regards,\nAlex Morgan\nMinistry of Rural Affairs"
+        "from": "Anna Andersson",
+        "fromEmail": "anna.andersson@skogsstyrelsen.se",
+        "subject": "Re: The lichen forests near Juhttátahkka",
+        "body": "Dear Reindeer,\n\nThank you for your letter. We have received it and passed it on to the officers who handle felling notifications in your area.\n\nKind regards,\nAnna Andersson\nSwedish Forest Agency"
       },
       "testPageResult": {
         "sending": "Sending…",
