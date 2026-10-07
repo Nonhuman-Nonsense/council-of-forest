@@ -1,7 +1,7 @@
 #!/bin/bash
 # One kiosk window, the council or the meter, run by its launchd agent (see MUSEUM.md, "Kiosk
 # windows"). Waits for its screen and for the server, opens Chrome on that screen, and stays
-# while Chrome runs. When Chrome closes, the page stops, or the meter's screen goes away, it
+# while Chrome runs. When Chrome closes, the page stops, or its screen goes away or changes, it
 # exits with an error, so launchd starts it again; stop.sh is how staff close the windows.
 set -uo pipefail
 
@@ -14,6 +14,9 @@ POLL_SECONDS=2
 # How often the page's heartbeat is read, and how long it may stand still before Chrome restarts.
 CHECK_SECONDS=30
 STALE_SECONDS=120
+# How long this window's screen must stay changed before the window reopens there: a projector
+# warming up comes and goes for a few seconds.
+SETTLE_SECONDS=10
 
 log() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') [$ROLE] $*"
@@ -60,14 +63,73 @@ wait_for() {
   log "Found $what."
 }
 
+# shellcheck disable=SC2329 # called through wait_for
 has_screen() {
   [[ -n "$(my_screen)" ]]
+}
+
+# The pointer as "x y", in the same top-left points as `screens`, and the pid of the app in front.
+pointer_and_front() {
+  osascript -l JavaScript -e '
+    ObjC.import("AppKit");
+    const mainHeight = $.NSScreen.screens.objectAtIndex(0).frame.size.height;
+    const p = $.NSEvent.mouseLocation;
+    const front = $.NSWorkspace.sharedWorkspace.frontmostApplication;
+    [p.x, mainHeight - p.y, front.isNil() ? 0 : front.processIdentifier].map(Math.round).join(" ");' 2>/dev/null
+}
+
+# Seconds since anyone last used a mouse or keyboard on this Mac.
+idle_seconds() {
+  ioreg -c IOHIDSystem | awk '/HIDIdleTime/ { print int($NF / 1000000000); exit }'
+}
+
+# How long nobody may have used the Mac before a kiosk window takes the front from any app.
+UNATTENDED_SECONDS=60
+
+# macOS applies a page's cursor, the hidden one too, only while its Chrome is the app in front, and
+# nothing puts a kiosk window in front by itself: after a restart the pointer stayed on the council
+# until someone clicked, and helper apps that start at login (a mouse's software) take the front
+# with a busy beachball. So the window with the pointer on its screen takes the front from the
+# other kiosk window, Finder or the login window at once, and from any other app once nobody has
+# used the Mac for a minute; until then, that app is someone at work.
+keep_front() {
+  local px py front sx sy sw sh chrome idle
+  read -r px py front <<<"$(pointer_and_front)"
+  read -r sx sy sw sh <<<"$(my_screen)"
+  [[ -n "$px" && -n "$sh" ]] || return 0
+  (( px >= sx && px <= sx + sw && py >= sy && py <= sy + sh )) || return 0
+  # This window's Chrome itself; its helpers carry the same flags, after others.
+  chrome="$(pgrep -f -- "MacOS/Google Chrome --user-data-dir=$PROFILE " | head -1)"
+  [[ -n "$chrome" && "$front" != "$chrome" ]] || return 0
+  case "$(ps -o args= -p "$front" 2>/dev/null)" in
+    "" | *"--user-data-dir=${COUNCIL_PROFILE:-} "* | *"--user-data-dir=${METER_PROFILE:-} "* | */Finder.app/* | */loginwindow.app/*) ;;
+    *) idle="$(idle_seconds)"; (( ${idle:-0} >= UNATTENDED_SECONDS )) || return 0 ;;
+  esac
+  osascript -l JavaScript -e "ObjC.import('AppKit'); \$.NSRunningApplication.runningApplicationWithProcessIdentifier($chrome).activateWithOptions(1)" >/dev/null 2>&1
 }
 
 ORIGIN="$(printf '%s' "$URL" | sed -E 's#^(https?://[^/]+).*#\1#')"
 # shellcheck disable=SC2329 # called through wait_for
 server_up() {
   curl -fsS -o /dev/null --max-time 5 "$ORIGIN/health" 2>/dev/null
+}
+
+# Whether this window's Chrome has a window covering `$1`, its screen. Kiosk mode can fail to go
+# full screen on a screen that is still settling (a projector warming up beside it), leaving a
+# small window in the corner. Yes when it cannot tell, so only a window seen not to cover it
+# restarts.
+covers_screen() {
+  local chrome
+  chrome="$(pgrep -f -- "MacOS/Google Chrome --user-data-dir=$PROFILE " | head -1)"
+  [[ -n "$chrome" ]] || return 0
+  [[ "$(osascript -l JavaScript -e '
+    function run([pid, screen]) {
+      ObjC.import("CoreGraphics");
+      const windows = ObjC.deepUnwrap(ObjC.castRefToObject($.CGWindowListCopyWindowInfo(0, 0))) || [];
+      const covers = windows.some((w) => String(w.kCGWindowOwnerPID) === pid && w.kCGWindowLayer === 0 &&
+        [w.kCGWindowBounds.X, w.kCGWindowBounds.Y, w.kCGWindowBounds.Width, w.kCGWindowBounds.Height].map(Math.round).join(" ") === screen);
+      return covers ? "yes" : "no";
+    }' "$chrome" "$1" 2>/dev/null)" != "no" ]]
 }
 
 # The title of this window's tab, as Chrome lists it on its debugging port (this Mac only), or
@@ -87,7 +149,14 @@ wait_for has_screen "its screen"
 # A window opened while the server is down shows Chrome's error page, which nothing leaves.
 wait_for server_up "the server at $ORIGIN"
 
-read -r x y _ <<<"$(my_screen)"
+# Read once: a screen that comes and goes while a projector warms up can be gone a moment after
+# it was found, and a window opened at no position lands on the main screen.
+screen="$(my_screen)"
+if [[ -z "$screen" ]]; then
+  log "The screen went away before the window opened."
+  exit 75
+fi
+read -r x y _ <<<"$screen"
 args=(
   "--user-data-dir=$PROFILE"
   --no-first-run --no-default-browser-check --noerrdialogs --hide-crash-restore-bubble
@@ -125,6 +194,8 @@ close_window() {
 }
 trap 'log "Stopped; closing the window."; close_window; exit 0' TERM
 
+changed_since=""
+uncovered=false
 title=""
 ticking=false
 last_change=$SECONDS
@@ -134,16 +205,44 @@ while kill -0 "$opener" 2>/dev/null; do
   sleep "$POLL_SECONDS"
   # macOS moves the windows of a screen that goes away onto the main one: the meter would
   # cover the council. Close it; launchd starts this again, to wait for the screen.
-  if ! has_screen; then
+  now_screen="$(my_screen)"
+  if [[ -z "$now_screen" ]]; then
     log "The screen went away; closing the window."
     close_window
     wait "$opener"
     exit 75
   fi
+  # A window stays where it opened, but which screen is the main one can change under it: a Mac
+  # started with only the meter's screen on makes that the main one, so the council opens there,
+  # and when the projector comes on, macOS makes it the main one again. So when this window's
+  # screen is no longer the one it opened on, and stays so, the window reopens on it.
+  if [[ "$now_screen" == "$screen" ]]; then
+    changed_since=""
+  elif [[ -z "$changed_since" ]]; then
+    changed_since=$SECONDS
+  elif (( SECONDS - changed_since >= SETTLE_SECONDS )); then
+    log "Its screen changed ($screen → $now_screen); reopening the window there."
+    close_window
+    wait "$opener"
+    exit 75
+  fi
+  keep_front
 
   # Only a page seen ticking can stop: the council in web mode, or not yet set up, never ticks.
   if (( SECONDS >= next_check )); then
     next_check=$((SECONDS + CHECK_SECONDS))
+    # Seen at two checks in a row, so a window still going full screen is left to finish.
+    if [[ "${KIOSK:-1}" == "1" ]] && ! covers_screen "$screen"; then
+      if $uncovered; then
+        log "The window does not fill its screen; reopening it."
+        close_window
+        wait "$opener"
+        exit 75
+      fi
+      uncovered=true
+    else
+      uncovered=false
+    fi
     now="$(tab_title)"
     if [[ "$now" != "$title" ]]; then
       title="$now"

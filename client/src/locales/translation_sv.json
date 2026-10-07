@@ -140,13 +140,15 @@
         "failed": "Inte skickat"
       }
     },
+    "splitAudio": {
+      "toggle": "Delat ljud"
+    },
     "print": {
       "toggle": "Skriv ut protokoll",
       "printerLabel": "Skrivare",
       "pendingLabel": "Väntar på utskrift",
       "attentionLabel": "Behöver åtgärdas",
       "since": "sedan {{time}}",
-      "modeHint": "Protokoll skrivs bara ut i museiläge.",
       "testPage": "Skriv ut testsida",
       "testPageText": "## Testsida\n\nOm du kan läsa detta fungerar utskriften: webbläsaren skickade sidan till bryggan, och bryggan skickade den till skrivaren.\n\nMötesprotokoll skrivs ut på samma sätt, så snart ett live-möte i museiläge har fått sitt protokoll.",
       "testPageResult": {

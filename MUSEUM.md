@@ -69,6 +69,14 @@ When Chrome closes, for whatever reason, it opens again 10 s later. If the meter
 screen goes away (switched off, unplugged), its window closes, instead of macOS moving
 it on top of the council, and opens again when the screen is back.
 
+The screens may come on in any order. A Mac started with only the meter's screen on makes
+that the main screen, so the council opens there; when the projector comes on, macOS makes
+it the main screen again, and the council moves to it by itself: a window whose screen has
+changed for 10 s closes and opens again on its screen. Chrome can miss full screen on a
+screen that is still settling, so a window that does not fill its screen for a minute opens
+again too. With a projector the Mac has not seen before, check once that it gets the menu
+bar (Displays → Arrange, drag the menu bar onto it); macOS remembers that for the next time.
+
 **Watchdog.** In museum and presenter mode, and always on the meter, the page ticks a
 counter in its title every 10 s (the `kioskHeartbeat` capability; a kiosk never shows
 the title). The window script reads it every 30 s from Chrome's debugging port (9222
@@ -76,6 +84,12 @@ for the council, 9223 for the meter; this Mac only). A page that ticked and then
 still for 2 minutes has crashed (`Aw, Snap!`), hung, or been replaced by an error page,
 so Chrome restarts. A page that never ticked, like the council in web mode before
 `#staff` is set up, is left alone.
+
+**The pointer** hides once it has stood still for 3 s, on the council in museum and presenter
+mode and always on the meter, and shows again when the mouse moves. macOS only applies that
+while the window's Chrome is the app in front, so the window with the pointer on its screen
+takes the front: at once from the other kiosk window or Finder, and from any other app (a
+mouse's helper app that starts at login, say) once nobody has used the Mac for a minute.
 
 | | |
 |---|---|
@@ -94,6 +108,15 @@ open -na "Google Chrome" --args --user-data-dir="$HOME/Library/Application Suppo
 
 Quit that Chrome, then `start.sh`. Extra Chrome flags for the council go in
 `--council-flags "..."`.
+
+**Text size.** If subtitles and text read too small from where visitors stand, zoom in
+with Cmd + in that same profile while it is open for setup. Chrome keeps the zoom per
+site in the profile, next to the `#staff` settings, so it lasts through restarts and
+Chrome updates and goes only with the profile (`uninstall.sh --purge`) or a change of
+host in the URL. Nothing on screen shows it, so write the level you chose into the
+venue's setup notes. Keep the page at least 600 px tall after zoom: below that the
+app switches to its small-screen layout, with smaller text. On a 1080p screen that
+means 175% at most.
 
 ### The Mac itself
 
@@ -208,9 +231,13 @@ shortcut on the Desktop:
 - **Printer stuck** after paper out or a jam: fix the printer. The installer sets
   it to retry on its own. If the panel still says **Stopped**, resume it in
   System Settings → Printers & Scanners, or run `sudo cupsenable <printer name>`.
-- Printing goes to the Mac's **default printer**. Set a fixed default in System
-  Settings → Printers & Scanners, not "Last printer used", then re-run the bridge
-  installer so the retry setting is applied to it.
+- Printing goes to the Mac's **system-wide default printer**. Choosing a default in
+  System Settings → Printers & Scanners only sets it for that user, and the bridge
+  runs as root, so it doesn't see it. Choose a fixed default there, not "Last printer
+  used", then re-run the bridge installer: it makes that printer the system-wide
+  default and applies the retry setting. To change it without the installer, run
+  `sudo lpadmin -d <printer name>` (`lpstat -e` lists the names); the bridge picks it
+  up within seconds.
 
 ### Printer alert emails
 
@@ -223,7 +250,9 @@ errorbot on Telegram:
   printer. A different problem sends a new email.
 - **Reminder** every 4 hours while it lasts, only during the venue's opening hours,
   plus one when the venue opens.
-- **Working again** once it has stayed fixed for 2 minutes.
+
+Once it has stayed fixed for 2 minutes, only errorbot hears that it works again; staff
+aren't emailed.
 
 **Who gets them:** the installation's **venue**, chosen on `#staff` (Installation panel →
 Venue). The page hands it to the bridge.
@@ -257,7 +286,9 @@ that by the black screens (see section 7).
 
 **Venue** (Installation panel) is where this installation runs, chosen from the
 server's `COUNCIL_VENUES`. One choice sets everything that belongs to the place:
-who gets printer alert emails and the tag on the AI usage of meetings run here.
+who gets printer alert emails, the tag on the AI usage of meetings run here, and
+which meetings idle autoplay replays: the ones held at this venue, or any venue's
+until this one has a finished meeting in the current language.
 (Room power plugs are placed at a venue in `COUNCIL_VENUES` itself, not here.) A bridge that already had a venue passes it
 to the page, so existing installations don't need to choose again.
 
@@ -282,7 +313,7 @@ council.
    `--meter-url "https://<host>/meter?venue=<venue-id>"`. The meter finds this screen by
    itself.
 3. **Check:** numbers move during a meeting (or plugs report), the QR code opens the
-   methodology page on a phone, and the pointer is hidden on the meter.
+   methodology page on a phone, and the pointer hides on the meter once it stands still.
 
 The meter looks after itself: when its connection comes back after a network drop
 or a server restart (a deploy included) it reloads the page, so it also runs the new
@@ -339,6 +370,23 @@ restarts from zero after a power cut, and the plug's uptime tells the server so:
 before October 2026 need the current script pasted in again to send it. Each plug's energy is also
 kept per hour, for later questions (from a date, per day, open hours versus night).
 
+### Split audio
+
+Turn on **Split audio** on the staff page to feed two places from the Mac's one audio output.
+The output's two channels become two mono feeds: the **left** carries the scene alone (the
+ambience and the beings' sounds), the **right** the full mix, voices included. A Y-cable from
+the headphone jack (3.5 mm stereo to 2× mono, RCA or 6.35 mm) takes each side to its own amp
+or speaker. The setup and meeting agents' voices play on both sides. The switch takes effect at
+once, without a reload; off, the output is the usual stereo mix.
+
+- Each side is mono. A mono plug into a stereo headphone amp plays in one ear only, so give
+  headphones an amp with a mono input, or a mono-to-both-ears adapter.
+- The Mac's volume moves both sides together; set each side's level on its amp.
+- macOS can quietly undo the split: keep System Settings → Accessibility → Audio → **Play
+  stereo audio as mono** off, and the Sound balance slider centred.
+- Leave it off on any screen someone listens to in headphones: they would hear the voices in
+  one ear only.
+
 ### Mode switch button (staff escape)
 
 Enable **Mode switch button** on the staff page to show a red-bordered preview
@@ -373,9 +421,11 @@ During a live meeting, the button also drives human input and the meta-agent
 
 ### Printed protocols
 
-1. Connect the A4 printer and make it the Mac's default printer
+1. Connect the A4 printer and make it the Mac's default printer (System Settings →
+   Printers & Scanners)
 2. Install (or re-install) the bridge. It sets up the print folder, the Desktop
-   shortcut and the printer's retry setting
+   shortcut, makes the printer the system-wide default (the bridge doesn't see a
+   default that's only yours) and sets its retry setting
 3. `#staff` → **Museum** + **Print summaries**. The Bridge panel shows the printer as **Ready**
 4. **Print test page**, and check a page comes out
 5. Installation panel → **Venue** → choose the museum, and paste the **Installation key**
@@ -413,6 +463,7 @@ Use the hardware checklist in
 6. Unplug/replug USB → recovers without staff action  
 7. Meter screen upright, full screen, numbers moving; room plugs listed if installed  
 8. Restart the Mac → both windows come back on their screens, untouched  
+9. With **Split audio** on: the left side plays no voices, the right side plays everything  
 
 Bridge logs: `/var/log/council-button-bridge.log`; kiosk logs:
 `~/Library/Logs/council-kiosk-*.log`

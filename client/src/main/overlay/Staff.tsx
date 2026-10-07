@@ -560,7 +560,8 @@ function Staff(): ReactElement {
     setPttHardwareEnabled,
     printSummariesEnabled,
     setPrintSummariesEnabled,
-    capabilities,
+    splitAudioEnabled,
+    setSplitAudioEnabled,
     modeSwitchButtonEnabled,
     setModeSwitchButtonEnabled,
     devLogEnabled,
@@ -1006,15 +1007,20 @@ function Staff(): ReactElement {
               </>
             ) : null}
           </StaffRow>
-          {printSummariesEnabled && !capabilities.printSummary ? (
-            <StaffRowNote testId="staff-print-mode-hint">{t("staff.print.modeHint")}</StaffRowNote>
-          ) : null}
           {printSummariesEnabled ? (
             /* The test page is a real protocol, so it exercises the same PDF path. */
             <div style={{ position: "absolute", top: 0, display: "none" }}>
               <ProtocolDocument ref={testPageRef} summaryText={t("staff.print.testPageText")} meetingId="TEST" />
             </div>
           ) : null}
+
+          <StaffRow label={t("staff.splitAudio.toggle")}>
+            <StaffToggle
+              on={splitAudioEnabled}
+              onChange={setSplitAudioEnabled}
+              testId="staff-split-audio-toggle"
+            />
+          </StaffRow>
 
           {printSummariesEnabled && alertsHealth && alertsStatus ? (
             <>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import Forest from '@forest/Forest';
 
@@ -78,6 +78,27 @@ describe('Forest Visual Logic', () => {
         );
         forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
+    });
+
+    it('animates the next zoom after a resize that happened while zoomed out', () => {
+        vi.useFakeTimers();
+        try {
+            const { container, rerender } = render(
+                <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
+            , { wrapper: MemoryRouter });
+            const forestContainer = container.firstChild as HTMLElement;
+
+            act(() => { window.dispatchEvent(new Event('resize')); });
+            expect(forestContainer.style.transition).toBe('');
+
+            act(() => { vi.advanceTimersByTime(1000); });
+            rerender(
+                <Forest currentSpeakerId="salmon" isPaused={false} audioContext={mockAudioContext} />
+            );
+            expect(forestContainer.style.transition).toContain('transform');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('does not zoom for unknown speaker', async () => {
