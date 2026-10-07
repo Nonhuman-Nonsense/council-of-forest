@@ -8,6 +8,8 @@ import Disclaimer from "./Disclaimer";
 interface ProtocolDocumentProps {
   summaryText: string;
   meetingId: string | number | null;
+  /** The disclaimer under a protocol; a letter carries none. */
+  disclaimer?: boolean;
   ref?: React.Ref<HTMLDivElement>;
 }
 
@@ -16,7 +18,7 @@ interface ProtocolDocumentProps {
  * {@link createProtocolPdf}. Never shown on screen — render it inside a hidden
  * container and pass the element to the PDF renderer.
  */
-function ProtocolDocument({ summaryText, meetingId, ref }: ProtocolDocumentProps): React.ReactElement {
+function ProtocolDocument({ summaryText, meetingId, disclaimer = true, ref }: ProtocolDocumentProps): React.ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -43,8 +45,7 @@ function ProtocolDocument({ summaryText, meetingId, ref }: ProtocolDocumentProps
         <div id="printed-style">
           {/* Ensure synchronous parsing for type safety */}
           {parse(marked.parse(summaryText, { async: false }) as string)}
-          <hr /><br />
-          <Disclaimer />
+          {disclaimer && <><hr /><br /><Disclaimer /></>}
         </div>
       </div>
     </div>

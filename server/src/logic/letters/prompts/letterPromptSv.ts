@@ -123,14 +123,14 @@ Svara exakt i samma format, och börja med ämnesraden:
         humanApart: (text, humanName) =>
             `${humanName ? `${humanName}, en människa som deltog i mötet,` : "En människa som deltog i mötet"} ville lägga till, med egna ord:\n”${text}”`,
 
-        footer: ({ beingName, meetingId, meetingUrl, humanContributed }) => [
+        footer: ({ beingName, meetingUrl, humanContributed }) => [
             "—",
-            `Det här brevet är skrivet av ${beingName}, en röst i Skogsrådet — ett konstverk där AI-drivna skogsvarelser håller möte om marken de lever i. Det formulerades av en språkmodell i slutet av möte #${meetingId} och skickades utan att vi redigerat det.`,
+            `Det här brevet är skrivet av ${beingName}, en röst i Skogsrådet, där skogen möts för ett rådslag om dess öde.`,
             ...(humanContributed
                 ? ["En människa som deltog i mötet fick frågan vad hen ville lägga till, och de orden är en del av brevet."]
                 : []),
             `Hela mötet kan höras och läsas här: ${meetingUrl}`,
-            `Skogsrådet är gjort av Nonhuman Nonsense och visas på Havremagasinet i Boden 10 oktober 2026 – 17 januari 2027. Vill du inte få fler brev, svara och säg det.`,
+            `Skogsrådet är gjort av Nonhuman Nonsense (https://nonhuman-nonsense.com/) och visas på Havremagasinet i Boden 10 oktober 2026 – 17 januari 2027. Vill du inte få fler brev, svara och säg det.`,
         ].join("\n\n"),
     };
 }
