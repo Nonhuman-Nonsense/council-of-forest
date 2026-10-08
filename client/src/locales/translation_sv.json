@@ -148,6 +148,10 @@
     "splitAudio": {
       "toggle": "Delat ljud"
     },
+    "sidetone": {
+      "label": "Hör dig själv",
+      "note": "Besökaren hör sin egen röst medan knappen hålls nere. Bara i hörlurar: i högtalare tjuter mikrofonen."
+    },
     "print": {
       "toggle": "Skriv ut protokoll",
       "printerLabel": "Skrivare",
