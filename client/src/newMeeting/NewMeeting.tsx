@@ -106,6 +106,7 @@ export default function NewMeeting() {
       )}
       {step === "characters" && (
         <SelectCharacters
+          topicId={topicSelection?.id}
           topicTitle={topicSelection?.title ?? ""}
           agendaPoints={topicSelection?.agendaPoints}
           onContinueForward={({ characters }) => onStartMeeting(characters)}

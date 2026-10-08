@@ -24,6 +24,7 @@ export type { Character, CharacterSetupData } from "./CharacterSetup";
 export { getCharacterSetupBundle, createDefaultHumans, createHuman, CHAIR_ID } from "./CharacterSetup";
 
 export interface SelectCharactersProps {
+  topicId?: string;
   topicTitle: string;
   agendaPoints?: string[];
   onContinueForward: (data: { characters: Character[] }) => void | Promise<void>;
@@ -84,6 +85,7 @@ function panelistIndexFromId(id: string): number | null {
  * screen's own contract uses `characters` because Forest uses the same flow.
  */
 function SelectCharacters({
+  topicId,
   topicTitle,
   agendaPoints,
   onContinueForward,
@@ -119,7 +121,7 @@ function SelectCharacters({
   const isMobile = useMobile();
   const isMobileXs = useMobileXs();
   const { capabilities } = useCouncilSettings();
-  const { typedSetup } = capabilities;
+  const { typedSetup, pinnedAgendaPoints } = capabilities;
   const { t, i18n } = useTranslation();
 
   const characterSetupData = useMemo(() => {
@@ -218,6 +220,7 @@ function SelectCharacters({
         formatHumanCount: (count) => t("meeting.characters.humanCount", { count }),
       },
       agendaPoints,
+      pinnedAgendaPoint: topicId ? pinnedAgendaPoints[topicId] : undefined,
       typedSetup,
     });
     if (built.ok) {
