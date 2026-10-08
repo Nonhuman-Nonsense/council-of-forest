@@ -98,6 +98,13 @@
         "SYSTEM": "System",
         "ERROR": "Feldetalj",
         "PRINT": "Utskrift"
+      },
+      "server": {
+        "label": "Skicka logg till servern",
+        "hint": "Spara allt den här sidan loggar på rådets server, så att det kan läsas i efterhand (npm run logs). Följer kategorierna ovan; kräver att loggning är på.",
+        "waiting": "Inget skickat än · sida {{pageId}}",
+        "sending": "Skickar — senaste paketet för {{seconds}} s sedan · {{sentLines}} rader · sida {{pageId}}",
+        "failing": "Skickar inte ({{failure}}) — {{pending}} rader väntar"
       }
     },
     "web": "Webb",
@@ -322,6 +329,10 @@
     "invalidAudioId": "Kunde inte ladda mötesljud.",
     "realtimeUnavailable": "Rådets röst är inte tillgänglig just nu",
     "reconnecting": "Försöker återansluta...",
-    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
+    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…",
+    "noInternet": "Inget internet",
+    "noInternetDetail": "Kontrollera nätverkskabeln eller wifi.",
+    "serverUnreachable": "Når inte servern",
+    "serverUnreachableDetail": "Kontrollera internetanslutningen."
   }
 }

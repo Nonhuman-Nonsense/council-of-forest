@@ -33,6 +33,7 @@ describe("capabilitiesFor", () => {
         kioskHeartbeat: false,
         sendsLetters: false,
         pinnedAgendaPoints: {},
+        staffShortcut: false,
       },
     },
     {
@@ -60,6 +61,7 @@ describe("capabilitiesFor", () => {
         kioskHeartbeat: true,
         sendsLetters: true,
         pinnedAgendaPoints: {},
+        staffShortcut: true,
       },
     },
     {
@@ -87,6 +89,7 @@ describe("capabilitiesFor", () => {
         kioskHeartbeat: true,
         sendsLetters: false,
         pinnedAgendaPoints: { mining: 5 },
+        staffShortcut: true,
       },
     },
   ];

@@ -62,6 +62,10 @@ Each window, at login:
 1. **Waits for its screen:** the council takes the main screen (the one with the menu
    bar), the meter the other one. Where they sit in Displays → Arrange does not matter.
 2. **Waits for the server** to answer `/health`, so it never opens on Chrome's error page.
+   If it hasn't answered after 15 s, the screen says why, from a page on the Mac
+   (`offline.html`, English): **No network** (no cable or Wi‑Fi), **No internet** (a network,
+   but no internet), or **Server error** (the internet works; nothing to do on site). The
+   council opens by itself as soon as the server answers.
 3. **Opens Chrome in kiosk mode** on that screen, in a Chrome profile of its own (in
    `~/Library/Application Support/council-kiosk/`), starting from a single tab.
 
@@ -148,6 +152,11 @@ so press it once after every update.
 
 Open `https://<your-origin>/#staff` on the install machine (bookmark it for
 field staff). Settings persist in `localStorage` on that browser profile.
+
+In **Museum** and **Presenter** mode, a keyboard reaches it without a mouse: **Cmd+S**
+(Ctrl+S off the Mac) opens it, **Tab** moves between controls, **Enter** presses one, and
+**Esc** closes the page. Space is not a click here — it stands in for the talk button,
+so staff can test a press. In Web mode the shortcut is off; open `#staff` by URL.
 
 ### Installation mode
 
@@ -405,6 +414,29 @@ presenter) without reload.
 
 Optional category toggles on `#staff` for field debugging (`localStorage`-backed).
 
+**Send log to server** (Logging panel) stores everything the console prints on the council
+server as well, so an installation's log can be read after something went wrong — nobody has
+to have had DevTools open. It needs logging on, and follows the category toggles: what is
+stored is exactly what is printed. The line under the switch shows it arriving ("Sending —
+last batch 3 s ago") and the page's id. Lines are batched every 5 s and kept while the
+server is unreachable. The server keeps the newest 512 MB (the `client_log` collection is
+capped, so it never needs pruning).
+
+Read it back from `server/` (it reads the database the server's `.env` names):
+
+```
+npm run logs -- --venue havremagasinet --stalls --since 24h
+npm run logs -- --setup <setupId>
+npm run logs -- --page <pageId>
+npm run logs -- --range
+```
+
+`--stalls` lists the moments a realtime agent went quiet when it should not have (the visitor
+stopped speaking and no reply began, a reply never finished, audio arrived but was not
+played, a tool result got no follow-up…). Those are also reported to ErrorBot as
+`realtime.<agent>.stall` whether or not logging is on, with the setup id and page id to look
+up.
+
 ---
 
 ## 3. Typical install presets
@@ -509,10 +541,12 @@ Open the dev URL at `/#staff`, set **Museum** (or **Presenter**) +
 | Chrome quits, crashes or hangs | The kiosk window: opens Chrome again, once the server answers |
 | Meter screen switched off or unplugged | The kiosk window: closes the meter until the screen is back |
 | Power cut, Mac restart | The Mac: starts after a power failure, logs in, opens the windows |
+| Internet or server down | Nothing on site: the screens say which, and the app comes back by itself when it's back. In a running council the reconnect overlay says **No internet** at once, or **Can't reach the server** after 30 s |
 
 Every reload and reopen waits for `/health` first, so nothing lands on Chrome's error
 page while the server is down; the screens wait, black, instead.
 
 What none of this reaches: a Mac that hangs, a screen that stays black while still
-connected, and the network or server being down for good. Nothing reports those either;
-staff notice them by the black screens, and need a person to fix them.
+connected, and the network or server being down for good. Nothing emails anyone about those;
+staff notice them on the screens (black, or saying the connection is down), and need a
+person to fix them.

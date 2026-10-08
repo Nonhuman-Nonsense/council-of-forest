@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Staff from '@main/overlay/Staff';
+import { DEV_LOG_CATEGORIES } from '@/settings/councilSettings';
 import '@testing-library/jest-dom';
 import type { BridgeAlertsHealth, BridgePrintHealth, SerialDetail, UsbPortInfo } from '@museum/button/buttonBridge';
 
@@ -373,6 +374,20 @@ describe('Staff overlay', () => {
     expect(localStorage.getItem('councilDevLogEnabled')).toBe('false');
   });
 
+  it('sends the log to the server only while logging is on', () => {
+    render(<Staff />);
+    const toggle = screen.getByTestId('staff-server-log-toggle');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(toggle);
+    expect(localStorage.getItem('councilServerLogEnabled')).toBe('true');
+    expect(screen.getByTestId('staff-server-log-status')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('staff-dev-log-off'));
+    expect(screen.getByTestId('staff-server-log-toggle')).toBeDisabled();
+    expect(screen.queryByTestId('staff-server-log-status')).not.toBeInTheDocument();
+  });
+
   it('toggles a dev log category pill', () => {
     render(<Staff />);
     const api = screen.getByTestId('staff-dev-log-category-API');
@@ -392,6 +407,35 @@ describe('Staff overlay', () => {
 
     fireEvent.click(screen.getByText('staff.panels.details'));
     expect(screen.getByTestId('staff-button-usb-hint')).toBeInTheDocument();
+  });
+
+  describe('keyboard', () => {
+    const firstControl = () => screen.getByTestId('app-mode-web');
+    const lastControl = () => screen.getByTestId(`staff-dev-log-category-${DEV_LOG_CATEGORIES.at(-1)}`);
+
+    it('takes focus when it opens and gives it back when it closes', () => {
+      const outside = document.createElement('button');
+      document.body.appendChild(outside);
+      outside.focus();
+
+      const { unmount } = render(<Staff />);
+      expect(screen.getByText('staff.title').parentElement).toHaveFocus();
+
+      unmount();
+      expect(outside).toHaveFocus();
+      outside.remove();
+    });
+
+    it.each([
+      { from: 'last', shiftKey: false, to: 'first' },
+      { from: 'first', shiftKey: true, to: 'last' },
+    ])('Tab wraps from the $from control to the $to, not into the page behind', ({ from, shiftKey, to }) => {
+      render(<Staff />);
+      const controls = { first: firstControl(), last: lastControl() };
+      controls[from as 'first' | 'last'].focus();
+      fireEvent.keyDown(document.activeElement!, { key: 'Tab', shiftKey });
+      expect(controls[to as 'first' | 'last']).toHaveFocus();
+    });
   });
 
   describe('printing', () => {

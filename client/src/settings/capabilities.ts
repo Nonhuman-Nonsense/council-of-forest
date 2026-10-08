@@ -136,6 +136,12 @@ export type Capabilities = {
    * chair always opens with, instead of a random one. Remove after the screening.
    */
   pinnedAgendaPoints: Readonly<Partial<Record<string, number>>>;
+  /**
+   * Cmd+S (Ctrl+S off the Mac) opens the staff page, so staff with a keyboard plugged into an
+   * installation can reach it without a mouse. On the web a visitor saving out of habit would
+   * land on it instead.
+   */
+  staffShortcut: boolean;
 };
 
 const WEB: Capabilities = {
@@ -161,6 +167,7 @@ const WEB: Capabilities = {
   kioskHeartbeat: false,
   sendsLetters: false,
   pinnedAgendaPoints: {},
+  staffShortcut: false,
 };
 
 const MUSEUM: Capabilities = {
@@ -186,6 +193,7 @@ const MUSEUM: Capabilities = {
   kioskHeartbeat: true,
   sendsLetters: true,
   pinnedAgendaPoints: {},
+  staffShortcut: true,
 };
 
 /**
