@@ -329,6 +329,10 @@
     "invalidAudioId": "Kunde inte ladda mötesljud.",
     "realtimeUnavailable": "Rådets röst är inte tillgänglig just nu",
     "reconnecting": "Försöker återansluta...",
-    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
+    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…",
+    "noInternet": "Inget internet",
+    "noInternetDetail": "Kontrollera nätverkskabeln eller wifi.",
+    "serverUnreachable": "Når inte servern",
+    "serverUnreachableDetail": "Kontrollera internetanslutningen."
   }
 }
