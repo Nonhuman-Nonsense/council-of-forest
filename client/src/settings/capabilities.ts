@@ -142,6 +142,14 @@ export type Capabilities = {
    * land on it instead.
    */
   staffShortcut: boolean;
+  /**
+   * Always load the full-size media (character videos, stage background), even when the
+   * viewport is short enough to count as a phone. Installation staff zoom the page in to
+   * fit the screen, which shrinks the viewport in CSS pixels without changing how many
+   * real pixels the stage covers — the small set then gets stretched across a big
+   * screen. A visitor's phone keeps the small set: it saves the download and the decode.
+   */
+  fullResolutionMedia: boolean;
 };
 
 const WEB: Capabilities = {
@@ -168,6 +176,7 @@ const WEB: Capabilities = {
   sendsLetters: false,
   pinnedAgendaPoints: {},
   staffShortcut: false,
+  fullResolutionMedia: false,
 };
 
 const MUSEUM: Capabilities = {
@@ -194,6 +203,7 @@ const MUSEUM: Capabilities = {
   sendsLetters: true,
   pinnedAgendaPoints: {},
   staffShortcut: true,
+  fullResolutionMedia: true,
 };
 
 /**
