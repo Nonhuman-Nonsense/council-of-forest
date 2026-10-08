@@ -34,6 +34,7 @@ describe("capabilitiesFor", () => {
         sendsLetters: false,
         pinnedAgendaPoints: {},
         staffShortcut: false,
+        fullResolutionMedia: false,
       },
     },
     {
@@ -62,6 +63,7 @@ describe("capabilitiesFor", () => {
         sendsLetters: true,
         pinnedAgendaPoints: {},
         staffShortcut: true,
+        fullResolutionMedia: true,
       },
     },
     {
@@ -90,6 +92,7 @@ describe("capabilitiesFor", () => {
         sendsLetters: false,
         pinnedAgendaPoints: { mining: 5 },
         staffShortcut: true,
+        fullResolutionMedia: true,
       },
     },
   ];
