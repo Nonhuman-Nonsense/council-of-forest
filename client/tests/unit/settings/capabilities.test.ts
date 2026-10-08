@@ -32,6 +32,7 @@ describe("capabilitiesFor", () => {
         printSummary: false,
         kioskHeartbeat: false,
         sendsLetters: false,
+        pinnedAgendaPoints: {},
       },
     },
     {
@@ -58,6 +59,7 @@ describe("capabilitiesFor", () => {
         printSummary: true,
         kioskHeartbeat: true,
         sendsLetters: true,
+        pinnedAgendaPoints: {},
       },
     },
     {
@@ -84,6 +86,7 @@ describe("capabilitiesFor", () => {
         printSummary: false,
         kioskHeartbeat: true,
         sendsLetters: false,
+        pinnedAgendaPoints: { mining: 5 },
       },
     },
   ];
@@ -126,6 +129,7 @@ describe("capabilitiesFor", () => {
       "autoReturnToLanding",
       "idleAnswersForVisitor",
       "idleNudge",
+      "pinnedAgendaPoints", // TEMPORARY: mining screening
       "printSummary",
       "sendsLetters",
       "typedSetup",

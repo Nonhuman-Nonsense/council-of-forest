@@ -11,6 +11,14 @@ export type MeetingCharactersI18n = {
 
 export type MeetingSetupPhase = "landing" | "topic" | "characters";
 
+/**
+ * How many human panelists a council can have. A product choice, not a
+ * technical limit: we have only ever used one, and one keeps the speaking order
+ * simple to reason about. The server routes any number (they come due in lineup
+ * order, see server/src/logic/SpeakerSelector.ts), so this can be raised again.
+ */
+export const MAX_HUMAN_PANELISTS = 1;
+
 function isPanelistId(id: string): boolean {
   return id.startsWith("panelist");
 }
@@ -367,10 +375,12 @@ export function buildMeetingCharactersPayload(params: {
   numberOfHumans: number;
   labels: MeetingCharactersI18n;
   agendaPoints?: string[];
+  /** Agenda point (1-based) the chair opens with instead of a random one. */
+  pinnedAgendaPoint?: number;
   /** The visitor can type, so each human panelist needs a written description. */
   typedSetup?: boolean;
 }): { ok: true; characters: Character[] } | { ok: false; error: string } {
-  const { language, humans, numberOfHumans, labels, agendaPoints, typedSetup = false } = params;
+  const { language, humans, numberOfHumans, labels, agendaPoints, pinnedAgendaPoint, typedSetup = false } = params;
   let { selectedCharacters } = params;
 
   if (!typedSetup) {
@@ -465,7 +475,11 @@ export function buildMeetingCharactersPayload(params: {
 
   if (replacedCharacters.length > 0 && replacedCharacters[0].prompt) {
     replacedCharacters[0].prompt = replacedCharacters[0].prompt.replace("[HUMANS]", humanPresentation);
-    replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints);
+    replacedCharacters[0].prompt = injectRandomAgendaPoint(
+      replacedCharacters[0].prompt,
+      agendaPoints,
+      pinnedAgendaPoint,
+    );
   }
 
   return { ok: true, characters: replacedCharacters };

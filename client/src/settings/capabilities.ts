@@ -131,6 +131,11 @@ export type Capabilities = {
    * still written and shown, marked unsent.
    */
   sendsLetters: boolean;
+  /**
+   * TEMPORARY (screening, Sat 10 Oct 2026): topic id → the agenda point (1-based) the
+   * chair always opens with, instead of a random one. Remove after the screening.
+   */
+  pinnedAgendaPoints: Readonly<Partial<Record<string, number>>>;
 };
 
 const WEB: Capabilities = {
@@ -155,6 +160,7 @@ const WEB: Capabilities = {
   printSummary: false,
   kioskHeartbeat: false,
   sendsLetters: false,
+  pinnedAgendaPoints: {},
 };
 
 const MUSEUM: Capabilities = {
@@ -179,6 +185,7 @@ const MUSEUM: Capabilities = {
   printSummary: true,
   kioskHeartbeat: true,
   sendsLetters: true,
+  pinnedAgendaPoints: {},
 };
 
 /**
@@ -207,6 +214,8 @@ const PRESENTER: Capabilities = {
   typedSetup: true,
   printSummary: false,
   sendsLetters: false,
+  // TEMPORARY: the mining screening opens on "Who Can Say No? Uranium and the Local Veto".
+  pinnedAgendaPoints: { mining: 5 },
 };
 
 const CAPABILITIES: Record<AppMode, Capabilities> = {
