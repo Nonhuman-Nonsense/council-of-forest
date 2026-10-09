@@ -38,7 +38,8 @@
   },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
-    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka"
+    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka",
+    "holdHint": "Håll knappen nedtryckt medan du pratar"
   },
   "replay": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
@@ -100,8 +101,6 @@
         "PRINT": "Utskrift"
       },
       "server": {
-        "label": "Skicka till servern",
-        "hint": "Spara allt den här sidan loggar på rådets server, så att det kan läsas i efterhand (npm run logs). Följer kategorierna ovan; kräver att loggning är på.",
         "failing": "Skickar inte ({{failure}}) — {{pending}} rader väntar"
       }
     },
@@ -256,8 +255,7 @@
   "agent": {
     "turnOn": "Slå på guiden",
     "turnOff": "Stäng av guiden",
-    "micStart": "Prata med guiden",
-    "micStop": "Sluta prata"
+    "micHold": "Håll in för att prata med guiden"
   },
   "microphone": {
     "title": "Mikrofonen är inte tillgänglig",

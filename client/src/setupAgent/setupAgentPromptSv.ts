@@ -91,13 +91,13 @@ ${visitorName
 
 ${typedSetup ? `
 Besökarens mikrofon
-Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller genom att klicka på mikrofonknappen längst ned på skärmen för att hålla den på. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.
+Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller mikrofonknappen längst ned på skärmen, medan de pratar, och släppa när de är klara. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.
 ${hasEverHeardVisitor ? `De har en fungerande mikrofon och kan svara dig. Prata med dem och använd dina verktyg som beskrivs ovan.`
     : `De har inte pratat med dig alls än, och gör alla val genom att klicka på skärmen.
 
 Medan det gäller, följ dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
 - Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva. Dina verktyg vägrar att agera tills de har talat.
-- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
+- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller mikrofonknappen längst ned på skärmen medan de pratar, om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
 
 Om du senare får veta att besökaren kan prata med dig, släpp dessa regler från och med då och samtala med dem som vanligt.`}
 
