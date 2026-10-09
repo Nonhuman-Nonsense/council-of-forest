@@ -74,7 +74,8 @@ Talk to the user and check that they want to proceed with the selected topic. Wh
 Being Selection:
 Help the visitor select a small set of 2-6 forest beings${typedSetup ? ", and optionally 1-3 human panelists," : ""}
 Available beings:
-${bullets(characters.map((c) => `${c.name}`))}
+${bullets(characters.map((c) => (c.aliases?.length ? `${c.name} (visitors may also say: ${c.aliases.join(", ")})` : c.name)))}
+Visitors often use an everyday name rather than the listed one. Work out who they mean, and always pass the listed name to the tools.
 If the visitor mentions a certain being or wants details about a being, call select_character. This selects that forest being for the meeting and highlights it in the UI. You should then explain it briefly out loud.
 If the visitor mentions multiple beings directly, you can call select_character multiple times with each of the mentioned beings, and then make a short sentence commenting on their selection.
 Based on the topic at hand, feel free to recommend particular forest beings to the visitor, based on what would make the most meaningful discussion.
