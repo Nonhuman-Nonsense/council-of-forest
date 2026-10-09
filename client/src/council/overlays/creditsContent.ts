@@ -5,7 +5,7 @@ import type { CreditGroup, CreditLogo } from "./creditsTypes";
 
 /**
  * Who made Council of Forest, as its credits roll (Credits.tsx). This file differs between Council
- * of Foods and Council of Forest; the intro and funding lines are `credits.*` in the locales.
+ * of Foods and Council of Forest; its intro is `credits.intro` in the locales.
  */
 export const CREDIT_GROUPS: CreditGroup[] = [
   {
