@@ -629,6 +629,10 @@ Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
   owners" is no longer in the custom topic; it remains in the Green Transition topic.
 - River being: a new rule — with a single agenda point, keep returning to it from new
   angles rather than introducing new subjects.
+- River's single-point rule moved to `singleAgendaPoint` (EN + SV) and is injected at
+  `[SINGLE_AGENDA_POINT]` only when the agenda has exactly one point (a visitor's question).
+  With a listed topic's several points River's prompt is as it was: the rule had kept River
+  on one point too long.
 
 **2026-09-28 — This file moved and renamed** (docs)
 - `docs/political-context-2026.md` → `shared/prompts/facts_and_sources.md`, next to the
