@@ -302,6 +302,22 @@
       "pressToRestart": "Tryck på knappen för att starta ett nytt möte."
     }
   },
+  "credits": {
+    "thankYou": "Tack",
+    "intro": "Skogsrådet är ett initiativ av konst- och designkollektivet Nonhuman Nonsense, utvecklat i samarbete med Biosfärområdet Vindelälven-Juhttátahkka. Det bygger på intervjuer och samtal med lokala experter, och hade aldrig varit möjligt utan bidragen från alla de invånare i biosfärområdet som vi har mött.",
+    "biosphereCollaborator": "Samarbetspartner i biosfärområdet",
+    "interviews": "Baserat på intervjuer med",
+    "fisheriesConsultant": "Fiskerikonsult",
+    "forestryConsultant": "Skogskonsult",
+    "forester": "Skogsförvaltare",
+    "support": "Medverkande",
+    "filmProduction": "Filmproduktion",
+    "animationProduction": "Animationsproduktion",
+    "programming": "Programmering",
+    "soundDesign": "Ljuddesign",
+    "catalogueTranslation": "Översättning, katalog",
+    "funding": "Skogsrådet finansieras av Vinnova (ref. nr. 2025-00344)."
+  },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
     "items": {
