@@ -38,7 +38,8 @@
   },
   "ptt": {
     "holdToSpeak": "Push the button to speak",
-    "humanPlaceholder": "Press and hold the button to talk, release to submit"
+    "humanPlaceholder": "Press and hold the button to talk, release to submit",
+    "holdHint": "Hold the button down while you talk"
   },
   "replay": {
     "preamble": "This is a replay of the meeting #{{meetingId}}: {{meetingTitle}} on {{meetingDate}}. ",
@@ -100,8 +101,6 @@
         "ERROR": "Error detail"
       },
       "server": {
-        "label": "Send to server",
-        "hint": "Store everything this page logs on the council server, so it can be read later (npm run logs). Uses the categories above; needs logging on.",
         "failing": "Not sending ({{failure}}) — {{pending}} lines waiting"
       }
     },
@@ -147,6 +146,10 @@
     },
     "splitAudio": {
       "toggle": "Split audio"
+    },
+    "sidetone": {
+      "label": "Hear yourself",
+      "note": "Visitors hear their own voice while they hold the button. Headphones only: over speakers the mic howls."
     },
     "print": {
       "toggle": "Print summaries",
@@ -252,8 +255,7 @@
   "agent": {
     "turnOn": "Turn on the guide",
     "turnOff": "Turn off the guide",
-    "micStart": "Talk to the guide",
-    "micStop": "Stop talking"
+    "micHold": "Hold to talk to the guide"
   },
   "microphone": {
     "title": "Microphone not available",
@@ -299,6 +301,21 @@
     "banner": {
       "pressToRestart": "Press the button to start a new meeting."
     }
+  },
+  "credits": {
+    "thankYou": "Thank You",
+    "intro": "Council of Forest is an initiative by art & design collective Nonhuman Nonsense developed in collaboration with the Vindelälven-Juhttátahkka Biosphere Reserve. It is based on interviews and conversations with local experts, and would have never been possible without the contributions of all the biosphere inhabitants we met.",
+    "biosphereCollaborator": "Biosphere Collaborator",
+    "interviews": "Based on interviews with",
+    "fisheriesConsultant": "Fisheries Consultant",
+    "forestryConsultant": "Forestry Consultant",
+    "forester": "Forester",
+    "support": "Support",
+    "filmProduction": "Film Production",
+    "animationProduction": "Animation Production",
+    "programming": "Programming",
+    "soundDesign": "Sound Design",
+    "catalogueTranslation": "Translation Catalogue"
   },
   "disclaimer": {
     "intro": "This document was created by the Council of Forest, a political arena where the forest itself speaks, through the use of artificial intelligence. While every effort has been made to generate meaningful content, please note the following:",

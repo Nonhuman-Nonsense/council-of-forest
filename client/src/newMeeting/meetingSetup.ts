@@ -157,6 +157,23 @@ export function selectedFoodNames(
     .filter((name): name is string => Boolean(name));
 }
 
+/**
+ * Named human panelists in the council. Filtered by the selection, not just
+ * by slot: taking a panelist out only drops their id from the selection, and
+ * their slot keeps the name.
+ */
+export function selectedPanelistNames(
+  selectedIds: readonly string[],
+  humans: ReadonlyArray<{ name: string }>,
+  numberOfHumans: number,
+): string[] {
+  return humans
+    .slice(0, numberOfHumans)
+    .filter((_human, index) => selectedIds.includes(`panelist${index}`))
+    .map((human) => human.name)
+    .filter((name) => name.length > 0);
+}
+
 /** Diffs the council against what the agent was last told, in click order. */
 export function diffCouncil(previousNames: string[], currentNames: string[]): CouncilChanges {
   return {
@@ -353,7 +370,9 @@ export function buildTopicFromSelection(params: {
   if (built.id === topicsBundle.custom_topic.id) {
     built.prompt = (built.prompt || "").replace(VISITOR_INPUT_PLACEHOLDER, customTopic.trim());
     built.description = customTopic;
-    built.agendaPoints = undefined;
+    // The visitor's question is the whole agenda: the chair opens on it the same
+    // way it opens on a listed topic's agenda point, in either language.
+    built.agendaPoints = [customTopic.trim()];
   }
   built.prompt = buildMeetingSystemPrompt(
     topicsBundle.system,
@@ -382,11 +401,15 @@ export function buildMeetingCharactersPayload(params: {
 }): { ok: true; characters: Character[] } | { ok: false; error: string } {
   const { language, humans, numberOfHumans, labels, agendaPoints, pinnedAgendaPoint, typedSetup = false } = params;
   let { selectedCharacters } = params;
+  const characterSetupData = getCharacterSetupBundle(language);
+  // The chair prompt goes to whoever is first, so the chair always is — whatever
+  // order the selection was built in, or if the chair was dropped from it.
+  const chairId = characterSetupData.characters[0].id;
+  selectedCharacters = [chairId, ...selectedCharacters.filter((id) => id !== chairId)];
 
   if (!typedSetup) {
     selectedCharacters = orderSelectedCharactersForInstallation(selectedCharacters);
   }
-  const characterSetupData = getCharacterSetupBundle(language);
   const baseCharacters = characterSetupData.characters;
   const characters = [...baseCharacters, ...humans.slice(0, numberOfHumans)];
 

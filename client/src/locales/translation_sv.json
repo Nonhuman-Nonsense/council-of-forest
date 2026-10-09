@@ -38,7 +38,8 @@
   },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
-    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka"
+    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka",
+    "holdHint": "Håll knappen nedtryckt medan du pratar"
   },
   "replay": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
@@ -100,8 +101,6 @@
         "PRINT": "Utskrift"
       },
       "server": {
-        "label": "Skicka till servern",
-        "hint": "Spara allt den här sidan loggar på rådets server, så att det kan läsas i efterhand (npm run logs). Följer kategorierna ovan; kräver att loggning är på.",
         "failing": "Skickar inte ({{failure}}) — {{pending}} rader väntar"
       }
     },
@@ -147,6 +146,10 @@
     },
     "splitAudio": {
       "toggle": "Delat ljud"
+    },
+    "sidetone": {
+      "label": "Hör dig själv",
+      "note": "Besökaren hör sin egen röst medan knappen hålls nere. Bara i hörlurar: i högtalare tjuter mikrofonen."
     },
     "print": {
       "toggle": "Skriv ut protokoll",
@@ -252,8 +255,7 @@
   "agent": {
     "turnOn": "Slå på guiden",
     "turnOff": "Stäng av guiden",
-    "micStart": "Prata med guiden",
-    "micStop": "Sluta prata"
+    "micHold": "Håll in för att prata med guiden"
   },
   "microphone": {
     "title": "Mikrofonen är inte tillgänglig",
@@ -299,6 +301,21 @@
     "banner": {
       "pressToRestart": "Tryck på knappen för att starta ett nytt möte."
     }
+  },
+  "credits": {
+    "thankYou": "Tack",
+    "intro": "Skogsrådet är ett initiativ av konst- och designkollektivet Nonhuman Nonsense, utvecklat i samarbete med Biosfärområdet Vindelälven-Juhttátahkka. Det bygger på intervjuer och samtal med lokala experter, och hade aldrig varit möjligt utan bidragen från alla de invånare i biosfärområdet som vi har mött.",
+    "biosphereCollaborator": "Samarbetspartner i biosfärområdet",
+    "interviews": "Baserat på intervjuer med",
+    "fisheriesConsultant": "Fiskerikonsult",
+    "forestryConsultant": "Skogskonsult",
+    "forester": "Skogsförvaltare",
+    "support": "Medverkande",
+    "filmProduction": "Filmproduktion",
+    "animationProduction": "Animationsproduktion",
+    "programming": "Programmering",
+    "soundDesign": "Ljuddesign",
+    "catalogueTranslation": "Översättning, katalog"
   },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",

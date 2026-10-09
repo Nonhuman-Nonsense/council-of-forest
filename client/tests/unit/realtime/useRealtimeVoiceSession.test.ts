@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import {
   CAPACITY_MIN_RETRIES,
@@ -6,11 +6,13 @@ import {
   retryBudgetFor,
   useRealtimeVoiceSession,
 } from "@realtime/useRealtimeVoiceSession";
+import { setSplitAudioEnabled } from "@/settings/councilSettings";
 
 const mockCreateEventLoop = vi.hoisted(() => vi.fn());
 const mockFetchRealtimeBootstrap = vi.hoisted(() => vi.fn());
 const mockCreateRealtimeConnection = vi.hoisted(() => vi.fn());
 const mockCreateRemoteAudioAnchor = vi.hoisted(() => vi.fn());
+const mockCreateVoicesSideOutput = vi.hoisted(() => vi.fn());
 
 let eventLoopCallbacks: {
   onCaption?: (text: string | null) => void;
@@ -28,6 +30,7 @@ let eventLoopCallbacks: {
   }) => void;
 } = {};
 
+let mockAudible = true;
 let mockCtxTime = 10;
 let mockOnAudioStart: ((nowMs: number, ctxTime: number) => void) | undefined;
 let mockOnArmed: (() => void) | undefined;
@@ -42,6 +45,8 @@ const eventLoopMocks = vi.hoisted(() => ({
   requestResponseIfIdle: vi.fn(),
   isResponseActive: vi.fn(() => false),
   interruptAndRespond: vi.fn(),
+  beginUserTurn: vi.fn(),
+  endUserTurn: vi.fn(),
 }));
 
 vi.mock("@realtime/realtimeEventLoop", () => ({
@@ -101,6 +106,11 @@ vi.mock("@realtime/remoteAudioAnchor", () => ({
   },
 }));
 
+vi.mock("@/audio/audioRouting", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/audio/audioRouting")>()),
+  createVoicesSideOutput: mockCreateVoicesSideOutput,
+}));
+
 const defaultParams = {
   feature: "meta-agent" as const,
   language: "en",
@@ -118,6 +128,7 @@ beforeEach(() => {
   vi.useRealTimers();
   eventLoopCallbacks = {};
   mockCtxTime = 10;
+  mockAudible = true;
   mockOnAudioStart = undefined;
   mockOnArmed = undefined;
   rafCallback = null;
@@ -125,6 +136,7 @@ beforeEach(() => {
   mockCreateRemoteAudioAnchor.mockImplementation(() => ({
     arm: vi.fn(),
     getCtxTime: () => mockCtxTime,
+    isAudible: () => mockAudible,
     getState: () => "running",
     dispose: vi.fn(),
   }));
@@ -342,6 +354,61 @@ describe("useRealtimeVoiceSession", () => {
     await waitFor(() => {
       expect(result.current.lastCaption).toBe("World");
     });
+  });
+
+  /**
+   * A tool follow-up is asked for as soon as the reply that called the tool is
+   * done generating, while that reply is still playing, and Inworld plays the
+   * two back to back with no gap to detect. The silence detector took a pause
+   * inside one of them for the boundary and the captions ran seconds early or
+   * late. The next response's clock starts where the previous one ends — or,
+   * if nothing is playing by then, at its own onset.
+   */
+  it.each([
+    { playingAtEnd: true, expected: "anchored at the previous end" },
+    { playingAtEnd: false, expected: "waits for its own onset" },
+  ])("a response queued behind one still playing: audio at its end $playingAtEnd → $expected", async ({ playingAtEnd }) => {
+    mockConnectionWithRemoteTrack();
+
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => expect(mockOnAudioStart).toBeTypeOf("function"));
+    const arm = (mockCreateRemoteAudioAnchor.mock.results.at(-1)?.value as { arm: ReturnType<typeof vi.fn> }).arm;
+
+    // A reply with 1.0 s of speech, 0.8 s into playback.
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+      mockCtxTime = 0;
+      mockOnAudioStart?.(performance.now(), 0);
+      eventLoopCallbacks.onWordAlignment?.(1, [{ w: "Wonderful.", s: 0, e: 1 }]);
+      eventLoopCallbacks.onWordAlignment?.(1, []);
+      eventLoopCallbacks.onResponseDone?.({ status: "completed" });
+      mockCtxTime = 0.8;
+    });
+
+    // The follow-up starts, its alignment arriving while the reply still plays.
+    act(() => {
+      eventLoopCallbacks.onResponseStarted?.();
+      eventLoopCallbacks.onWordAlignment?.(1, [{ w: "First.", s: 0, e: 0.5 }]);
+      eventLoopCallbacks.onWordAlignment?.(1, []);
+      eventLoopCallbacks.onWordAlignment?.(1, [{ w: "Second.", s: 0, e: 0.5 }]);
+      eventLoopCallbacks.onWordAlignment?.(1, []);
+    });
+    arm.mockClear();
+    mockAudible = playingAtEnd;
+    mockCtxTime = 1.7;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    act(() => {
+      rafCallback?.(0);
+    });
+
+    if (playingAtEnd) {
+      // 0.7 s past the previous end: the second sentence.
+      expect(result.current.lastCaption).toBe("Second.");
+      expect(arm).not.toHaveBeenCalled();
+    } else {
+      expect(result.current.lastCaption).toBeNull();
+      expect(arm).toHaveBeenCalledWith(false);
+    }
   });
 
   /**
@@ -916,6 +983,35 @@ describe("useRealtimeVoiceSession", () => {
     expect(result.current.micStream).toBeNull();
   });
 
+  /** The talk button is the turn: opening starts it, closing sends it or throws it out. */
+  it("turns the talk button's open and close into the visitor's turn", async () => {
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => expect(result.current.connectionState).toBe("ready"));
+    eventLoopMocks.beginUserTurn.mockClear();
+    eventLoopMocks.endUserTurn.mockClear();
+
+    act(() => result.current.setMicEnabled(true));
+    act(() => result.current.setMicEnabled(true));
+    act(() => result.current.setMicEnabled(false));
+    act(() => result.current.setMicEnabled(false));
+    act(() => result.current.setMicEnabled(true));
+    act(() => result.current.setMicEnabled(false, { discard: true }));
+
+    expect(eventLoopMocks.beginUserTurn).toHaveBeenCalledTimes(2);
+    expect(eventLoopMocks.endUserTurn.mock.calls).toEqual([[{ respond: true }], [{ respond: false }]]);
+  });
+
+  it("cuts the agent off when the talk button opens during a reply", async () => {
+    const { result } = renderHook(() => useRealtimeVoiceSession(defaultParams));
+    await waitFor(() => expect(result.current.connectionState).toBe("ready"));
+    eventLoopMocks.isResponseActive.mockReturnValue(true);
+
+    act(() => result.current.setMicEnabled(true));
+
+    expect(eventLoopMocks.beginUserTurn).toHaveBeenLastCalledWith({ interrupt: expect.any(Object) });
+    eventLoopMocks.isResponseActive.mockReturnValue(false);
+  });
+
   it("connects without asking for the microphone when deferMic is set", async () => {
     const getUserMedia = vi.fn();
     vi.stubGlobal("navigator", { ...navigator, mediaDevices: { getUserMedia } });
@@ -1351,6 +1447,59 @@ describe("useRealtimeVoiceSession", () => {
       expect.any(Object),
       { triggerGreetingOnReady: false },
     );
+  });
+});
+
+describe("on a split audio output", () => {
+  function voicesSide() {
+    return { setMuted: vi.fn(), resume: vi.fn(), dispose: vi.fn() };
+  }
+
+  async function connectWithElement() {
+    const el = document.createElement("audio");
+    el.play = vi.fn().mockResolvedValue(undefined);
+    mockConnectionWithRemoteTrack();
+    const hook = renderHook(() => useRealtimeVoiceSession({ ...defaultParams, audioElement: el }));
+    await waitFor(() => expect(mockCreateRealtimeConnection).toHaveBeenCalled());
+    return { el, ...hook };
+  }
+
+  beforeEach(() => {
+    mockCreateVoicesSideOutput.mockImplementation(voicesSide);
+    setSplitAudioEnabled(true);
+  });
+
+  afterEach(() => {
+    setSplitAudioEnabled(false);
+  });
+
+  it("plays the agent on the voices side, keeping its element playing muted", async () => {
+    const { el } = await connectWithElement();
+
+    await waitFor(() => expect(mockCreateVoicesSideOutput).toHaveBeenCalledTimes(1));
+    expect(el.muted).toBe(true);
+    expect(el.play).toHaveBeenCalled();
+  });
+
+  it("mutes the agent on the voices side", async () => {
+    const { result } = await connectWithElement();
+    await waitFor(() => expect(mockCreateVoicesSideOutput).toHaveBeenCalled());
+    const side = mockCreateVoicesSideOutput.mock.results[0].value;
+
+    act(() => result.current.setAgentOutputMuted(true));
+
+    expect(side.setMuted).toHaveBeenLastCalledWith(true);
+  });
+
+  it("gives the agent back to its element when the split is switched off", async () => {
+    const { el } = await connectWithElement();
+    await waitFor(() => expect(mockCreateVoicesSideOutput).toHaveBeenCalled());
+    const side = mockCreateVoicesSideOutput.mock.results[0].value;
+
+    act(() => setSplitAudioEnabled(false));
+
+    await waitFor(() => expect(side.dispose).toHaveBeenCalled());
+    expect(el.muted).toBe(false);
   });
 });
 

@@ -28,20 +28,9 @@ import {
   type InworldWordToken,
 } from "@realtime/inworldSubtitleTrack";
 import { reportRealtimeIssue } from "@realtime/realtimeErrorReporting";
-import {
-  createStallDetector,
-  type SessionStallRule,
-  type StallDetector,
-  type StallReport,
-} from "@realtime/realtimeStallDetector";
-import {
-  createAudioMonitor,
-  readPeerAudioStats,
-  type AudioMonitor,
-} from "@realtime/realtimeAudioMonitor";
-import { getLogPageId } from "@/logging/serverLogSink";
 import { log, summarizeLogPayload } from "@/logger";
-import { getVenueId } from "@/settings/councilSettings";
+import { getVenueId, useCouncilSettings } from "@/settings/councilSettings";
+import { createVoicesSideOutput, type VoicesSideOutput } from "@/audio/audioRouting";
 import { createRealtimeUsageReporter } from "@realtime/realtimeUsageReporter";
 
 /**
@@ -66,17 +55,6 @@ function realtimeDebugLog(...args: unknown[]): void {
 }
 
 export type RealtimeVoiceFeature = "meta-agent" | "setup-agent";
-
-/** What ErrorBot is told for each kind of stall. */
-const STALL_MESSAGES: Record<SessionStallRule, string> = {
-  "no-answer": "the visitor stopped speaking and no reply began",
-  "response-unfinished": "a reply began and never finished",
-  "no-tool-continuation": "a tool result went back and no reply followed",
-  "create-unanswered": "a requested reply was neither started nor refused",
-  "empty-response": "a reply finished with nothing in it",
-  "audio-not-received": "a reply carried audio but none reached the page",
-  "audio-blocked": "a reply carried audio but the browser is not playing it",
-};
 
 export type RealtimeVoiceSessionConnectionState = "idle" | "connecting" | "ready" | "error";
 
@@ -236,7 +214,7 @@ export type UseRealtimeVoiceSessionResult = {
   hasReceivedAudioPart: boolean;
   agentSpeaking: boolean;
   micStream: MediaStream | null;
-  setMicEnabled: (open: boolean) => void;
+  setMicEnabled: (open: boolean, options?: { discard?: boolean }) => void;
   /**
    * Ask for the microphone and start sending it on the live session (no
    * reconnect). Resolves `false` when the mic couldn't be obtained — the
@@ -338,8 +316,8 @@ export function useRealtimeVoiceSession(
   const audioElementRef = useRef(audioElement);
   const serverDefaultsRef = useRef<RealtimeSessionServerDefaults | null>(null);
   const eventLoopRef = useRef<ReturnType<typeof createEventLoop> | null>(null);
-  const stallDetectorRef = useRef<StallDetector | null>(null);
-  const audioMonitorRef = useRef<AudioMonitor | null>(null);
+  /** Whether the talk button has the mic open — turn edges are its changes. */
+  const micGateOpenRef = useRef(false);
   const subtitleTrackRef = useRef<InworldSubtitleTrack | null>(null);
   /** Keeps the caption clear while the agent is muted, until the next response. */
   const outputMuteRef = useRef<(() => void) | null>(null);
@@ -353,11 +331,19 @@ export function useRealtimeVoiceSession(
   const responseTransitionPendingRef = useRef(false);
   /** Fallback timer that force-resets if confirmed silence never arrives. */
   const pendingResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Back-to-back responses: hands the captions over to the next response
+   * when the previous one, still playing, reaches its known end.
+   */
+  const pendingHandoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const alignmentRafRef = useRef<number | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   /** Agent-output mute state, kept outside the element so reconnects preserve it. */
   const agentOutputMutedRef = useRef(false);
   const remoteAudioAnchorRef = useRef<RemoteAudioAnchor | null>(null);
+  const remoteTrackRef = useRef<MediaStreamTrack | null>(null);
+  /** The agent on the voices side of a split output; the element then plays muted. */
+  const voicesSideRef = useRef<VoicesSideOutput | null>(null);
   /** A play() the browser refused; a later gesture retries it. */
   const audioBlockedRef = useRef(false);
   const audibleRef = useRef(audible);
@@ -409,6 +395,44 @@ export function useRealtimeVoiceSession(
     audioElementRef.current = audioElement;
   }, [audioElement]);
 
+  const { splitAudioEnabled } = useCouncilSettings();
+  const splitAudioRef = useRef(splitAudioEnabled);
+
+  /**
+   * Send the agent where the output wants it: straight from its element, or — on a split
+   * output — onto the voices side, with the element kept playing muted. Called whenever the
+   * track, the split or the agent's mute changes.
+   */
+  const applyAudioRoute = useCallback(() => {
+    const el = remoteAudioRef.current;
+    const track = remoteTrackRef.current;
+    if (!el || !track) return;
+
+    if (splitAudioRef.current && !voicesSideRef.current) {
+      try {
+        voicesSideRef.current = createVoicesSideOutput(track);
+      } catch (err) {
+        // Better on both sides than silent.
+        log.event("ERROR", "realtime voices-side output failed; playing on both sides", {
+          feature,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } else if (!splitAudioRef.current && voicesSideRef.current) {
+      voicesSideRef.current.dispose();
+      voicesSideRef.current = null;
+    }
+
+    const side = voicesSideRef.current;
+    side?.setMuted(agentOutputMutedRef.current);
+    el.muted = side ? true : agentOutputMutedRef.current;
+  }, [feature]);
+
+  useEffect(() => {
+    splitAudioRef.current = splitAudioEnabled;
+    applyAudioRoute();
+  }, [splitAudioEnabled, applyAudioRoute]);
+
   const attemptRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -452,6 +476,10 @@ export function useRealtimeVoiceSession(
       clearTimeout(pendingResetTimeoutRef.current);
       pendingResetTimeoutRef.current = null;
     }
+    if (pendingHandoverTimeoutRef.current != null) {
+      clearTimeout(pendingHandoverTimeoutRef.current);
+      pendingHandoverTimeoutRef.current = null;
+    }
     if (alignmentRafRef.current != null) {
       cancelAnimationFrame(alignmentRafRef.current);
       alignmentRafRef.current = null;
@@ -462,12 +490,13 @@ export function useRealtimeVoiceSession(
     responseAudioAnchorCtxSecRef.current = null;
     responseTransitionPendingRef.current = false;
     eventLoopRef.current = null;
-    stallDetectorRef.current?.dispose();
-    stallDetectorRef.current = null;
-    audioMonitorRef.current?.dispose();
-    audioMonitorRef.current = null;
+    // A new session starts with the mic shut and no turn open.
+    micGateOpenRef.current = false;
     remoteAudioAnchorRef.current?.dispose();
     remoteAudioAnchorRef.current = null;
+    voicesSideRef.current?.dispose();
+    voicesSideRef.current = null;
+    remoteTrackRef.current = null;
     connectionRef.current?.close();
     connectionRef.current = null;
     const ownedAudio = remoteAudioRef.current;
@@ -608,11 +637,7 @@ export function useRealtimeVoiceSession(
 
       serverDefaultsRef.current = defaults;
 
-      const subtitleTrack = createInworldSubtitleTrack({
-        onSentenceFlushed: (s, total) => {
-          realtimeDebugLog(`[SUBS] SENTENCE ${total - 1} start=${s.start.toFixed(3)} end=${s.end.toFixed(3)} text="${s.text.slice(0, 60)}"`);
-        },
-      });
+      const subtitleTrack = createInworldSubtitleTrack();
       subtitleTrackRef.current = subtitleTrack;
       responseAudioAnchorCtxSecRef.current = null;
 
@@ -655,6 +680,14 @@ export function useRealtimeVoiceSession(
         words: ReadonlyArray<InworldWordToken>;
       }> = [];
       const PENDING_RESET_TIMEOUT_MS = 8000;
+
+      /** When the previous response's audio ends, on the AudioContext clock; null when unknown. */
+      const previousResponseEndCtxSec = (): number | null => {
+        const anchorCtxSec = responseAudioAnchorCtxSecRef.current;
+        const endSec = subtitleTrack.getPlaybackEndSec();
+        if (anchorCtxSec == null || endSec == null) return null;
+        return anchorCtxSec + endSec;
+      };
 
       /**
        * Whether the previous response's audio has certainly finished playing,
@@ -701,6 +734,10 @@ export function useRealtimeVoiceSession(
           clearTimeout(pendingResetTimeoutRef.current);
           pendingResetTimeoutRef.current = null;
         }
+        if (pendingHandoverTimeoutRef.current != null) {
+          clearTimeout(pendingHandoverTimeoutRef.current);
+          pendingHandoverTimeoutRef.current = null;
+        }
         if (!responseTransitionPendingRef.current) return;
         responseTransitionPendingRef.current = false;
         // A stale closure's fallback timeout could otherwise fire after a
@@ -718,6 +755,12 @@ export function useRealtimeVoiceSession(
       const watchForOutputCut = (reason: string) => {
         if (outputCutPending || isPreviousResponseAudioFinished()) return;
         outputCutPending = true;
+        // The cut ends the audio early, so its known end no longer holds;
+        // the silence detector takes over.
+        if (pendingHandoverTimeoutRef.current != null) {
+          clearTimeout(pendingHandoverTimeoutRef.current);
+          pendingHandoverTimeoutRef.current = null;
+        }
         remoteAudioAnchorRef.current?.arm(true);
         realtimeDebugLog(`[SUBS] CUT (${reason}) waiting for silence ctxTime=${remoteAudioAnchorRef.current?.getCtxTime().toFixed(3) ?? "n/a"}`);
       };
@@ -792,61 +835,10 @@ export function useRealtimeVoiceSession(
 
       let activeConn: RealtimeConnection | null = null;
 
-      /**
-       * The agent went quiet when it should not have. Always reported to ErrorBot (sampled);
-       * the log line is what marks the spot in a stored log.
-       */
-      const reportStall = ({ rule, detail }: StallReport) => {
-        if (isStale()) return;
-        const where = {
-          setupId: setupSession?.get() ?? null,
-          venueId: getVenueId() || null,
-          pageId: getLogPageId(),
-        };
-        log.event("ERROR", `STALL ${rule}`, { feature, ...detail, ...where });
-        reportRealtimeIssue({
-          feature,
-          kind: "stall",
-          code: rule,
-          message: `Realtime agent stalled: ${STALL_MESSAGES[rule]}`,
-          detail: { ...detail, ...where },
-        });
-      };
-      // A failed attempt leaves its watchers behind; the retry replaces them.
-      stallDetectorRef.current?.dispose();
-      audioMonitorRef.current?.dispose();
-      const stallDetector = createStallDetector({ onStall: reportStall });
-      stallDetectorRef.current = stallDetector;
-
-      const currentPc = () => activeConn?.pc ?? connectionRef.current?.pc ?? null;
-      audioMonitorRef.current = createAudioMonitor({
-        probe: {
-          readStats: () => readPeerAudioStats(currentPc()),
-          playback: () => ({
-            elementPaused: remoteAudioRef.current?.paused ?? null,
-            elementMuted: agentOutputMutedRef.current,
-            blocked: audioBlockedRef.current,
-            contextState: remoteAudioAnchorRef.current?.getState() ?? null,
-          }),
-          connection: () => {
-            const pc = currentPc();
-            const dc = activeConn?.dc ?? connectionRef.current?.dc ?? null;
-            return {
-              pc: pc?.connectionState ?? null,
-              ice: pc?.iceConnectionState ?? null,
-              dc: dc?.readyState ?? null,
-            };
-          },
-        },
-        log: (message, data) => log.flat("REALTIME", message, { feature, ...data }),
-        onStall: reportStall,
-      });
-
       const sendOnDc = (payload: unknown) => {
         const dc = activeConn?.dc ?? connectionRef.current?.dc;
         if (!dc || dc.readyState !== "open") return;
         dc.send(JSON.stringify(payload));
-        stallDetector.observeOutgoing(payload);
       };
 
       const loop = createEventLoop({
@@ -935,10 +927,44 @@ export function useRealtimeVoiceSession(
               return;
             }
 
-            // Approximate path (interrupts, back-to-back responses): audio may
-            // still be draining, so keep the current caption and wait for the
-            // detector to confirm real silence — or a fallback timeout, in
-            // case it never does.
+            // Back-to-back path: the previous response finished generating but
+            // is still playing (a tool follow-up is asked for the moment the
+            // reply that called the tool is done). Inworld plays the next one
+            // straight after it, with no gap the silence detector could find —
+            // it took a pause inside one of the two for the boundary, and the
+            // captions ran seconds early or late. The previous response's end
+            // is known, so the next one's clock starts there; if nothing is
+            // playing by then, its audio is late and its onset anchors it.
+            if (pendingHandoverTimeoutRef.current != null) clearTimeout(pendingHandoverTimeoutRef.current);
+            pendingHandoverTimeoutRef.current = null;
+            const previousEndCtxSec = responseCancelled ? null : previousResponseEndCtxSec();
+            if (anchor != null && previousEndCtxSec != null) {
+              const remainingSec = previousEndCtxSec - anchor.getCtxTime();
+              pendingHandoverTimeoutRef.current = setTimeout(() => {
+                pendingHandoverTimeoutRef.current = null;
+                if (isStale() || !responseTransitionPendingRef.current) return;
+                const current = remoteAudioAnchorRef.current;
+                if (current?.isAudible()) {
+                  performResponseTransitionReset("back-to-back");
+                  responseAudioAnchorCtxSecRef.current = previousEndCtxSec;
+                  realtimeDebugLog(`[SUBS] ANCHOR set: anchorCtxSec=${previousEndCtxSec.toFixed(3)} (straight after the previous response)`);
+                } else {
+                  performResponseTransitionReset("playback-complete");
+                  current?.arm(false);
+                }
+              }, remainingSec * 1000);
+              realtimeDebugLog(`[SUBS] response.created — previous response still playing ${remainingSec.toFixed(3)}s, handing over at its end`);
+              if (pendingResetTimeoutRef.current != null) clearTimeout(pendingResetTimeoutRef.current);
+              pendingResetTimeoutRef.current = setTimeout(() => {
+                pendingResetTimeoutRef.current = null;
+                performResponseTransitionReset("timeout-fallback");
+              }, remainingSec * 1000 + PENDING_RESET_TIMEOUT_MS);
+              return;
+            }
+
+            // Approximate path (interrupts): audio may still be draining, so
+            // keep the current caption and wait for the detector to confirm
+            // real silence — or a fallback timeout, in case it never does.
             anchor?.arm(true);
             if (pendingResetTimeoutRef.current != null) clearTimeout(pendingResetTimeoutRef.current);
             pendingResetTimeoutRef.current = setTimeout(() => {
@@ -983,9 +1009,6 @@ export function useRealtimeVoiceSession(
                 setAgentSpeaking(false);
               }
             }
-            if (responseAudioAnchorCtxSecRef.current == null) {
-              realtimeDebugLog("[SUBS] WARN: response.done but anchor was never set — no captions shown");
-            }
           },
           onAudioPartReady: () => {
             if (!isStale()) setHasReceivedAudioPart(true);
@@ -1011,8 +1034,12 @@ export function useRealtimeVoiceSession(
         signal: controller.signal,
         onRemoteTrack: (track) => {
           if (isStale()) { try { track.stop(); } catch { /* ignore */ } return; }
+          voicesSideRef.current?.dispose();
+          voicesSideRef.current = null;
+          remoteTrackRef.current = track;
           const el = attachRemoteAudio(track, audioElementRef.current ?? null, agentOutputMutedRef.current);
           remoteAudioRef.current = el;
+          applyAudioRoute();
           playRemoteAudio();
           try {
             remoteAudioAnchorRef.current?.dispose();
@@ -1047,8 +1074,6 @@ export function useRealtimeVoiceSession(
         },
         onEvent: (event) => {
           if (isStale()) return;
-          stallDetector.observeIncoming(event);
-          audioMonitorRef.current?.observeIncoming(event);
           // Never let a throw inside the loop become an invisible unhandled
           // rejection — on an unattended installation a silent handler crash is
           // indistinguishable from the agent simply going quiet.
@@ -1135,11 +1160,6 @@ export function useRealtimeVoiceSession(
       }
 
       conn?.close();
-      // Nothing to watch until the next attempt connects.
-      stallDetectorRef.current?.dispose();
-      stallDetectorRef.current = null;
-      audioMonitorRef.current?.dispose();
-      audioMonitorRef.current = null;
 
       const kind = classifyRealtimeError(e, { selfHealing: selfHealingRef.current });
       const msg = e instanceof Error ? e.message : FEATURE_MESSAGES[feature].startFailed;
@@ -1204,6 +1224,7 @@ export function useRealtimeVoiceSession(
     cleanup,
     scheduleRetry,
     markSessionLive,
+    applyAudioRoute,
   ]);
 
   // Keep startRef current so retry timers always call the latest start.
@@ -1237,12 +1258,93 @@ export function useRealtimeVoiceSession(
     };
   }, [sessionActive, autoConnect, start, cleanup, resetSessionUiState]);
 
-  const setMicEnabled = useCallback((open: boolean) => {
+  /**
+   * Whether there is any agent audio left to cut off, and how much of it was
+   * heard. `null` means it has already played out — nothing to interrupt.
+   */
+  const planOutputCut = useCallback((): { audioElapsedMs?: number } | null => {
+    const loop = eventLoopRef.current;
+    const responseActive = loop?.isResponseActive() ?? false;
+
+    // How far into the current/last response's audio we actually are, so the
+    // event loop can truncate the assistant's transcript to match what was
+    // audibly heard rather than what was fully generated. AudioContext.currentTime
+    // is a free-running hardware clock — it keeps advancing after playback
+    // ends, so this grows without bound once the agent has gone quiet.
+    // Between response.created and the confirmed-silence reset, the anchor and
+    // subtitle track still describe the *previous* response while the event
+    // loop's assistant audio item id has already advanced to the new one — an
+    // offset from that timeline would truncate the wrong response at a
+    // meaningless point. Treat the timeline as unknown instead; the cancel and
+    // output-buffer clear still apply, we just don't claim to know how much
+    // was heard.
+    const staleTimeline = responseTransitionPendingRef.current;
+    const anchor = remoteAudioAnchorRef.current;
+    const anchorCtxSec = responseAudioAnchorCtxSecRef.current;
+    const rawElapsedSec = !staleTimeline && anchor != null && anchorCtxSec != null
+      ? anchor.getCtxTime() - anchorCtxSec
+      : null;
+    const endSec = staleTimeline
+      ? null
+      : (subtitleTrackRef.current?.getPlaybackEndSec() ?? null);
+    // Our client-side duration estimate can run ahead of the provider's own
+    // audio, so shave a safety margin off the end before trusting it.
+    const safeEndSec = endSec != null ? Math.max(0, endSec - AUDIO_END_SAFETY_MARGIN_SEC) : null;
+
+    const audioAlreadyFinished =
+      !responseActive && rawElapsedSec != null && safeEndSec != null && rawElapsedSec >= safeEndSec;
+
+    if (audioAlreadyFinished) return null;
+
+    // Only claim to know the offset while we are confidently *inside* the
+    // audio. Near the tail — or with no alignment data to bound it at all —
+    // every input to this number is unreliable at once:
+    //
+    //  - the offset is AudioContext time since the anchor, which includes any
+    //    lead-in before audio actually flowed, so it overstates what played;
+    //  - word alignment describes speech the model *planned*, which can run
+    //    past what TTS actually synthesised;
+    //  - and the cancel we are about to send is itself what decides the final
+    //    duration, at whatever point the server stops — so the truth does not
+    //    exist yet at the moment we have to name a number.
+    //
+    // Clamping to the estimate does not help: it is the estimate that is wrong
+    // (observed: audio_end_ms 762 against 599 ms of real audio). Truncating at
+    // the tail also buys nothing — the model said essentially all of it — so
+    // skip it and keep the cancel and the buffer clear, which is what actually
+    // stops the sound.
+    const insideAudio = rawElapsedSec != null && safeEndSec != null && rawElapsedSec < safeEndSec;
+    const audioElapsedMs = insideAudio ? Math.max(0, rawElapsedSec * 1000) : undefined;
+    return { audioElapsedMs };
+  }, []);
+
+  /**
+   * Open or close the visitor's mic — the talk button. Opening starts their
+   * turn (cutting the agent off if it is still talking); closing ends it, and
+   * the agent is asked for its reply. Pass `discard` when closing is not the
+   * visitor finishing but the agent being put away: the turn is thrown out.
+   * Repeated calls with the same state change nothing.
+   */
+  const setMicEnabled = useCallback((open: boolean, options?: { discard?: boolean }) => {
     const stream = connectionRef.current?.micStream ?? null;
     setMicTracksEnabled(stream, open);
     setMicStream(open ? stream : null);
+    if (open === micGateOpenRef.current) return;
+    micGateOpenRef.current = open;
     log.flat("REALTIME", open ? "mic open" : "mic closed", { feature, hasMic: stream != null });
-  }, [feature]);
+
+    const loop = eventLoopRef.current;
+    if (!loop) return;
+    if (open) {
+      // Cut the agent off only when it is answering or audibly mid-sentence —
+      // not on a first press with nothing ever played.
+      const cut = planOutputCut();
+      const talking = cut != null && (loop.isResponseActive() || cut.audioElapsedMs != null);
+      loop.beginUserTurn(talking ? { interrupt: cut } : undefined);
+    } else {
+      loop.endUserTurn({ respond: !options?.discard });
+    }
+  }, [feature, planOutputCut]);
 
   const attachMic = useCallback(async (
     { userInitiated = false }: { userInitiated?: boolean } = {},
@@ -1297,6 +1399,7 @@ export function useRealtimeVoiceSession(
     const el = remoteAudioRef.current;
     if (!el) return;
     remoteAudioAnchorRef.current?.resume();
+    voicesSideRef.current?.resume();
     void el
       .play()
       .then(() => {
@@ -1332,6 +1435,7 @@ export function useRealtimeVoiceSession(
   useEffect(() => {
     const retry = (): void => {
       if (audioBlockedRef.current) playRemoteAudio();
+      else voicesSideRef.current?.resume();
     };
     window.addEventListener("pointerdown", retry);
     window.addEventListener("keydown", retry);
@@ -1348,10 +1452,7 @@ export function useRealtimeVoiceSession(
       log.flat("REALTIME", muted ? "agent output muted" : "agent output unmuted", { feature });
     }
     agentOutputMutedRef.current = muted;
-    const el = remoteAudioRef.current;
-    if (el) {
-      el.muted = muted;
-    }
+    applyAudioRoute();
     if (muted) {
       // The playback clock keeps running, and without this the next sentence
       // boundary would put a caption back while muted.
@@ -1365,7 +1466,7 @@ export function useRealtimeVoiceSession(
       }
       eventLoopRef.current?.cancelActiveResponse();
     }
-  }, [feature]);
+  }, [feature, applyAudioRoute]);
 
   const sendUserMessage = useCallback((text: string) => {
     eventLoopRef.current?.sendUserMessage(text);
@@ -1377,37 +1478,8 @@ export function useRealtimeVoiceSession(
 
   const interruptAndRespond = useCallback((text: string, reason?: string) => {
     const loop = eventLoopRef.current;
-    const responseActive = loop?.isResponseActive() ?? false;
-
-    // How far into the current/last response's audio we actually are, so the
-    // event loop can truncate the assistant's transcript to match what was
-    // audibly heard rather than what was fully generated. AudioContext.currentTime
-    // is a free-running hardware clock — it keeps advancing after playback
-    // ends, so this grows without bound once the agent has gone quiet.
-    // Between response.created and the confirmed-silence reset, the anchor and
-    // subtitle track still describe the *previous* response while the event
-    // loop's assistant audio item id has already advanced to the new one — an
-    // offset from that timeline would truncate the wrong response at a
-    // meaningless point. Treat the timeline as unknown instead; the cancel and
-    // output-buffer clear still apply, we just don't claim to know how much
-    // was heard.
-    const staleTimeline = responseTransitionPendingRef.current;
-    const anchor = remoteAudioAnchorRef.current;
-    const anchorCtxSec = responseAudioAnchorCtxSecRef.current;
-    const rawElapsedSec = !staleTimeline && anchor != null && anchorCtxSec != null
-      ? anchor.getCtxTime() - anchorCtxSec
-      : null;
-    const endSec = staleTimeline
-      ? null
-      : (subtitleTrackRef.current?.getPlaybackEndSec() ?? null);
-    // Our client-side duration estimate can run ahead of the provider's own
-    // audio, so shave a safety margin off the end before trusting it.
-    const safeEndSec = endSec != null ? Math.max(0, endSec - AUDIO_END_SAFETY_MARGIN_SEC) : null;
-
-    const audioAlreadyFinished =
-      !responseActive && rawElapsedSec != null && safeEndSec != null && rawElapsedSec >= safeEndSec;
-
-    if (audioAlreadyFinished) {
+    const cut = planOutputCut();
+    if (cut == null) {
       // Nothing to interrupt: the previous response's audio has already
       // finished playing, so just react normally instead of sending a
       // cancel/truncate/clear that has no target.
@@ -1415,28 +1487,8 @@ export function useRealtimeVoiceSession(
       loop?.requestResponseIfIdle();
       return;
     }
-
-    // Only claim to know the offset while we are confidently *inside* the
-    // audio. Near the tail — or with no alignment data to bound it at all —
-    // every input to this number is unreliable at once:
-    //
-    //  - the offset is AudioContext time since the anchor, which includes any
-    //    lead-in before audio actually flowed, so it overstates what played;
-    //  - word alignment describes speech the model *planned*, which can run
-    //    past what TTS actually synthesised;
-    //  - and the cancel we are about to send is itself what decides the final
-    //    duration, at whatever point the server stops — so the truth does not
-    //    exist yet at the moment we have to name a number.
-    //
-    // Clamping to the estimate does not help: it is the estimate that is wrong
-    // (observed: audio_end_ms 762 against 599 ms of real audio). Truncating at
-    // the tail also buys nothing — the model said essentially all of it — so
-    // skip it and keep the cancel and the buffer clear, which is what actually
-    // stops the sound.
-    const insideAudio = rawElapsedSec != null && safeEndSec != null && rawElapsedSec < safeEndSec;
-    const audioElapsedMs = insideAudio ? Math.max(0, rawElapsedSec * 1000) : undefined;
-    loop?.interruptAndRespond(text, { reason, audioElapsedMs });
-  }, []);
+    loop?.interruptAndRespond(text, { reason, audioElapsedMs: cut.audioElapsedMs });
+  }, [planOutputCut]);
 
   const reconfigureSession = useCallback((options?: ConfigureSessionOptions) => {
     const loop = eventLoopRef.current;

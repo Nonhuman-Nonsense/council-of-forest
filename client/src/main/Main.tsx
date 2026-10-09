@@ -33,6 +33,7 @@ import ModeSwitchButton from "@/museum/ModeSwitchButton";
 import ButtonLedDebugOverlay, { useButtonLedDebugOverlay } from "@/museum/button/buttonDebug";
 import { useCouncilSettings } from "@/settings/councilSettings";
 import { useAudioSplit } from "@/audio/audioRouting";
+import { useSidetone } from "@/audio/sidetone";
 import LetterReplyPrinter from "@/museum/print/LetterReplyPrinter";
 import { createAudioContext, useAudioSuspended } from "@/audio/audioContext";
 import { usePortrait } from "@/utils";
@@ -106,9 +107,16 @@ export default function Main(props: MainProps) {
   useWakeLock(isMeetingPath(location.pathname) && !isPaused);
   const isIphone = useIsIphone();
   const isPortrait = usePortrait();
-  const { capabilities, pttHardwareEnabled, modeSwitchButtonEnabled, printSummariesEnabled, splitAudioEnabled } =
-    useCouncilSettings();
+  const {
+    capabilities,
+    pttHardwareEnabled,
+    modeSwitchButtonEnabled,
+    printSummariesEnabled,
+    splitAudioEnabled,
+    sidetoneLevel,
+  } = useCouncilSettings();
   useAudioSplit(audioContext, splitAudioEnabled);
+  useSidetone(sidetoneLevel, splitAudioEnabled);
   const meetingGeneration = useAutoplayStore((s) => s.meetingGeneration);
   const { ledDebugOverlay } = useButtonLedDebugOverlay();
   useMuseumCursorHide();

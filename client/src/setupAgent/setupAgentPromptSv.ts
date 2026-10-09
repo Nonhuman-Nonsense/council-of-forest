@@ -1,5 +1,6 @@
 import { getCapabilities } from "@/settings/councilSettings";
-import type { SetupAgentPromptParams } from "./setupAgentPrompt";
+import type { MeetingSetupPhase } from "@newMeeting/meetingSetup";
+import type { SetupAgentPromptParams, SetupAgentSelection } from "./setupAgentPrompt";
 
 export function buildSvPrompt({
   phase,
@@ -7,6 +8,7 @@ export function buildSvPrompt({
   topics,
   characters,
   otherLanguageNames,
+  selection,
   hasEverHeardVisitor = true,
 }: SetupAgentPromptParams): string {
   const { voiceSetupAgent, typedSetup } = getCapabilities();
@@ -91,13 +93,13 @@ ${visitorName
 
 ${typedSetup ? `
 Besökarens mikrofon
-Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller genom att klicka på mikrofonknappen längst ned på skärmen för att hålla den på. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.
+Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller mikrofonknappen längst ned på skärmen, medan de pratar, och släppa när de är klara. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.
 ${hasEverHeardVisitor ? `De har en fungerande mikrofon och kan svara dig. Prata med dem och använd dina verktyg som beskrivs ovan.`
     : `De har inte pratat med dig alls än, och gör alla val genom att klicka på skärmen.
 
 Medan det gäller, följ dessa extra regler (de gäller före beskrivningarna ovan om något krockar):
 - Välj, bekräfta eller navigera ingenting åt dem, och erbjud dig inte att göra det. De gör det själva. Dina verktyg vägrar att agera tills de har talat.
-- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller trycka på mikrofonknappen längst ned på skärmen om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
+- Tidigt — i din första eller andra tur — nämn en gång, kort och lätt, att de kan hålla ned mellanslagstangenten eller mikrofonknappen längst ned på skärmen medan de pratar, om de vill prata med dig. Säg det bara en gång, och tjata aldrig.
 
 Om du senare får veta att besökaren kan prata med dig, släpp dessa regler från och med då och samtala med dem som vanligt.`}
 
@@ -110,7 +112,30 @@ Vi är för närvarande i fasen ${phase}. Besökaren har redan gått igenom alla
 Du behöver inte upprepa uppgifterna för de faser som listats ovan, anta att de redan hänt.
 Det vill säga, du behöver inte presentera dig och fråga om de är redo — du kan anta att de redan är det!
 Kontrollera vilken uppgift du har i fasen ${phase} och fortsätt sedan därifrån.`}
+${describeSelection(phase, selection)}
 `;
 
   return prompt;
+}
+
+/**
+ * Valen som redan syns på skärmen. Tomt på välkomststeget, där inget kan ha
+ * valts än.
+ */
+function describeSelection(phase: MeetingSetupPhase, selection?: SetupAgentSelection): string {
+  if (phase === "landing" || !selection) return "";
+  const lines: string[] = [];
+  if (selection.topic) {
+    lines.push(phase === "topic"
+      ? `Besökaren har redan markerat ämnet "${selection.topic}" på skärmen, men har inte bekräftat det än.`
+      : `Det bekräftade ämnet är "${selection.topic}".`);
+  }
+  if (phase === "characters") {
+    lines.push(selection.council.length > 0
+      ? `Rådet består redan av ${selection.council.join(", ")}, och dig själv som moderator.`
+      : `Ingen har valts till rådet än; det är bara du själv som moderator.`);
+  }
+  if (lines.length === 0) return "";
+  lines.push("De här valen gjordes innan samtalet började. Utgå från dem som de är och fortsätt därifrån, i stället för att reagera som om de just hade gjorts.");
+  return lines.join("\n");
 }

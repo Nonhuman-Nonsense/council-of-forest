@@ -27,9 +27,6 @@ export const DEV_LOG_DISABLED_CATEGORIES_KEY = "councilDevLogDisabledCategories"
 
 export const DEV_LOG_CHANGE_EVENT = "council-dev-log-change";
 
-/** Send what the console logs to the server too (#staff → Logging). */
-export const SERVER_LOG_ENABLED_KEY = "councilServerLogEnabled";
-
 export const PTT_HARDWARE_ENABLED_KEY = "councilPttHardwareEnabled";
 
 export const PTT_HARDWARE_CHANGE_EVENT = "council-ptt-hardware-change";
@@ -41,6 +38,10 @@ export const PRINT_SUMMARIES_CHANGE_EVENT = "council-print-summaries-change";
 export const SPLIT_AUDIO_ENABLED_KEY = "councilSplitAudioEnabled";
 
 export const SPLIT_AUDIO_CHANGE_EVENT = "council-split-audio-change";
+
+export const SIDETONE_LEVEL_KEY = "councilSidetoneLevel";
+
+export const SIDETONE_LEVEL_CHANGE_EVENT = "council-sidetone-level-change";
 
 export const VENUE_ID_KEY = "councilVenueId";
 
@@ -198,6 +199,34 @@ export function setSplitAudioEnabled(enabled: boolean): void {
   window.dispatchEvent(new CustomEvent<boolean>(SPLIT_AUDIO_CHANGE_EVENT, { detail: enabled }));
 }
 
+/**
+ * How loud the visitor hears their own voice in the headphones while they hold the button
+ * (see `audio/sidetone.ts`): 0 (off) to 1. Independent of the mode, since it depends on
+ * headphones being there; off by default, because over speakers the mic hears itself and howls.
+ */
+export function getSidetoneLevel(): number {
+  try {
+    const level = Number(localStorage.getItem(SIDETONE_LEVEL_KEY));
+    return Number.isFinite(level) ? Math.min(Math.max(level, 0), 1) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function setSidetoneLevel(level: number): void {
+  try {
+    if (level > 0) {
+      localStorage.setItem(SIDETONE_LEVEL_KEY, String(level));
+    } else {
+      localStorage.removeItem(SIDETONE_LEVEL_KEY);
+    }
+  } catch {
+    // ignore storage errors (private mode, quota, etc.)
+  }
+
+  window.dispatchEvent(new CustomEvent<number>(SIDETONE_LEVEL_CHANGE_EVENT, { detail: level }));
+}
+
 /** Top-left staff control to switch mode without opening #staff. */
 export function getModeSwitchButtonEnabled(): boolean {
   try {
@@ -268,27 +297,6 @@ export function setDevLogEnabled(enabled: boolean): void {
   window.dispatchEvent(new CustomEvent(DEV_LOG_CHANGE_EVENT));
 }
 
-/**
- * Whether the console log also goes to the server. Off unless staff turn it on, and only
- * meaningful while console logging is on: the server stores what the console prints.
- */
-export function getServerLogEnabled(): boolean {
-  try {
-    return localStorage.getItem(SERVER_LOG_ENABLED_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-export function setServerLogEnabled(enabled: boolean): void {
-  try {
-    localStorage.setItem(SERVER_LOG_ENABLED_KEY, enabled ? "true" : "false");
-  } catch {
-    // ignore storage errors
-  }
-  window.dispatchEvent(new CustomEvent(DEV_LOG_CHANGE_EVENT));
-}
-
 export function isDevLogCategoryEnabled(category: LogCategory): boolean {
   return !readDisabledDevLogCategories().includes(category);
 }
@@ -326,6 +334,8 @@ export function useCouncilSettings(): {
   setPrintSummariesEnabled: (enabled: boolean) => void;
   splitAudioEnabled: boolean;
   setSplitAudioEnabled: (enabled: boolean) => void;
+  sidetoneLevel: number;
+  setSidetoneLevel: (level: number) => void;
   modeSwitchButtonEnabled: boolean;
   setModeSwitchButtonEnabled: (enabled: boolean) => void;
   devLogEnabled: boolean;
@@ -333,8 +343,6 @@ export function useCouncilSettings(): {
   devLogCategories: Record<LogCategory, boolean>;
   setDevLogCategoryEnabled: (category: LogCategory, enabled: boolean) => void;
   setAllDevLogCategories: (enabled: boolean) => void;
-  serverLogEnabled: boolean;
-  setServerLogEnabled: (enabled: boolean) => void;
 } {
   const [mode, setMode] = useState<AppMode>(getAppMode);
   const [lastInstallationMode, setLastInstallationMode] = useState<Exclude<AppMode, "web">>(getLastInstallationMode);
@@ -342,16 +350,15 @@ export function useCouncilSettings(): {
   const [printSummariesEnabled, setPrintSummariesEnabledState] =
     useState(getPrintSummariesEnabled);
   const [splitAudioEnabled, setSplitAudioEnabledState] = useState(getSplitAudioEnabled);
+  const [sidetoneLevel, setSidetoneLevelState] = useState(getSidetoneLevel);
   const [modeSwitchButtonEnabled, setModeSwitchButtonEnabledState] =
     useState(getModeSwitchButtonEnabled);
   const [devLogEnabled, setDevLogEnabledState] = useState(getDevLogEnabled);
   const [devLogCategories, setDevLogCategoriesState] = useState(getDevLogCategoryStates);
-  const [serverLogEnabled, setServerLogEnabledState] = useState(getServerLogEnabled);
 
   const refreshDevLogSettings = useCallback(() => {
     setDevLogEnabledState(getDevLogEnabled());
     setDevLogCategoriesState(getDevLogCategoryStates());
-    setServerLogEnabledState(getServerLogEnabled());
   }, []);
 
   useEffect(() => {
@@ -376,6 +383,11 @@ export function useCouncilSettings(): {
       setSplitAudioEnabledState(next);
     }
 
+    function onSidetoneLevelChange(event: Event): void {
+      const next = (event as CustomEvent<number>).detail;
+      setSidetoneLevelState(next);
+    }
+
     function onModeSwitchButtonChange(event: Event): void {
       const next = (event as CustomEvent<boolean>).detail;
       setModeSwitchButtonEnabledState(next);
@@ -397,13 +409,15 @@ export function useCouncilSettings(): {
       if (event.key === SPLIT_AUDIO_ENABLED_KEY) {
         setSplitAudioEnabledState(getSplitAudioEnabled());
       }
+      if (event.key === SIDETONE_LEVEL_KEY) {
+        setSidetoneLevelState(getSidetoneLevel());
+      }
       if (event.key === MODE_SWITCH_BUTTON_ENABLED_KEY) {
         setModeSwitchButtonEnabledState(getModeSwitchButtonEnabled());
       }
       if (
         event.key === DEV_LOG_ENABLED_KEY ||
-        event.key === DEV_LOG_DISABLED_CATEGORIES_KEY ||
-        event.key === SERVER_LOG_ENABLED_KEY
+        event.key === DEV_LOG_DISABLED_CATEGORIES_KEY
       ) {
         refreshDevLogSettings();
       }
@@ -417,6 +431,7 @@ export function useCouncilSettings(): {
     window.addEventListener(PTT_HARDWARE_CHANGE_EVENT, onPttHardwareChange);
     window.addEventListener(PRINT_SUMMARIES_CHANGE_EVENT, onPrintSummariesChange);
     window.addEventListener(SPLIT_AUDIO_CHANGE_EVENT, onSplitAudioChange);
+    window.addEventListener(SIDETONE_LEVEL_CHANGE_EVENT, onSidetoneLevelChange);
     window.addEventListener(MODE_SWITCH_BUTTON_CHANGE_EVENT, onModeSwitchButtonChange);
     window.addEventListener(DEV_LOG_CHANGE_EVENT, onDevLogChange);
     window.addEventListener("storage", onStorage);
@@ -425,6 +440,7 @@ export function useCouncilSettings(): {
       window.removeEventListener(PTT_HARDWARE_CHANGE_EVENT, onPttHardwareChange);
       window.removeEventListener(PRINT_SUMMARIES_CHANGE_EVENT, onPrintSummariesChange);
       window.removeEventListener(SPLIT_AUDIO_CHANGE_EVENT, onSplitAudioChange);
+      window.removeEventListener(SIDETONE_LEVEL_CHANGE_EVENT, onSidetoneLevelChange);
       window.removeEventListener(MODE_SWITCH_BUTTON_CHANGE_EVENT, onModeSwitchButtonChange);
       window.removeEventListener(DEV_LOG_CHANGE_EVENT, onDevLogChange);
       window.removeEventListener("storage", onStorage);
@@ -452,6 +468,11 @@ export function useCouncilSettings(): {
     setSplitAudioEnabledState(enabled);
   }, []);
 
+  const setSidetoneLevelFromHook = useCallback((level: number) => {
+    setSidetoneLevel(level);
+    setSidetoneLevelState(level);
+  }, []);
+
   const setModeSwitchButtonEnabledFromHook = useCallback((enabled: boolean) => {
     setModeSwitchButtonEnabled(enabled);
     setModeSwitchButtonEnabledState(enabled);
@@ -473,11 +494,6 @@ export function useCouncilSettings(): {
     refreshDevLogSettings();
   }, [refreshDevLogSettings]);
 
-  const setServerLogEnabledFromHook = useCallback((enabled: boolean) => {
-    setServerLogEnabled(enabled);
-    setServerLogEnabledState(enabled);
-  }, []);
-
   const capabilities = useMemo(() => capabilitiesFor(mode), [mode]);
 
   return {
@@ -491,6 +507,8 @@ export function useCouncilSettings(): {
     setPrintSummariesEnabled: setPrintSummariesEnabledFromHook,
     splitAudioEnabled,
     setSplitAudioEnabled: setSplitAudioEnabledFromHook,
+    sidetoneLevel,
+    setSidetoneLevel: setSidetoneLevelFromHook,
     modeSwitchButtonEnabled,
     setModeSwitchButtonEnabled: setModeSwitchButtonEnabledFromHook,
     devLogEnabled,
@@ -498,7 +516,5 @@ export function useCouncilSettings(): {
     devLogCategories,
     setDevLogCategoryEnabled: setDevLogCategory,
     setAllDevLogCategories: setAllCategories,
-    serverLogEnabled,
-    setServerLogEnabled: setServerLogEnabledFromHook,
   };
 }

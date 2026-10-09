@@ -220,7 +220,14 @@ prints it with macOS's own printing, so a crash, a reboot or a printer that is
 off only delays a protocol, never loses it. Each meeting prints once.
 
 In a meeting that ends in a letter, the letter is what prints — and only if the
-visitor was there to answer when asked to add something. **Replies** to the letters
+visitor was there to answer when asked to add something. With printing on, the letter is
+not read aloud or shown on screen: the chair thanks the author and the visitor, says the
+email was sent and is printing behind them (or that it was not sent, because nobody
+answered), and every meeting ends on the same **credits** — "Thank You", then a
+60-second roll — while the letter prints, 20 seconds after it is ready
+(`LETTER_PRINT_DELAY_MS` in `SummaryPrintJob.tsx`). The button or a click starts a new
+meeting; otherwise the start page returns 20 seconds after the credits. Replays skip
+the chair's farewell and the credits and show the letter. **Replies** to the letters
 print here too, as they arrive: the page asks the bridge for new replies to this
 venue's letters once a minute (the bridge asks the council server with the
 installation key, so the key and the venue must be set), prints each once, and
@@ -418,8 +425,8 @@ Turn on **Split audio** on the staff page to feed two places from the Mac's one 
 The output's two channels become two mono feeds: the **left** carries the scene alone (the
 ambience and the beings' sounds), the **right** the full mix, voices included. A Y-cable from
 the headphone jack (3.5 mm stereo to 2× mono, RCA or 6.35 mm) takes each side to its own amp
-or speaker. The setup and meeting agents' voices play on both sides. The switch takes effect at
-once, without a reload; off, the output is the usual stereo mix.
+or speaker. The setup and meeting agents speak on the right too, with the council. The switch
+takes effect at once, without a reload; off, the output is the usual stereo mix.
 
 - Each side is mono. A mono plug into a stereo headphone amp plays in one ear only, so give
   headphones an amp with a mono input, or a mono-to-both-ears adapter.
@@ -428,6 +435,24 @@ once, without a reload; off, the output is the usual stereo mix.
   stereo audio as mono** off, and the Sound balance slider centred.
 - Leave it off on any screen someone listens to in headphones: they would hear the voices in
   one ear only.
+- With the split on, the microphone opens without the browser's echo canceller, which coloured
+  the agents' voices. Keep speakers that play voices away from the mic, or the agents may hear
+  themselves. This part follows the switch only when the mic next opens: reload the page.
+
+### Hear yourself
+
+Set **Hear yourself** on the staff page to let a visitor in headphones hear their own voice
+while they hold the talk button, as in a radio studio. They hear it only while the button is
+down, and what they hear is the same cleaned-up signal the agents transcribe, so staff
+listening in hear what the AI hears. The level steps from off to 100 %; set the rest on the
+headphone amp. With **Split audio** on it plays on the right side only, with the voices.
+
+- Headphones only. Over speakers the mic hears itself and howls; leave it off at a screening.
+- Turn off any direct monitoring on the audio interface, or the visitor hears themselves twice.
+- It comes back a little late (a few tens of milliseconds), which can sound like a faint
+  doubling. A lower level makes it less noticeable.
+- After switching it on, check that transcripts still come out right: the browser's echo
+  canceller hears this playback too.
 
 ### Mode switch button (staff escape)
 
@@ -440,28 +465,27 @@ presenter) without reload.
 
 Optional category toggles on `#staff` for field debugging (`localStorage`-backed).
 
-**Send log to server** (Logging panel) stores everything the console prints on the council
-server as well, so an installation's log can be read after something went wrong — nobody has
-to have had DevTools open. It needs logging on, and follows the category toggles: what is
-stored is exactly what is printed. The line under the switch shows it arriving ("Sending —
-last batch 3 s ago") and the page's id. Lines are batched every 5 s and kept while the
-server is unreachable. The server keeps the newest 512 MB (the `client_log` collection is
+While logging is on, everything the console prints is also stored on the council server, so
+an installation's log can be read after something went wrong — nobody has to have had
+DevTools open. There is no separate switch; it follows the category toggles: what is stored
+is exactly what is printed. A line under the switch appears only when sending fails. Lines
+are batched every 5 s and kept while the server is unreachable. The server keeps the newest 512 MB (the `client_log` collection is
 capped, so it never needs pruning).
 
 Read it back from `server/` (it reads the database the server's `.env` names):
 
 ```
-npm run logs -- --venue havremagasinet --stalls --since 24h
+npm run logs -- --venue havremagasinet --unanswered --since 24h
 npm run logs -- --setup <setupId>
 npm run logs -- --page <pageId>
 npm run logs -- --range
 ```
 
-`--stalls` lists the moments a realtime agent went quiet when it should not have (the visitor
-stopped speaking and no reply began, a reply never finished, audio arrived but was not
-played, a tool result got no follow-up…). Those are also reported to ErrorBot as
-`realtime.<agent>.stall` whether or not logging is on, with the setup id and page id to look
-up.
+The realtime agents log each visitor turn and each reply as one line (`turn: answered`,
+`reply: completed`, with the transcript, the wait and the tools called), and `[SUBS] AUDIO`
+lines where the agent's audio really starts and pauses — read those against the captions'
+`DISPLAY` lines when captions drift. `--unanswered` lists the turns the agent decided to
+answer that no reply ever followed: where it froze, with the setup id and page id to look up.
 
 ---
 
@@ -529,7 +553,9 @@ Use the hardware checklist in
 7. Meter screen upright, full screen, numbers moving; room plugs listed if installed  
 8. Restart the Mac → both windows come back on their screens, untouched  
 9. With **Split audio** on: the left side plays no voices, the right side plays everything  
-10. Press the Mac's power button once → it shuts down by itself (the bridge log says
+10. With **Hear yourself** on: holding the button, the visitor hears their own voice in the
+    headphones; released, nothing; the transcript still comes out right  
+11. Press the Mac's power button once → it shuts down by itself (the bridge log says
     `power button pressed`); start it again → everything comes back  
 
 Bridge logs: `/var/log/council-button-bridge.log`; kiosk logs:
