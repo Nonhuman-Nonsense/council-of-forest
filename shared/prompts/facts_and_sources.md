@@ -94,6 +94,12 @@ Swedish uranium ban lifted (Jan 2026).
   otherwise fall back on 2023 knowledge). No figures that a topic already carries in
   detail. The shared `system` prompt tells every being to take figures and dates from the
   notes and never invent a number.
+- **No vote counts in being prompts, and no "cite this" instructions.** A vivid, quotable
+  figure in a being's prompt travels to every meeting, and an instruction to state it makes
+  the being repeat it turn after turn; other beings then answer it, and it becomes the
+  meeting's thread. Vote margins live once, in the agenda point they belong to. Beings
+  carry the *effect* of a decision ("three weeks instead of six"), listed among other
+  problems, and are told to pick what fits River's question.
 - **Balance for the venue.** Critical framings stay, but each gets its strongest counter
   (e.g. "the 2026 rescue of the Boden steel plant as proof that serious long-term capital
   still believes in the north").
@@ -560,6 +566,32 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-10-09 — The June 2026 forestry vote trimmed** (EN + SV)
+- Problem: beings kept returning to the 308–21 forestry vote in meetings on any topic.
+  Causes: Pine was told to "name what was decided, and by what margin. State the vote";
+  Tree Harvester carried the vote count with a ready-made argument; in Forestry meetings
+  every being also saw the law three times (Recent Developments, agenda point, both sides'
+  bullets), and Reindeer's "match the previous speaker" rule made it snowball.
+- **Pine:** "What has actually happened" → "Where things stand": the law's effect only, no
+  vote count or margin, framed as two problems among many; step 2 of its response
+  structure now takes the problem from the agenda point under discussion.
+- **Tree Harvester:** "Regulatory Reality" cut to the law's effect as background, without
+  the vote count or the "oversight was delay" line.
+- **Forestry topic:** the Recent Developments item on the law removed; its 670,000 ha
+  critique moved into the "Consultation, Deregulation, and Power" agenda point, which
+  keeps the 308–21 count as the one place it appears. `agentBrief` no longer leads with
+  the vote.
+- §2 gained the rule "No vote counts in being prompts".
+
+**2026-10-09 — Custom topic stays on the visitor's question** (EN + SV)
+- Custom topic: the eight-item list of fault lines ("Draw this question into…") is replaced
+  by an instruction to stay with the visitor's question, with the Council's usual concerns
+  named only as an optional, brief angle. Meetings were drifting off the question into the
+  green transition. The dated fact "one bankrupt, one rescued at the last minute by new
+  owners" is no longer in the custom topic; it remains in the Green Transition topic.
+- River being: a new rule — with a single agenda point, keep returning to it from new
+  angles rather than introducing new subjects.
 
 **2026-09-28 — This file moved and renamed** (docs)
 - `docs/political-context-2026.md` → `shared/prompts/facts_and_sources.md`, next to the
