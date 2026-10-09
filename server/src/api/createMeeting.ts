@@ -38,7 +38,6 @@ export async function createMeeting(rawBody: unknown, _environment: string): Pro
         conversationExtraSlots: 0,
         meetingComplete: false,
         sendsLetters: setup.sendsLetters ?? false,
-        printsLetters: setup.printsLetters ?? false,
         ...(venueId ? { venueId } : {}),
     };
 

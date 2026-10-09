@@ -310,7 +310,7 @@ function Council({
               onConcludeMeeting={handleOnConcludeMeeting}
               proceedWithHumanName={handleHumanNameEntered}
               onDismiss={declineOverlay}
-              summary={{ text: summaryDocument(summary, t), letter: summaryLetter(summary), credits: summary?.type === "credits" }}
+              summary={{ text: summaryDocument(summary, t), letter: summaryLetter(summary) }}
               meetingId={currentMeetingId}
               participants={participants}
               audioContext={audioContext}
