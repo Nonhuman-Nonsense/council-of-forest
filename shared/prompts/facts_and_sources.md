@@ -561,6 +561,15 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
 
+**2026-10-09 — Custom topic stays on the visitor's question** (EN + SV)
+- Custom topic: the eight-item list of fault lines ("Draw this question into…") is replaced
+  by an instruction to stay with the visitor's question, with the Council's usual concerns
+  named only as an optional, brief angle. Meetings were drifting off the question into the
+  green transition. The dated fact "one bankrupt, one rescued at the last minute by new
+  owners" is no longer in the custom topic; it remains in the Green Transition topic.
+- River being: a new rule — with a single agenda point, keep returning to it from new
+  angles rather than introducing new subjects.
+
 **2026-09-28 — This file moved and renamed** (docs)
 - `docs/political-context-2026.md` → `shared/prompts/facts_and_sources.md`, next to the
   prompts and the translation guide; `docs/` is for temporary design notes only.
