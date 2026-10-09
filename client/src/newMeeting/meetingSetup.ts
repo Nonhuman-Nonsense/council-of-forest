@@ -1,5 +1,5 @@
 import type { Character, Topic } from "@shared/ModelTypes";
-import { injectRandomAgendaPoint } from "@shared/agendaPointInjection";
+import { injectRandomAgendaPoint, injectSingleAgendaPointRule } from "@shared/agendaPointInjection";
 import { buildMeetingSystemPrompt, VISITOR_INPUT_PLACEHOLDER } from "@shared/topicPrompt";
 import { toTitleCase } from "@/utils";
 import type { TopicsData } from "@main/topicsBundle";
@@ -385,7 +385,7 @@ export function buildTopicFromSelection(params: {
 
 /**
  * Validates character-selection state and builds the meeting `characters` payload,
- * including chair `[CHARACTERS]`, `[HUMANS]`, and `[RANDOM_AGENDA_POINT]` prompt injection.
+ * including chair `[CHARACTERS]`, `[HUMANS]`, `[RANDOM_AGENDA_POINT]` and `[SINGLE_AGENDA_POINT]` prompt injection.
  */
 export function buildMeetingCharactersPayload(params: {
   language: string;
@@ -502,6 +502,11 @@ export function buildMeetingCharactersPayload(params: {
       replacedCharacters[0].prompt,
       agendaPoints,
       pinnedAgendaPoint,
+    );
+    replacedCharacters[0].prompt = injectSingleAgendaPointRule(
+      replacedCharacters[0].prompt,
+      agendaPoints,
+      characterSetupData.singleAgendaPoint,
     );
   }
 

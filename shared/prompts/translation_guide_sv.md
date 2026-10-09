@@ -23,7 +23,7 @@ The political facts behind the prompts, their dates and sources live in
   headings, bullet lists, or stage directions in what beings say aloud. Prompt
   instructions themselves may keep their structure.
 - **Leave mechanics intact.** Do not translate placeholders (`[TOPIC]`,
-  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
+  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[SINGLE_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
   `[VISITOR_INPUT]`, `[CURRENT_DATE]`), JSON keys, ids, law numbers (`1971:437`), Latin species
   names (`Pinus contorta`, `Cladina spp.`), or numeric data.
 - **Name the parties in Swedish.** The English prompts stay structural ("the
@@ -78,8 +78,8 @@ The political facts behind the prompts, their dates and sources live in
 
 **`beings_<lang>.json`**
 
-- `panelWithHumans`, `addHuman`, `characters[]` (`id`, `name`, `description`,
-  `prompt`).
+- `panelWithHumans`, `singleAgendaPoint` (River's rule for a one-point agenda),
+  `addHuman`, `characters[]` (`id`, `name`, `description`, `prompt`).
 - Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
   text fields only — do not copy English Inworld voice settings.
 
