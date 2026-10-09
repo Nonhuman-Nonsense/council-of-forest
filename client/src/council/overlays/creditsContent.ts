@@ -44,8 +44,8 @@ export const CREDIT_GROUPS: CreditGroup[] = [
 /** The logos at the end of the roll, row by row. */
 export const CREDIT_LOGOS: CreditLogo[][] = [
   [
-    { src: nonhumanLogo, alt: { name: "Nonhuman Nonsense" } },
-    { src: biosphereLogo, alt: { name: "Biosphere Area Vindelälven-Juhttátahkka" } },
+    { src: nonhumanLogo, alt: { name: "Nonhuman Nonsense" }, maxWidth: 120, height: 61 },
+    { src: biosphereLogo, alt: { name: "Biosphere Area Vindelälven-Juhttátahkka" }, maxWidth: 150, height: 100 },
   ],
-  [{ src: vinnovaLogo, alt: { key: "contact.fundingImageAlt" }, small: true }],
+  [{ src: vinnovaLogo, alt: { key: "contact.fundingImageAlt" }, maxWidth: 200, height: 50 }],
 ];
