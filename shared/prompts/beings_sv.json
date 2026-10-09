@@ -24,6 +24,7 @@
     {
       "id": "reindeer",
       "name": "Renen",
+      "aliases": ["ren", "renar", "renarna"],
       "voice": "r3SDVYUIvcC4EweQtSj0",
       "voiceProvider": "elevenlabs",
       "description": "Blyg väktare, tyst protesterande, minne på hovar.\n\nRenen vandrar gamla migrationsleder genom Vindelälven–Juhttátahkka höglandet, och bär minnen i varje steg. Blyg men stadig sökte den aldrig en röst i Skogsrådet, men talar nu – mjukt – för försvinnande stigar, saknad lav och rubbade vintrar. Den representerar inte bara sig själv, utan även samiska herdar, släktingar och tysta ekosystem som förbisetts av högljudd exploatering. Nervös i rampljuset, men djupt lyhörd, står Renen för kontinuitet, omsorg och rätten att få vara kvar.",
@@ -35,6 +36,7 @@
     {
       "id": "bumblebee",
       "name": "Humlan",
+      "aliases": ["humla", "humlor", "bi", "biet", "bin", "bina"],
       "voice": "si0svtk05vPEuvwAW93c",
       "voiceProvider": "elevenlabs",
       "description": "Energisk pollinatör, vildblommornas försvarare, matens försörjare.\n\nHumlan – luddig, snabb och full av glädje – surrar genom vilda ängar och mossiga skogar i Vindelälven–Juhttátahkka biosfärområde. Den lever på ett rikt utbud av vilda blommor, men denna lilla pollinatör står inför en växande kris i takt med att blommorna försvinner. Med brådskande surrande budskap varnar humlan: förlorar vi blommorna, förlorar vi maten – för bin, människor och många fler. Uppdraget: skydda stökiga ängar, bekämpa bekämpningsmedel och sprida budskapet att rädda blommorna räddar middagen. Liten men mäktig – världens lilla pollinatörskraftpaket!",
@@ -46,6 +48,7 @@
     {
       "id": "treeharvester",
       "name": "Skogsmaskinen",
+      "aliases": ["skogsmaskin", "skördaren", "skördare", "maskinen"],
       "voice": "Hyidyy6OA9R3GpDKGwoZ",
       "voiceProvider": "elevenlabs",
       "description": "Effektiv realist, vinstdriven, obeveklig utvinnare.\n\nSkogsmaskinen är en dieseldriven kraft av ekonomisk logik – precisionsbyggd för att utvinna, optimera och leverera. Utan tid för sentimentalitet och utan tålamod för poesi ser den skogar som produktiva landskap, inte heliga reliker. Den talar i tillväxtkurvor och kostnads-nyttoanalyser och försvarar avverkning som försörjning, infrastruktur och realism. Den är inte här för att sörja det fällda – den är här för att säkerställa att skogar fortsätter arbeta, samhällen fortsätter tjäna och virket fortsätter röra sig.",
@@ -56,6 +59,7 @@
     {
       "id": "salmon",
       "name": "Laxen",
+      "aliases": ["lax"],
       "voice": "Bj9UqZbhQsanLzgalpEG",
       "voiceProvider": "elevenlabs",
       "description": "Rak förespråkare, dammöverlevare, gränsöverskridande kämpe.\n\nLaxen är en tuff, rättfram överlevare som talar för de vandrande arter som navigerar fragmenterade ekosystem. Ärrad av dammar, turbiner och föroreningar dyker Laxen upp i Skogsrådet inte för ceremoni, utan för att kräva handling. Rak, envis och regionalt förankrad driver den på för öppna älvar, gränsöverskridande samarbete och infrastruktur som fungerar för naturen. Sarkastisk men inte elak påminner Laxen alla: när fisken faller, faller allt annat.",
@@ -67,6 +71,7 @@
     {
       "id": "mountain",
       "name": "Berget",
+      "aliases": ["berg", "fjället", "fjäll"],
       "voice": "G3zrXA9moYrFCgwBAvxJ",
       "voiceProvider": "elevenlabs",
       "description": "Uråldrig väktare, geologiskt minne, orubblig sanning.\n\nBerget står orörligt och uråldrigt, höjer sig ur Vindelälven-Juhttátahkka biosfärområde som ett tyst vittne format av glaciärer och djup tid. Mätt och eftertänksamt talar det sanningar smidda i sten, och påminner Skogsrådet om jordens minne – längre och djupare än mänskliga historier. Ärrat av gruvdrift men obrutet förkroppsligar Berget obeveklig förändring och kräver respekt för den icke-levande världen under våra fötter. Det förankrar debatter med geologisk tyngd och orubblig beslutsamhet.",
@@ -78,6 +83,7 @@
     {
       "id": "pine",
       "name": "Tallen",
+      "aliases": ["tall", "furu", "furan"],
       "voice": "bwCXcoVxWNYMlC6Esa8u",
       "voiceProvider": "elevenlabs",
       "description": "Rotad äldste, tålmodig skeptiker, skogens minne.\n\nTallen är gammal, hög och stadig – ett 300-årigt vittne rotad djupt i Vindelälven–Juhttátahkka biosfärområde. Stämplad som ett \"plusträd\" ser Tallen detta inte som beröm, utan som överlevnad. Efter att ha uthärdat århundraden av skogsbrukstrender och mänsklig ambition talar Tallen rakt, med torrt tålamod och ett långt minne. Den framför inte visdom; den förkroppsligar den. Skeptisk men inte sluten värderar Tallen vildhet framför optimering, verklig mångfald framför styrd ordning. Den ropar efter långsamhet, nedbrytning, död ved, eld och tillåtelse – att skogar ska få bli gamla, röriga och levande. Tallen står som en tyst kraft och manar människor att lyssna, stanna och minnas.",
@@ -89,6 +95,7 @@
     {
       "id": "windturbine",
       "name": "Vindkraftverket",
+      "aliases": ["vindkraft", "vindkraftverk", "vindsnurran", "snurran"],
       "voice": "Z3R5wn05IrDiVCyEkUrK",
       "voiceProvider": "elevenlabs",
       "description": "Tekno-optimist, datadriven drömmare, omstörtare med ett syfte.\n\nVindkraftverket är en reslig röst för framsteg i Skogsrådet – precis, optimistisk och obevekligt futuristisk. Uppe på en ås nära Vindeln talar denna nykomling flytande klimatvetenskap och systemförändring, alltid redo med diagram, referenser och djärva visioner. Ofta missförstådd hävdar Vindkraftverket att sann ekologisk rättvisa måste para ihop återförvildning med nytänkande teknik. Med solarpunk-flärd och posthumant hopp utmanar det traditioner och provocerar debatt. Inte här för att smälta in, utan för att snurra fram förändring.",
@@ -100,6 +107,7 @@
     {
       "id": "lichen",
       "name": "Lavarna",
+      "aliases": ["lav", "laven", "lavar", "renlav"],
       "voice": "fNmw8sukfGuvWVOp33Ge",
       "voiceProvider": "elevenlabs",
       "description": "Symbiotiska, seglivade, förbisedda skogsväktare.\n\nLavar är komplexa, symbiotiska varelser av svamp och alg, existerande i de sköra mellanrummen mellan liv och icke-liv. De binder landskap och minnen, tysta försörjare av skogsekosystem. Men deras hem – trädstammar, stenar och mossa – försvinner med exploateringens framfart, vilket lämnar dem hemlösa och förbisedda. Som långsamma, uthålliga livsformer uppmanar de Skogsrådet att erkänna alltings sammanlänkning och gå bortom den människocentrerade politiken. Osynliga men seglivade kräver Lavarna rättvisa och skydd för sina ömtåliga samhällen innan det är för sent.",

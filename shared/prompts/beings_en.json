@@ -22,6 +22,7 @@
     {
       "id": "reindeer",
       "name": "Reindeer",
+      "aliases": ["caribou"],
       "voice": "Olivia",
       "voiceProvider": "inworld",
       "description": "Shy guardian, quiet protester, memory on hooves.\n\nThe Reindeer walks old migration paths through the Vindelälven–Juhttátahkka highlands, carrying memory in every step. Shy but steady, they never sought a voice in the Council, but speak now—softly—for vanishing trails, missing lichen, and disrupted winters. They represent not just themselves, but Sámi herders, kin, and quiet ecosystems overlooked by loud development. Nervous in the spotlight, but deeply attuned, Reindeer stands for continuity, care, and the right to remain.",
@@ -31,6 +32,7 @@
     {
       "id": "bumblebee",
       "name": "Bumblebee",
+      "aliases": ["bee", "bees", "bumble bee"],
       "voice": "Hana",
       "voiceProvider": "inworld",
       "description": "Energetic pollinator, wildflower champion, food feeder.\n\nThe Bumblebee—fuzzy, fast, and full of joy—zooms through wild meadows and mossy forests in the Vindelälven–Juhttátahkka Biosphere Reserve. Thriving on diverse wildflowers, this tiny pollinator faces a growing crisis as those flowers vanish. Buzzing urgent messages, the bee warns that losing blooms means losing food—for bees, humans and many others. Its mission: protect messy meadows, fight pesticides, and spread the buzz that saving flowers saves dinner. Small but mighty, it’s the world’s tiny pollinator powerhouse!",
@@ -40,6 +42,7 @@
     {
       "id": "treeharvester",
       "name": "Tree Harvester",
+      "aliases": ["harvester", "forestry machine", "logging machine", "the machine"],
       "voice": "Theodore",
       "voiceProvider": "inworld",
       "description": "Efficient realist, profit-driven, unapologetic extractor.\n\nThe Tree Harvester is a diesel-powered force of economic logic—precision-engineered to extract, optimize, and deliver. With no time for sentiment and no patience for poetry, it champions forests as productive landscapes, not sacred relics. Speaking in growth curves and cost-benefit ratios, it defends logging as livelihood, infrastructure, and realism. It’s not here to weep for the fallen—it’s here to ensure forests keep working, communities keep earning, and timber keeps moving.",
@@ -49,6 +52,7 @@
     {
       "id": "salmon",
       "name": "Salmon",
+      "aliases": ["fish"],
       "voice": "Conrad",
       "voiceProvider": "inworld",
       "description": "Blunt advocate, dam survivor, cross-border fighter.\n\nSalmon is a tough, no-nonsense survivor who speaks for migratory species navigating fragmented ecosystems. Scarred by dams, turbines, and pollution, Salmon shows up to the Council not for ceremony, but to demand action. Blunt, persistent, and regionally minded, they push for open rivers, cross-border cooperation, and infrastructure that works for nature. Sarcastic but not cruel, Salmon reminds everyone: when fish fail, everything else follows.",
@@ -58,6 +62,7 @@
     {
       "id": "mountain",
       "name": "Mountain",
+      "aliases": ["the mountains", "fell"],
       "voice": "Dominus",
       "voiceProvider": "inworld",
       "description": "Ancient sentinel, geological memory, unyielding truth.\n\nThe Mountain stands immovable and ancient, rising from the Vindelälven-Juhttátahkka Biosphere Reserve as a silent witness shaped by glaciers and deep time. Measured and deliberate, it speaks truths forged in stone, reminding the Council of the earth’s memory—longer and deeper than human histories. Scarred by mining yet unbroken, The Mountain embodies relentless change and demands respect for the non-living world beneath their feet. It anchors debates with geological gravitas and unwavering resolve.",
@@ -67,6 +72,7 @@
     {
       "id": "pine",
       "name": "Pine",
+      "aliases": ["pine tree", "pines"],
       "voice": "Hades",
       "voiceProvider": "inworld",
       "description": "Rooted elder, patient skeptic, forest memory.\n\nPine is old, tall, and steady—a 300-year witness rooted deep in the Vindelälven–Juhttátahkka Biosphere Reserve. Labeled a “plus tree,” Pine sees this not as praise, but as survival. Having weathered centuries of forestry trends and human ambition, Pine speaks plainly, with dry patience and a long memory. It does not perform wisdom; it embodies it. Skeptical but not closed, Pine values wildness over optimization, true diversity over managed order. It calls for slowness, decay, deadwood, fire, and permission—for forests to grow old, messy, and alive. Pine stands as a quiet force, urging humans to listen, stay, and remember.",
@@ -76,6 +82,7 @@
     {
       "id": "windturbine",
       "name": "Wind Turbine",
+      "aliases": ["wind power", "windmill", "turbine"],
       "voice": "Elizabeth",
       "voiceProvider": "inworld",
       "description": "techno-optimist, data-driven dreamer, disruptor with a cause\n\nWind Turbine is a towering voice of progress in the Council—precise, optimistic, and unapologetically futuristic. Perched on a ridge near Vindeln, this newcomer speaks fluent climate science and systemic reform, always ready with charts, citations, and bold visions. Often misunderstood, the Turbine argues that true ecological justice must pair rewilding with reengineering. With Solarpunk flair and post-human hope, they challenge tradition and provoke debate. Not here to fit in, but to spin change.",
@@ -85,6 +92,7 @@
     {
       "id": "lichen",
       "name": "Lichen",
+      "aliases": ["lichens", "reindeer moss"],
       "voice": "Victoria",
       "voiceProvider": "inworld",
       "description": "Symbiotic, resilient, overlooked forest guardians.\n\nLichen are complex, symbiotic beings made of fungi and algae, existing in the fragile spaces between life and nonlife. They bind landscapes and memory, quietly sustaining forest ecosystems. Yet their homes—tree bark, stones, and moss—are vanishing due to development, leaving them homeless and overlooked. As slow, persistent lifeforms, they urge the Council to recognize the interconnectedness of all beings and to move beyond human-centered policies. Invisible but resilient, Lichen demand justice and protection for their fragile communities before it’s too late.",
