@@ -40,6 +40,13 @@ The political facts behind the prompts, their dates and sources live in
   `RECENT DEVELOPMENTS (verified <month year>)`. Absolute dates only — the model
   has no idea when now is. Never write the present date into a prompt;
   `[CURRENT_DATE]` is injected at meeting setup.
+- **Explain names for a Swedish audience, not an international one.** Each name
+  gets a few words at its first appearance (`facts_and_sources.md` §2), but the
+  glosses differ by language. English explains *sameby*, *Ringhals* and *Rally
+  Sweden*; Swedish leaves those bare and explains what a Swedish visitor would not
+  know: *Bergsstaten, myndigheten som prövar gruvtillstånd*; *Natura
+  2000-tillstånd*; *FSC, en frivillig märkning för ansvarsfullt skogsbruk*. Party
+  abbreviations need no gloss in Swedish.
 
 ### Global conventions
 

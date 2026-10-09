@@ -63,6 +63,14 @@ Swedish uranium ban lifted (Jan 2026).
 - **Swedish = parties and ministers named** (KD, M, SD, L, C, S, V, MP; Ebba Busch, Peter
   Kullgren; Wallenbergsfären). A local audience would find the anonymised version evasive.
   This divergence is deliberate — do not "correct" it in either direction.
+- **Explain every name where it first appears.** A person, place, company, project, court
+  case, law, institution or acronym gets a few words saying what it is the first time it
+  appears in a topic or a being's prompt: "Per Geijer, a rare-earth deposit in Kiruna",
+  "samebyar, the Sámi reindeer-herding communities". The beings repeat what the prompt
+  gives them, so a bare name in the prompt comes back as a bare name in the meeting. Gloss
+  for the audience of each language: English explains *sameby* and *Ringhals*; Swedish
+  does not, but does explain *Bergsstaten* and *Natura 2000*. The shared `system` prompt
+  tells every being to do the same when it speaks.
 - **Characters never campaign.** Party politics goes in the topics, which are swappable per
   meeting. A being may react to a policy; it may not endorse a party or tell anyone how to
   vote.
@@ -566,6 +574,35 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-10-09 — Names explained for the audience** (EN + SV)
+- Problem: beings spoke as if the visitor had read the briefing, saying "Per Geijer"
+  with no explanation. Causes: `system` presented the dated facts as "briefing notes for
+  this meeting" with no mention of an audience that has not read them, so in-group
+  shorthand was natural; names are the most memorable part of a fact and the cheapest
+  fit in a 400-character turn; Reindeer was told it "MUST weave in… the place names".
+- **`system`:** a new paragraph after the date paragraph. The meeting is performed for
+  visitors who have not read the notes; the first time a name or acronym comes up, say in
+  a few words what it is, in the speaker's own voice and within its usual length;
+  describe rather than name when there is no room; once explained, the name is free to
+  use. SV adds that party abbreviations need no explanation.
+- **River:** a new rule, "Explain for the audience". When opening an agenda point, say
+  what it is about and what its names refer to; explain a name a participant used
+  without explaining it.
+- **Topics, EN:** *sameby/samebyar* explained at first use (Forestry, Sámi, Tourism,
+  Rights of Nature, Mining); FSC; Rally Sweden as a world-championship car rally (Sámi,
+  Tourism); Natura 2000 permit; Rönnbäcken as planned nickel mines; Ringhals as the
+  nuclear plant on the west coast.
+- **Topics, SV:** FSC; Per Geijer in the Sámi topic (it was named there without saying
+  what it is); Natura 2000-tillstånd; Bergsstaten; Rönnbäckenfallet; kärnkraftverket
+  Ringhals.
+- **Beings:** Reindeer's anchor-facts rule now says to explain a named place, law or
+  group; lappbyar, FSC, and Ran sameby explained. Pine: Sveaskog (EN), FSC,
+  avverkningskoll.se, Artportalen, Stornorrfors. Wind Turbine: Ringhals. Lichen:
+  Sveaskog (EN).
+- §2 gained the rule "Explain every name where it first appears".
+- Not printed yet: the topic glosses differ slightly from the wall text printed on
+  28 September.
 
 **2026-10-09 — The June 2026 forestry vote trimmed** (EN + SV)
 - Problem: beings kept returning to the 308–21 forestry vote in meetings on any topic.
