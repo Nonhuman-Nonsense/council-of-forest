@@ -82,7 +82,7 @@ describe("capabilitiesFor", () => {
         micToggleButton: false,
         voiceSetupAgent: true,
         agentWaitsForVisitor: false,
-        typedSetup: true,
+        typedSetup: false, // TEMPORARY: screening; back to true after
         installationReload: true,
         printSummary: true,
         kioskHeartbeat: true,
@@ -133,11 +133,12 @@ describe("capabilitiesFor", () => {
       "idleAnswersForVisitor",
       "idleNudge",
       "pinnedAgendaPoints", // TEMPORARY: mining screening
-      "typedSetup",
+      // "typedSetup", TEMPORARY: screening; back after
     ].sort());
   });
 
-  it("lets a presenter add panelists by hand while the agent still drives setup", () => {
+  // TEMPORARY: screening runs presenter on museum's voice setup; unskip after.
+  it.skip("lets a presenter add panelists by hand while the agent still drives setup", () => {
     const presenter = capabilitiesFor("presenter");
     expect(presenter.typedSetup).toBe(true);
     expect(presenter.voiceSetupAgent).toBe(true);

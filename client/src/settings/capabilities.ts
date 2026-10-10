@@ -216,7 +216,9 @@ const PRESENTER: Capabilities = {
   idleNudge: false,
   autoReturnToLanding: false,
   autoplay: false,
-  typedSetup: true,
+  // TEMPORARY (screening, Sat 10 Oct 2026): museum's voice setup, so the presenter is seated as
+  // the one human panelist under the name they give the agent. Restore `typedSetup: true` after.
+  // typedSetup: true,
   // TEMPORARY: the mining screening opens on "Who Can Say No? Uranium and the Local Veto".
   pinnedAgendaPoints: { mining: 5 },
 };
