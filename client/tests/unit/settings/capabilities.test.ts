@@ -84,9 +84,9 @@ describe("capabilitiesFor", () => {
         agentWaitsForVisitor: false,
         typedSetup: true,
         installationReload: true,
-        printSummary: false,
+        printSummary: true,
         kioskHeartbeat: true,
-        sendsLetters: false,
+        sendsLetters: true,
         pinnedAgendaPoints: { mining: 5 },
         staffShortcut: true,
         fullResolutionMedia: true,
@@ -116,11 +116,11 @@ describe("capabilitiesFor", () => {
   });
 
   /**
-   * Presenter departs from museum in exactly three ways: nothing advances on a
-   * timer, setup can be driven by hand, and nothing prints. Everything else is museum, and this
+   * Presenter departs from museum in exactly two ways: nothing advances on a
+   * timer, and setup can be driven by hand. Everything else is museum, and this
    * pins that so the two cannot drift apart one flag at a time.
    */
-  it("differs from museum only in its timers, its typed setup, printing and sending letters", () => {
+  it("differs from museum only in its timers and its typed setup", () => {
     const museum = capabilitiesFor("museum");
     const presenter = capabilitiesFor("presenter");
     const differing = Object.keys(museum).filter(
@@ -133,8 +133,6 @@ describe("capabilitiesFor", () => {
       "idleAnswersForVisitor",
       "idleNudge",
       "pinnedAgendaPoints", // TEMPORARY: mining screening
-      "printSummary",
-      "sendsLetters",
       "typedSetup",
     ].sort());
   });
