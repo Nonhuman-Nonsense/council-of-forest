@@ -276,6 +276,32 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   that was superseded by the June 2026 vote.
 - **Arjeplog, 19 Aug 2026 (SVT):** four uranium exploration permits granted in Arjeplog;
   no mine application yet. Arjeplog is the site of the 1981 Pleutajokk uranium protest.
+  *No longer in the prompts since 10 Oct 2026: the veto agenda point now uses Kalix.*
+- **Kalix uranium exploration (the veto agenda point since 10 Oct 2026):**
+  - Bergsstaten granted the US company **Adelheid Holdings LLC** two exploration permits
+    in Kalix kommun: **Pålänge nr 3** (BS 200-889-2026, **23 June 2026**) and **Kamlunge
+    Väst nr 1** (BS 200-891-2026, **25 June 2026**). ~1,650 ha together, valid to 2029.
+    Uranium, yttrium, copper, nickel, cobalt (one source adds thorium); diamond drilling.
+  - Part of the area is in the Kalix riverbed itself, next to the groundwater that
+    supplies Kalix (residents, via socialisterna.org and Arbetet). Reindeer herding at
+    Kamlunge is a riksintresse.
+  - Kalixälven is one of four nationalälvar (Torne, Kalix, Pite, Vindel), protected from
+    hydropower since 1993 (miljöbalken 4 kap 6 §). It is partly Natura 2000.
+  - Sametinget, Kalix kommun and several landowners **objected** during the application
+    (herding, drinking water, natural values); the municipality cited the nationalälv,
+    several riksintressen and Natura 2000.
+  - Kalix politicians split: five parties no, two yes, one maybe (NSD, 29 June 2026).
+    Lena Lagerstam and Bernt Selberg, who helped stop the Kalix River hydropower plans in
+    the 1970s, are organising again; demonstration on Nationalälvsdagen, 15 Aug 2026.
+  - Under the Minerals Act, competing interests are fully weighed only at the concession
+    stage, not at the exploration permit (MP Norrbotten).
+  - **Not verified in a source (given by the project team, 10 Oct 2026; to be checked with
+    the environmental experts):** that Kalix kommun, Sametinget and Älvräddarna have
+    **appealed** the permits; that the permit area lies **inside** a Natura 2000 site;
+    that it is a **riksintresse för friluftsliv**. As of 10 Oct only calls for an appeal
+    were found (V Kalix, 15 July), and one article (17 Aug) said Älvräddarna had been told
+    they lack standing to appeal. Also open: whether an appeal stops the drilling, and
+    whether drilling in a Natura 2000 site needs its own permit (7 kap 28 a § MB).
 - **Per Geijer:**
   - Gabna ended its 2013 cooperation agreement with LKAB on 2 Dec 2025 and rejects the
     mine.
@@ -482,7 +508,7 @@ Verified dates are given per item. **Superseded** marks what the prompts used to
   | Biodiversity | 11,631 | 6 | — (forest-debate point shrunk; it overlaps Forestry) |
   | Tourism | 11,162 | 6 | climate paradox → volume tourism |
   | Rights of Nature | 11,109 | 5 | — |
-  | Mining | 11,584 | 5 | fast-tracking → Minerals Act |
+  | Mining | ~12,280 | 5 | fast-tracking → Minerals Act (veto point grew ~700 with Kalix, 10 Oct) |
 
   Agenda points are unnumbered in the print ("AGENDA POINT 1" is generated), so merged
   points renumber the later ones. Facts cut for length are still in §3 (Norra Skog's
@@ -574,6 +600,19 @@ grounded in custom (sedvanerätt) rather than strictly immemorial prescription.
 ## 6. Change log
 
 Most recent first. "EN" = `*_en.json`, "SV" = `*_sv.json`.
+
+**2026-10-10 — Mining veto point moved to Kalix** (EN + SV)
+- `topics_*.json`, Mining, agenda point 5: retitled *Who Can Say No? Uranium in the Kalix
+  River* / *Vem får säga nej? Uran i Kalixälven*. Arjeplog and Pleutajokk replaced by
+  Adelheid Holdings' two exploration permits at Pålänge and Kamlunge (June 2026), on a
+  nationalälv "like the Vindel River". New bullets: "Looking Is Not Mining" (permit side),
+  "Every No Was Overruled" and "Protected, But Not From This" (local side); "Energy
+  Security", "One Rule for All Metals" and "Decided by Two Votes" kept. New core question.
+- The appeals, "inside a Natura 2000 site" and "riksintresse för friluftsliv" are in the
+  prompt on the project team's word and were **not found in a source** (§3.4). Check
+  them with the environmental experts and correct both languages if wrong.
+- Printed Mining text grows ~700 characters, above the 11–12k target.
+- Not printed yet: the wall text printed on 28 September still shows the Arjeplog version.
 
 **2026-10-09 — Names explained for the audience** (EN + SV)
 - Problem: beings spoke as if the visitor had read the briefing, saying "Per Geijer"
@@ -1092,6 +1131,14 @@ Verification date in brackets.
 - SOU 2018:59 Statens gruvliga risker: https://www.riksdagen.se/sv/dokument-och-lagar/dokument/statens-offentliga-utredningar/statens-gruvliga-risker_h6b359/html/
 - Mining Technology — Laisvall: https://www.mining-technology.com/projects/laisvall/
 - IEA — EU Critical Raw Materials Act (permit caps): https://www.iea.org/policies/17662-european-critical-raw-materials-act
+
+**Mining — Kalix** [all 10 Oct]
+- MP Norrbotten — Uranprospektering vid Kalixälven (permits, dates, area, objections; 24 Jul 2026): https://www.mp.se/norrbotten/politik/uranprospektering-vid-kalixalven/
+- NSD — Bergsstaten godkänner uranundersökning i Kalix (29 Jun 2026): https://www.nsd.se/nyheter/kalix/artikel/bergsstaten-godkanner-uranundersokning-i-kalix/rxq12g2j
+- NSD — Kämparna vid Kalixälven vägrar ge sig (3 Jul 2026): https://www.nsd.se/nyheter/kalix/artikel/protest-mot-uranundersokning-i-kamlunge-och-palange/jdq6gz8r
+- TV4 — Ilskan i Kalix (31 Jul 2026): https://www.tv4.se/artikel/2bSYzGflBKYsUkXbVEJQZX/ilskan-i-kalix-alla-ska-hit-och-bryta-och-haerja-fritt
+- Arbetet — V Kalix opinion piece, riverbed and Natura 2000 (15 Jul 2026): https://arbetet.se/2026/07/15/tido-offrar-kalix-for-uran-gor-norrbotten-till-ravarukoloni/
+- Socialisterna — demonstration 15 Aug, Älvräddarna's standing (17 Aug 2026): https://www.socialisterna.org/radda-kalixalven-fran-uranbrytning/
 
 **Forestry** [all 28 Sep]
 - Sveaskog — reduced felling in Norrbotten (9 Jan 2023): https://www.sveaskog.se/press/2023/minskade-avverkningsnivaer-i-norrbotten-2023/

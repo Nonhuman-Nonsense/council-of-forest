@@ -344,6 +344,9 @@ Format: **English** → **Swedish** — *notes*.
 | financial guarantee (closure) | ekonomisk säkerhet | Blaiken: 2.3 MSEK vs ≥427 MSEK clean-up |
 | settling basin | sedimenteringsbassäng | Saivastjärnen, Laisvall |
 | alum shale | alunskiffer | inquiry on municipal influence, June 2026 |
+| national river | nationalälv | Kalix, Torne, Pite, Vindel; protected from hydropower since 1993 |
+| riverbed | älvfåra | Kalix exploration area, 2026 |
+| national interest for outdoor recreation | riksintresse för friluftsliv | |
 
 ### 2.10 General framing concepts
 
