@@ -123,11 +123,6 @@ export type Capabilities = {
    */
   sendsLetters: boolean;
   /**
-   * TEMPORARY (screening, Sat 10 Oct 2026): topic id → the agenda point (1-based) the
-   * chair always opens with, instead of a random one. Remove after the screening.
-   */
-  pinnedAgendaPoints: Readonly<Partial<Record<string, number>>>;
-  /**
    * Cmd+S (Ctrl+S off the Mac) opens the staff page, so staff with a keyboard plugged into an
    * installation can reach it without a mouse. On the web a visitor saving out of habit would
    * land on it instead.
@@ -164,7 +159,6 @@ const WEB: Capabilities = {
   printSummary: false,
   kioskHeartbeat: false,
   sendsLetters: false,
-  pinnedAgendaPoints: {},
   staffShortcut: false,
   fullResolutionMedia: false,
 };
@@ -190,7 +184,6 @@ const MUSEUM: Capabilities = {
   printSummary: true,
   kioskHeartbeat: true,
   sendsLetters: true,
-  pinnedAgendaPoints: {},
   staffShortcut: true,
   fullResolutionMedia: true,
 };
@@ -216,11 +209,7 @@ const PRESENTER: Capabilities = {
   idleNudge: false,
   autoReturnToLanding: false,
   autoplay: false,
-  // TEMPORARY (screening, Sat 10 Oct 2026): museum's voice setup, so the presenter is seated as
-  // the one human panelist under the name they give the agent. Restore `typedSetup: true` after.
-  // typedSetup: true,
-  // TEMPORARY: the mining screening opens on "Who Can Say No? Uranium and the Local Veto".
-  pinnedAgendaPoints: { mining: 5 },
+  typedSetup: true,
 };
 
 const CAPABILITIES: Record<AppMode, Capabilities> = {

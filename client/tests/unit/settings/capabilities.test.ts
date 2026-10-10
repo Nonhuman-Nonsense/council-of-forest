@@ -31,7 +31,6 @@ describe("capabilitiesFor", () => {
         printSummary: false,
         kioskHeartbeat: false,
         sendsLetters: false,
-        pinnedAgendaPoints: {},
         staffShortcut: false,
         fullResolutionMedia: false,
       },
@@ -59,7 +58,6 @@ describe("capabilitiesFor", () => {
         printSummary: true,
         kioskHeartbeat: true,
         sendsLetters: true,
-        pinnedAgendaPoints: {},
         staffShortcut: true,
         fullResolutionMedia: true,
       },
@@ -82,12 +80,11 @@ describe("capabilitiesFor", () => {
         micToggleButton: false,
         voiceSetupAgent: true,
         agentWaitsForVisitor: false,
-        typedSetup: false, // TEMPORARY: screening; back to true after
+        typedSetup: true,
         installationReload: true,
         printSummary: true,
         kioskHeartbeat: true,
         sendsLetters: true,
-        pinnedAgendaPoints: { mining: 5 },
         staffShortcut: true,
         fullResolutionMedia: true,
       },
@@ -132,13 +129,11 @@ describe("capabilitiesFor", () => {
       "autoReturnToLanding",
       "idleAnswersForVisitor",
       "idleNudge",
-      "pinnedAgendaPoints", // TEMPORARY: mining screening
-      // "typedSetup", TEMPORARY: screening; back after
+      "typedSetup",
     ].sort());
   });
 
-  // TEMPORARY: screening runs presenter on museum's voice setup; unskip after.
-  it.skip("lets a presenter add panelists by hand while the agent still drives setup", () => {
+  it("lets a presenter add panelists by hand while the agent still drives setup", () => {
     const presenter = capabilitiesFor("presenter");
     expect(presenter.typedSetup).toBe(true);
     expect(presenter.voiceSetupAgent).toBe(true);

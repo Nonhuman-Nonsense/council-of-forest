@@ -451,17 +451,14 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
             "Learn the visitor's name first and call remember_visitor_name before start_meeting. Ask casually until they tell you.",
         };
       }
-      const topic = ctx.buildSelectedTopic();
-      const { typedSetup, pinnedAgendaPoints } = getCapabilities();
       const built = buildMeetingCharactersPayload({
         language: ctx.setupAgentLanguage,
         selectedCharacters,
         humans,
         numberOfHumans,
         labels: ctx.meetingCharactersLabels,
-        agendaPoints: topic?.agendaPoints,
-        pinnedAgendaPoint: topic ? pinnedAgendaPoints[topic.id] : undefined,
-        typedSetup,
+        agendaPoints: ctx.buildSelectedTopic()?.agendaPoints,
+        typedSetup: getCapabilities().typedSetup,
       });
       if (!built.ok) return built;
       await Promise.resolve(ctx.startMeeting(built.characters));

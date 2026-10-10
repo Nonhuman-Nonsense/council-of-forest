@@ -505,7 +505,7 @@ describe('SelectCharacters Component', () => {
         const cases = [
             { mode: 'web', canAddByHand: true },
             { mode: 'museum', canAddByHand: false },
-            { mode: 'presenter', canAddByHand: false }, // TEMPORARY: screening; back to true after
+            { mode: 'presenter', canAddByHand: true },
         ] as const;
 
         afterEach(() => {

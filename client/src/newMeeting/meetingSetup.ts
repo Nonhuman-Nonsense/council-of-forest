@@ -394,12 +394,10 @@ export function buildMeetingCharactersPayload(params: {
   numberOfHumans: number;
   labels: MeetingCharactersI18n;
   agendaPoints?: string[];
-  /** Agenda point (1-based) the chair opens with instead of a random one. */
-  pinnedAgendaPoint?: number;
   /** The visitor can type, so each human panelist needs a written description. */
   typedSetup?: boolean;
 }): { ok: true; characters: Character[] } | { ok: false; error: string } {
-  const { language, humans, numberOfHumans, labels, agendaPoints, pinnedAgendaPoint, typedSetup = false } = params;
+  const { language, humans, numberOfHumans, labels, agendaPoints, typedSetup = false } = params;
   let { selectedCharacters } = params;
   const characterSetupData = getCharacterSetupBundle(language);
   // The chair prompt goes to whoever is first, so the chair always is — whatever
@@ -498,11 +496,7 @@ export function buildMeetingCharactersPayload(params: {
 
   if (replacedCharacters.length > 0 && replacedCharacters[0].prompt) {
     replacedCharacters[0].prompt = replacedCharacters[0].prompt.replace("[HUMANS]", humanPresentation);
-    replacedCharacters[0].prompt = injectRandomAgendaPoint(
-      replacedCharacters[0].prompt,
-      agendaPoints,
-      pinnedAgendaPoint,
-    );
+    replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints);
     replacedCharacters[0].prompt = injectSingleAgendaPointRule(
       replacedCharacters[0].prompt,
       agendaPoints,
