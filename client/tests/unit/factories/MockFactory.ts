@@ -22,12 +22,13 @@ export const MockFactory = {
         });
     },
 
-    createTopic: (overrides: Partial<Topic> = {}): Topic => ({
+    createTopic: (overrides: Partial<Topic> = {}): Topic & { agentBrief: string } => ({
         id: 'pizza',
         title: 'Pizza Council',
         description: 'Discussion about pizza',
         prompt: 'The deliciousness of pizza',
         ...overrides,
+        agentBrief: overrides.agentBrief ?? 'What is at stake in pizza',
     }),
 
     createCharacterSetupBundle: (overrides: Partial<CharacterSetupData> = {}): CharacterSetupData => ({

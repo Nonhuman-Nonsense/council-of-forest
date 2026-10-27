@@ -22,7 +22,7 @@ function installBridgeUrlOverride(wsUrl: string): void {
   });
 }
 
-describe.sequential("button reconnect resilience", () => {
+describe("button reconnect resilience", () => {
   let bridge: TestBridge;
 
   beforeEach(async () => {
@@ -90,7 +90,7 @@ describe.sequential("button reconnect resilience", () => {
     useButtonStore.getState().enableAutoReconnect();
     await useButtonStore.getState().connect();
     await useButtonStore.getState().claimButton("human-input");
-    await useButtonStore.getState().setButtonLed("human-input", "pulse");
+    useButtonStore.getState().setButtonArmed("human-input", true);
 
     bridge.simulateButtonDown();
     await waitForTicks();

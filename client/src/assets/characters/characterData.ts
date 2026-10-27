@@ -40,12 +40,16 @@ const iconWebpGlob = import.meta.glob("/src/assets/characters/icons/*.webp", {
     import: "default",
 }) as Record<string, string>;
 
-const audioMp3Glob = import.meta.glob("/src/assets/characters/audio/*.mp3", {
+// Ogg/Opus: one file for every engine (Chromium, WebKit and Gecko all decode it via
+// decodeAudioData, so no Safari-specific CAF fallback is needed). Encoded with
+// `ffmpeg -i in.mp3 -c:a libopus -b:a 64k -vbr on -application audio out.opus`
+// (96k for the ambience bed, which plays exposed on the landing page).
+const audioOpusGlob = import.meta.glob("/src/assets/characters/audio/*.opus", {
     eager: true,
     import: "default",
 }) as Record<string, string>;
 
-const ambienceGlob = import.meta.glob("/src/assets/characters/ambience.mp3", {
+const ambienceGlob = import.meta.glob("/src/assets/characters/ambience.opus", {
     eager: true,
     import: "default",
 }) as Record<string, string>;
@@ -98,7 +102,7 @@ function mapAudio(paths: Record<string, string>): Record<string, string> {
     const out: Record<string, string> = {};
     for (const [p, url] of Object.entries(paths)) {
         const normalized = p.replace(/\\/g, "/");
-        const m = normalized.match(/\/audio\/([^/]+)\.mp3$/);
+        const m = normalized.match(/\/audio\/([^/]+)\.opus$/);
         if (m) out[m[1]] = url;
     }
     return out;
@@ -114,9 +118,9 @@ const smallVp9ById = mapDirCodec(smallVp9Glob, "small", "vp9");
 
 export const characterImageAvifByBasename = mapImages(imageAvifGlob);
 export const characterIconWebpByBasename = mapIcons(iconWebpGlob);
-const characterMp3ByBasename = mapAudio(audioMp3Glob);
+const characterAudioByBasename = mapAudio(audioOpusGlob);
 
-export const characterAmbienceUrl = firstUrl(ambienceGlob, "ambience.mp3");
+export const characterAmbienceUrl = firstUrl(ambienceGlob, "ambience.opus");
 
 /** HEVC + VP9 URLs for alpha video; river uses root files, others use large/ or small/. */
 export function characterTransparentVideoUrls(
@@ -159,11 +163,25 @@ export function characterIconWebpUrl(iconBasename: string): string {
     return url;
 }
 
-export function characterMp3Url(characterId: string): string {
+export function characterAudioUrl(characterId: string): string {
     const fn = toAssetBasename(characterId);
-    const url = characterMp3ByBasename[fn];
+    const url = characterAudioByBasename[fn];
     if (!url) {
-        throw new Error(`Missing character audio for "${characterId}" (expected src/assets/characters/audio/${fn}.mp3)`);
+        throw new Error(`Missing character audio for "${characterId}" (expected src/assets/characters/audio/${fn}.opus)`);
     }
     return url;
+}
+
+/**
+ * Ambient loop sources for a character, ordered by preference — the browser plays the
+ * first it supports. Foods ships no character audio, so this is always empty; the helper
+ * exists so `MediaPreloader` can stay shared with Forest, which does ship loops.
+ */
+export function characterAudioSources(
+    characterId: string,
+): Array<{ src: string; type: string }> {
+    const fn = toAssetBasename(characterId);
+    const url = characterAudioByBasename[fn];
+    //Not every being has a loop — those simply have nothing to preload.
+    return url ? [{ src: url, type: 'audio/ogg; codecs="opus"' }] : [];
 }

@@ -33,15 +33,13 @@
   },
   "human": {
     "placeholder": "Skriv din fråga eller börja inspelning...",
-    "panelist": "Vad har {{name}} att säga om det här?"
-  },
-  "agentMode": {
-    "alwaysOn": "Alltid på",
-    "pushToTalk": "Tryck för att tala"
+    "panelist": "Vad har {{name}} att säga om det här?",
+    "letter": "Lägg till något i mejlet från {{name}}, eller säg bara nej..."
   },
   "ptt": {
     "holdToSpeak": "Tryck på knappen för att tala",
-    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka"
+    "humanPlaceholder": "Håll in knappen för att tala, släpp för att skicka",
+    "holdHint": "Håll knappen nedtryckt medan du pratar"
   },
   "replay": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
@@ -64,7 +62,7 @@
     "label": "Kontakt",
     "credits": "Projektet är ett initiativ av konst & designkollektivet <nhn>Nonhuman Nonsense</nhn> utvecklat i samarbete med <biosphere>Biosfärområdet Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, <jonas>Jonas Thunberg</jonas>, Johannes Rydinger, <albin>Albin Karlsson</albin>, med flera.",
     "interviews": "Baserat på intervjuer med Marja Skum, Göran Jonsson, Maidi Eira-Andersson, Anders Granér, Daniel Holmqvist, Erik Alnersson, Isak Landström, Tommy Sandström, Lisa Jonsson, Cecilia Wallinder, Angelika Schindler-Egl, Bertil Nygren.",
-    "funding": "Skogsrådet är finansierat av <vinnova>Vinnova (ref. nr. 2025-00344)</vinnova> och är en fortsättning av projektet <cof>Council of Foods</cof> som har fått stöd av Europeiska\u00a0Unionens <horizon>Horizon Europe forsknings- och innovationsprogram under avtal 101069990</horizon>.",
+    "funding": "Skogsrådet är finansierat av <vinnova>Vinnova (ref. nr. 2025-00344)</vinnova> och är en fortsättning av projektet <cof>Council of Foods</cof> som har fått stöd av Europeiska Unionens <horizon>Horizon Europe forsknings- och innovationsprogram under avtal 101069990</horizon>.",
     "fundingImageAlt": "Finansierat av Vinnova",
     "euImageAlt": "Finansierat av EU, som en del av S+T+ARTS",
     "socialInstagram": "@nonhuman_nonsense",
@@ -74,10 +72,14 @@
   "staff": {
     "title": "PERSONAL",
     "panels": {
+      "mode": "Läge",
       "installation": "Installation",
-      "agentMode": "Agentläge",
       "details": "Detaljer & tips",
       "logging": "Loggning"
+    },
+    "toggle": {
+      "on": "På",
+      "off": "Av"
     },
     "logging": {
       "on": "På",
@@ -95,14 +97,101 @@
         "META": "Metaagent",
         "AUTOPLAY": "Autouppspelning",
         "SYSTEM": "System",
-        "ERROR": "Feldetalj"
+        "ERROR": "Feldetalj",
+        "PRINT": "Utskrift"
+      },
+      "server": {
+        "failing": "Skickar inte ({{failure}}) — {{pending}} rader väntar"
       }
     },
     "web": "Webb",
     "museum": "Museum",
-    "museumSwitchButton": "Museums växlingsknapp",
+    "presenter": "Presentation",
+    "modeSwitchButton": "Lägesbytarknapp",
+    "venue": {
+      "label": "Plats",
+      "none": "Ingen plats",
+      "unknown": "{{id}} (finns inte längre på servern)",
+      "hint": "Var den här installationen körs. Märker dess AI-användning för fotavtrycksmätaren och rummets eluttag, och avgör vem som får larmmejl om skrivaren."
+    },
+    "installationKey": {
+      "label": "Installationsnyckel",
+      "placeholder": "Klistra in installationsnyckeln",
+      "save": "Spara",
+      "change": "Ändra",
+      "cancel": "Avbryt",
+      "notSaved": "Inte sparad",
+      "hint": "Rådsserverns COUNCIL_INSTALLATION_KEY. Bryggan sparar den för den här servern, för larmmejl om skrivaren; den visas aldrig igen.",
+      "status": {
+        "saved": "Sparad",
+        "missing": "Inte inställd",
+        "otherServer": "Sparad för {{server}}; ange den här serverns nyckel",
+        "outdated": "Uppdatera bryggan för att ange den"
+      }
+    },
+    "alerts": {
+      "label": "Larmmejl",
+      "test": "Skicka testlarm",
+      "status": {
+        "noKey": "Ingen installationsnyckel",
+        "chooseVenue": "Välj en plats",
+        "failing": "Fungerar inte",
+        "on": "På"
+      },
+      "testResult": {
+        "sending": "Skickar…",
+        "sent": "Skickat, kolla inkorgen",
+        "failed": "Inte skickat"
+      }
+    },
+    "splitAudio": {
+      "toggle": "Delat ljud"
+    },
+    "sidetone": {
+      "label": "Hör dig själv",
+      "note": "Besökaren hör sin egen röst medan knappen hålls nere. Bara i hörlurar: i högtalare tjuter mikrofonen."
+    },
+    "print": {
+      "toggle": "Skriv ut protokoll",
+      "printerLabel": "Skrivare",
+      "pendingLabel": "Väntar på utskrift",
+      "attentionLabel": "Behöver åtgärdas",
+      "since": "sedan {{time}}",
+      "testPage": "Skriv ut testsida",
+      "testLetter": {
+        "from": "Renen",
+        "fromEmail": "reindeer@council-of-forest.com",
+        "to": "Generaldirektören",
+        "toEmail": "skogsstyrelsen@skogsstyrelsen.se",
+        "organisation": "Skogsstyrelsen",
+        "subject": "Lavskogarna vid Juhttátahkka",
+        "body": "Bästa generaldirektör,\n\nJag är Renen, och jag talade i dag i Skogsrådet. Vi talade om de gamla skogarna där hänglaven växer, och om avverkningen som planeras där. Jag skriver till dig eftersom tillstånden går genom din myndighet.\n\nI den djupaste vintern, när snön är hård, är laven i de gamla träden det som håller mina kalvar vid liv. Ett kalhygge tar den för hundra år. Jag ber dig inte stoppa all avverkning. Jag ber dig vänta, och lyssna på renskötarna som vet var vi går.\n\nVill du besöka skogen med dem innan nästa tillstånd avgörs? Skriv tillbaka till mig och berätta vad du såg.\n\nMed respekt,\nRenen"
+      },
+      "testReply": {
+        "from": "Anna Andersson",
+        "fromEmail": "anna.andersson@skogsstyrelsen.se",
+        "subject": "Sv: Lavskogarna vid Juhttátahkka",
+        "body": "Hej Renen,\n\nTack för ditt brev. Vi har tagit emot det och lämnat det vidare till de handläggare som arbetar med avverkningsanmälningar i ditt område.\n\nVänliga hälsningar,\nAnna Andersson\nSkogsstyrelsen"
+      },
+      "testPageResult": {
+        "sending": "Skickar…",
+        "queued": "Skickat till skrivaren",
+        "rejected": "Bryggan nekade sidan",
+        "unreachable": "Bryggan går inte att nå"
+      },
+      "printer": {
+        "unavailable": "—",
+        "outdated": "Bryggan är för gammal — uppdatera den",
+        "disabled": "Utskrift avstängd på bryggan",
+        "checking": "Kontrollerar…",
+        "noDefault": "Ingen standardskrivare",
+        "idle": "Redo",
+        "printing": "Skriver ut",
+        "stopped": "Stoppad",
+        "unknown": "Okänd"
+      }
+    },
     "button": {
-      "title": "Knapp",
       "bridgeLabel": "Brygga",
       "appLabel": "App",
       "usbLabel": "USB-knapp",
@@ -163,6 +252,19 @@
   "controls": {
     "wait": "vänta tills det är din tur att tala"
   },
+  "agent": {
+    "turnOn": "Slå på guiden",
+    "turnOff": "Stäng av guiden",
+    "micHold": "Håll in för att prata med guiden"
+  },
+  "microphone": {
+    "title": "Mikrofonen är inte tillgänglig",
+    "blocked": "Tillåt mikrofonåtkomst för den här sidan i din webbläsare,\ntryck sedan på mikrofonknappen igen.",
+    "noDevice": "Ingen mikrofon hittades på den här enheten.",
+    "inUse": "Mikrofonen används av ett annat program.\nStäng det och försök igen.",
+    "unsupported": "Den här webbläsaren kan inte ge sidan tillgång till en mikrofon.",
+    "dismiss": "Okej"
+  },
   "queryExtension": {
     "title": "Var det allt?",
     "body": "Mötet börjar bli långdraget,\när det dags att komma till ett avslut?",
@@ -181,11 +283,39 @@
     "goBack": "Gå tillbaka",
     "startNew": "Starta nytt möte"
   },
+  "letterReply": {
+    "optOut": "{{name}} bad att inte få fler brev."
+  },
+  "letter": {
+    "from": "Från",
+    "to": "Till",
+    "subject": "Ämne",
+    "sent": "Skickat",
+    "message": "Meddelande",
+    "replyFrom": "Svar från",
+    "received": "Mottaget",
+    "unsent": "Det här brevet skrevs, men skickades inte."
+  },
   "summary": {
     "download": "Ladda ned PDF",
     "banner": {
       "pressToRestart": "Tryck på knappen för att starta ett nytt möte."
     }
+  },
+  "credits": {
+    "thankYou": "Tack",
+    "intro": "Skogsrådet är ett initiativ av konst- och designkollektivet Nonhuman Nonsense, utvecklat i samarbete med Biosfärområdet Vindelälven-Juhttátahkka. Det bygger på intervjuer och samtal med lokala experter, och hade aldrig varit möjligt utan bidragen från alla de invånare i biosfärområdet som vi har mött.",
+    "biosphereCollaborator": "Samarbetspartner i biosfärområdet",
+    "interviews": "Baserat på intervjuer med",
+    "fisheriesConsultant": "Fiskerikonsult",
+    "forestryConsultant": "Skogskonsult",
+    "forester": "Skogsförvaltare",
+    "support": "Medverkande",
+    "filmProduction": "Filmproduktion",
+    "animationProduction": "Animationsproduktion",
+    "programming": "Programmering",
+    "soundDesign": "Ljuddesign",
+    "catalogueTranslation": "Översättning, katalog"
   },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
@@ -202,7 +332,22 @@
     "message": "Något gick snett...\nRådet kan inte fortsätta",
     "audioLoad": "Kunde inte ladda mötesljud.",
     "connection": "Anslutning förlorad",
+    "busy": "Rådet är upptaget",
+    "busyRetrying": "För många talar samtidigt — försöker igen…",
+    "busyTerminal": "För många talar med rådet just nu. Försök igen om några minuter.",
+    "elsewhere": "Det här mötet pågår någon annanstans",
+    "notFound": "Mötet kunde inte hittas",
+    "forbidden": "Det här mötet är inte ditt att öppna",
+    "unauthorized": "Det här mötet kräver en nyckel du inte har",
+    "invalidRequest": "Något med den förfrågan blev fel",
+    "meetingComplete": "Det här mötet är redan avslutat",
+    "invalidAudioId": "Kunde inte ladda mötesljud.",
+    "realtimeUnavailable": "Rådets röst är inte tillgänglig just nu",
     "reconnecting": "Försöker återansluta...",
-    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…"
+    "restartUnavailableRetrying": "Servern är inte tillgänglig för omstart, försöker igen…",
+    "noInternet": "Inget internet",
+    "noInternetDetail": "Kontrollera nätverkskabeln eller wifi.",
+    "serverUnreachable": "Når inte servern",
+    "serverUnreachableDetail": "Kontrollera internetanslutningen."
   }
 }

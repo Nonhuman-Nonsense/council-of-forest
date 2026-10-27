@@ -44,6 +44,21 @@
     "sv": "Förvänta dig svenskt tal."
   },
   "audioConcurrency": 10,
+  "voiceLoudness": { "targetLufs": -21, "skipBelowDb": 1.5, "truePeakDb": -1.5 },
+  "meetingEnding": "letter",
+  "letterSiteUrl": "https://council-of-forest.com",
+  "letterMaxCandidates": 16,
+  "letterModel": "anthropic/claude-sonnet-5-5",
+  "letterReasoning": "medium",
+  "letterWeaveModel": "anthropic/claude-sonnet-5-5",
+  "letterWeaveReasoning": "low",
+  "letterPlanLength": 4000,
+  "letterWriteLength": 6000,
+  "letterAuthorCooldown": 5,
+  "letterSenderDomain": "council-of-forest.com",
+  "letterReplyDomain": "reply.council-of-forest.com",
+  "letterSenderAddresses": { "treeharvester": "tree.harvester", "windturbine": "wind.turbine" },
+  "letterDailyLimit": 60,
   "humanInputRealtime": {
     "languages": {
       "en": {
@@ -63,7 +78,8 @@
     "languages": {
       "en": {
         "provider": "inworld",
-        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "llmModel": "anthropic/claude-sonnet-5-5",
+        "reasoning": "none",
         "ttsModel": "inworld-tts-1.5-max",
         "transcriptionModel": "soniox/stt-rt-v4",
         "agentVoice": {
@@ -74,7 +90,8 @@
       },
       "sv": {
         "provider": "inworld",
-        "llmModel": "google-ai-studio/gemini-2.5-flash",
+        "llmModel": "anthropic/claude-sonnet-5-5",
+        "reasoning": "none",
         "ttsModel": "inworld-tts-2",
         "transcriptionModel": "soniox/stt-rt-v4",
         "agentVoice": {

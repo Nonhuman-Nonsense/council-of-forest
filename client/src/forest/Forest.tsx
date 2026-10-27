@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, useMemo, CSSProperties, type RefObject } from "react";
 import FoodAnimation from "@council/FoodAnimation";
-import { dvh, minWindowHeight, useMobile } from "@/utils";
+import { dvh, minWindowHeight } from "@/utils";
+import { useSmallMedia } from "@/smallMedia";
 import forestCharacters from "@shared/prompts/forest_characters.json";
 import { characterRatios } from "@/generated/characterMedia";
 import { forestBackgroundUrls } from "@assets/backgrounds/index";
 import { z } from "@/zIndexLayers";
-import {
-    characterAmbienceUrl,
-    characterImageAvifUrl,
-    characterMp3Url,
-} from "@assets/characters/characterData";
+import { characterImageAvifUrl } from "@assets/characters/characterData";
+import { AmbientAudio, BeingAudio, BeingAudioPreloader } from "@forest/ForestAudio";
 
 type ForestManifestEntry = (typeof forestCharacters)[number];
 
@@ -33,9 +31,13 @@ function ratioFor(id: string): number {
     return r;
 }
 
+// Transitions stay off while the window is being resized and come back this long
+// after the last resize event (a fullscreen toggle fires a burst of them).
+const resizeSettleMs = 300;
+
 function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
-    const isMobile = useMobile();
+    const smallMedia = useSmallMedia();
 
     //Zooming variables
     const [zoomInOnBeing, setZoomInOnBeing] = useState<ForestCharacter | null>(null);
@@ -45,6 +47,9 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     const [translate, setTranslate] = useState<(string | number)[]>([0, 0]);
     const [animateTransformOrigin, setAnimateTransformOrigin] = useState(false);
     const [disableAnimations, setDisableAnimations] = useState(false);
+    // How much of the viewport width a zoomed-in character may fill before the
+    // zoom gets capped by width instead of height (portrait screens + wide characters).
+    const maxZoomWidthPercent = 90;
 
     const characterRefs = useMemo(() => {
         const map: Record<string, RefObject<HTMLDivElement | HTMLImageElement | null>> = {};
@@ -65,12 +70,23 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     );
 
     useEffect(() => {
+        let settleTimer: ReturnType<typeof setTimeout> | undefined;
         const handleResize = () => {
+            // The transform is in viewport units, so a resize changes it — snap rather
+            // than animate. Re-enable on a timer, not on the next zoom: when zoomed out
+            // the recalc below is a no-op, so nothing else would turn transitions back on.
             setDisableAnimations(true);
+            clearTimeout(settleTimer);
+            settleTimer = setTimeout(() => setDisableAnimations(false), resizeSettleMs);
+            // Viewport aspect ratio changed (e.g. rotation) — recompute so the zoom
+            // stays capped correctly instead of reusing a stale scale value.
+            setZoomInOnBeing((prev) => (prev ? { ...prev } : prev));
         };
         window.addEventListener('resize', handleResize);
-        // Cleanup function to remove the event listener
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(settleTimer);
+        };
     }, []); // Empty dependency array ensures this effect runs only once on mount and unmount
 
     const container: CSSProperties = {
@@ -106,8 +122,14 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
 
     useEffect(() => {
         if (zoomInOnBeing) {
-            //Zoom in so that character is 70% of height, or custom
-            const zoom = (zoomInOnBeing.zoom ?? 70) / zoomInOnBeing.height;
+            //Zoom in so that character is `zoom`% of viewport height, or `zoom`% of
+            //viewport width, whichever is reached first — keeps very wide/tall
+            //characters (e.g. salmon, mountain) from overflowing on portrait screens.
+            const target = zoomInOnBeing.zoom ?? 70;
+            const viewportAspect = window.innerWidth / window.innerHeight;
+            const zoomByHeight = target / zoomInOnBeing.height;
+            const zoomByWidth = (maxZoomWidthPercent * viewportAspect) / (zoomInOnBeing.height * zoomInOnBeing.ratio);
+            const zoom = Math.min(zoomByHeight, zoomByWidth);
 
             //Pixel calculations would be
             // const container = containerRef.current.getBoundingClientRect();
@@ -148,7 +170,6 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
         } else {
             setAnimateTransformOrigin(false);
         }
-        setDisableAnimations(false);
     }, [zoomInOnBeing]);
 
     function l(amount: number) {
@@ -161,7 +182,8 @@ function Forest({ currentSpeakerId, isPaused, audioContext }: ForestProps) {
     return (
         <div style={container} ref={containerRef}>
             <AmbientAudio audioContext={audioContext} />
-            <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={isMobile ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
+            <BeingAudioPreloader />
+            <img style={{ zIndex: z.background, height: "100%", position: "absolute", bottom: 0 }} src={smallMedia ? forestBackgroundUrls.small : forestBackgroundUrls.default} alt="" />
             <div style={{ zIndex: z.forestRiver, height: "75.5%", position: "absolute", bottom: 0, left: "calc(50% - max(49dvh,147px))" }}>
                 <FoodAnimation character={{ id: "river" }} isPaused={isPaused} always_on={true} styles={{}} />
                 <BeingAudio id={'river'} volume={0.15} currentSpeakerId={currentSpeakerId} audioContext={audioContext} />
@@ -210,114 +232,6 @@ function Being({ id, ref, type, height, left, bottom, always_on, isPaused, curre
         {type === "image" && <img ref={ref as RefObject<HTMLImageElement | null>} style={{ position: "absolute", height: height, left: left, bottom: bottom }} src={characterImageAvifUrl(id)} alt="" />}
     </>
     );
-}
-
-type BeingAudioProps = {
-    id: string;
-    currentSpeakerId: string;
-    volume: number;
-    audioContext: RefObject<AudioContext | null>;
-};
-
-function BeingAudio({ id, currentSpeakerId, volume, audioContext }: BeingAudioProps) {
-    const gainNode = useRef<GainNode | null>(null); //The general volume control node
-    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
-
-    const [play, setPlay] = useState(false);
-
-    useEffect(() => {
-        if (id === currentSpeakerId) {
-            setPlay(true);
-        } else {
-            setPlay(false);
-        }
-    }, [currentSpeakerId]);
-
-    useEffect(() => {
-        if (!gainNode.current || !audioContext.current) return;
-        const gain = gainNode.current;
-        const ctx = audioContext.current;
-        if (play) {
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 2);
-        } else {
-            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-        }
-    }, [play]);
-
-    if (audioContext.current && gainNode.current === null) {
-        const ctx = audioContext.current;
-        const gain = ctx.createGain();
-        gain.connect(ctx.destination);
-        gainNode.current = gain;
-        sourceNode.current = ctx.createBufferSource();
-
-        loadBeingAudio();
-    }
-
-    async function loadBeingAudio() {
-        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
-        const ctx = audioContext.current;
-        const source = sourceNode.current;
-        const gain = gainNode.current;
-
-        const audioBuffer = await fetch(characterMp3Url(id))
-            .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
-
-        source.buffer = audioBuffer;
-        source.loop = true;
-        source.connect(gain);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        source.start();
-    }
-
-    return null;
-}
-
-type AmbientAudioProps = {
-    audioContext: RefObject<AudioContext | null>;
-};
-
-function AmbientAudio({ audioContext }: AmbientAudioProps) {
-    const gainNode = useRef<GainNode | null>(null); //The general volume control node
-    const sourceNode = useRef<AudioBufferSourceNode | null>(null);
-
-    //Global ambience volume
-    const onVolume = 0.05;
-
-    if (audioContext.current && gainNode.current === null) {
-        const ctx = audioContext.current;
-        const gain = ctx.createGain();
-        gain.connect(ctx.destination);
-
-        //Set ambience volume
-        gain.gain.setValueAtTime(onVolume, ctx.currentTime);
-
-        gainNode.current = gain;
-        sourceNode.current = ctx.createBufferSource();
-        loadAmbience();
-    }
-
-    async function loadAmbience() {
-        if (!audioContext.current || !sourceNode.current || !gainNode.current) return;
-        const ctx = audioContext.current;
-        const source = sourceNode.current;
-        const gain = gainNode.current;
-
-        const audioBuffer = await fetch(characterAmbienceUrl)
-            .then(res => res.arrayBuffer())
-            .then(ArrayBuffer => ctx.decodeAudioData(ArrayBuffer));
-
-        source.buffer = audioBuffer;
-        source.loop = true;
-        source.connect(gain);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(onVolume, ctx.currentTime + 5);
-        source.start();
-    }
-
-    return null;
 }
 
 export default Forest;

@@ -43,6 +43,20 @@ describe("agendaPointInjection", () => {
       expect(result).toBe("Open with 3.");
     });
 
+    it.each([
+      { pinned: 5, expected: "Open with 5." },
+      { pinned: 0, expected: "Open with 3." },
+      { pinned: 6, expected: "Open with 3." },
+    ])("uses a pinned point only when it is on the agenda (pinned $pinned)", ({ pinned, expected }) => {
+      vi.spyOn(Math, "random").mockReturnValue(0.4);
+      const result = injectRandomAgendaPoint(
+        `Open with ${RANDOM_AGENDA_POINT_PLACEHOLDER}.`,
+        ["a", "b", "c", "d", "e"],
+        pinned,
+      );
+      expect(result).toBe(expected);
+    });
+
     it("replaces with the fallback sentence when agenda points are missing", () => {
       const result = injectRandomAgendaPoint(`Step: ${RANDOM_AGENDA_POINT_PLACEHOLDER}`);
       expect(result).toBe(`Step: ${RANDOM_AGENDA_POINT_FALLBACK}`);

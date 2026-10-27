@@ -71,6 +71,10 @@
         <button class="action-btn" @click="exportPrompts" style="width: 100%;">
           Export Prompts (JSON)
         </button>
+        <button class="action-btn" @click="exportPrintFiles" style="width: 100%; margin-top: 6px;"
+          title="Topics as InDesign Tagged Text and plain text, both languages, from the committed prompt files">
+          Export for Print (InDesign)
+        </button>
       </div>
     </aside>
 
@@ -117,7 +121,12 @@
                   <template v-if="!isCustomTopicSelected">
                     <label class="sub-label">Topic Description</label>
                     <textarea class="input-area" v-model="currentTopic.description"
-                      placeholder="Description of the topic..." v-auto-resize
+                      placeholder="One glanceable line, shown on the topic screen..." v-auto-resize
+                      style="min-height: 60px; margin-bottom: 15px; resize: none; overflow-y: hidden;"></textarea>
+
+                    <label class="sub-label">Setup Agent Brief</label>
+                    <textarea class="input-area" v-model="currentTopic.agentBrief"
+                      placeholder="Notes for the setup agent to speak from: the stakes, what is contested. Not what the description already says on screen." v-auto-resize
                       style="min-height: 60px; margin-bottom: 15px; resize: none; overflow-y: hidden;"></textarea>
                   </template>
                   <template v-else>
@@ -613,6 +622,7 @@
 
   <script src="Sortable.min.js"></script>
   <script src="audio_controller.js"></script>
+  <script src="print_export.js"></script>
   <script src="prototype_client.js?v=3.0"></script>
 </body>
 

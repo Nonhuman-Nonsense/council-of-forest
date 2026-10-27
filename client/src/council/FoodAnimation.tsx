@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useMobile } from "../utils";
+import { useSmallMedia } from "@/smallMedia";
 import { characterTransparentVideoUrls } from "@assets/characters/characterData";
 
 interface FoodAnimationProps {
@@ -20,7 +20,7 @@ function FoodAnimation({
   always_on,
   currentSpeakerId = "",
 }: FoodAnimationProps) {
-  const isMobile = useMobile();
+  const smallMedia = useSmallMedia();
   const video = useRef<HTMLVideoElement>(null);
   const [vidLoaded, setVidLoaded] = useState(false);
   const hasCharacter = Boolean(character?.id);
@@ -34,6 +34,8 @@ function FoodAnimation({
         } catch (e) {
           console.log(e);
         }
+        //The component may have unmounted while play() was pending, nulling the ref.
+        if (!video.current) return;
         video.current.pause();
         setVidLoaded(true);
       }
@@ -53,7 +55,7 @@ function FoodAnimation({
 
   if (!hasCharacter) return null;
 
-  const urls = characterTransparentVideoUrls(character.id, isMobile);
+  const urls = characterTransparentVideoUrls(character.id, smallMedia);
   return (
     <video ref={video} data-testid="food-video" style={{ ...styles, objectFit: "contain", height: "100%" }} loop muted playsInline>
       <source

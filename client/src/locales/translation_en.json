@@ -33,15 +33,13 @@
   },
   "human": {
     "placeholder": "Type your question or start recording...",
-    "panelist": "What does {{name}} have to say about this?"
-  },
-  "agentMode": {
-    "alwaysOn": "Always On",
-    "pushToTalk": "Push to Talk"
+    "panelist": "What does {{name}} have to say about this?",
+    "letter": "Add something to {{name}}'s email, or just say no..."
   },
   "ptt": {
     "holdToSpeak": "Push the button to speak",
-    "humanPlaceholder": "Press and hold the button to talk, release to submit"
+    "humanPlaceholder": "Press and hold the button to talk, release to submit",
+    "holdHint": "Hold the button down while you talk"
   },
   "replay": {
     "preamble": "This is a replay of the meeting #{{meetingId}}: {{meetingTitle}} on {{meetingDate}}. ",
@@ -74,10 +72,14 @@
   "staff": {
     "title": "STAFF",
     "panels": {
+      "mode": "Mode",
       "installation": "Installation",
-      "agentMode": "Agent mode",
       "details": "Details & hints",
       "logging": "Logging"
+    },
+    "toggle": {
+      "on": "On",
+      "off": "Off"
     },
     "logging": {
       "on": "On",
@@ -94,15 +96,102 @@
         "BUTTON": "Button",
         "META": "Meta agent",
         "AUTOPLAY": "Autoplay",
+        "PRINT": "Printing",
         "SYSTEM": "System",
         "ERROR": "Error detail"
+      },
+      "server": {
+        "failing": "Not sending ({{failure}}) — {{pending}} lines waiting"
       }
     },
     "web": "Web",
     "museum": "Museum",
-    "museumSwitchButton": "Museum switch button",
+    "presenter": "Presenter",
+    "modeSwitchButton": "Mode switch button",
+    "alerts": {
+      "label": "Alert emails",
+      "test": "Send test alert",
+      "status": {
+        "noKey": "No installation key",
+        "chooseVenue": "Choose a venue",
+        "failing": "Failing",
+        "on": "On"
+      },
+      "testResult": {
+        "sending": "Sending…",
+        "sent": "Sent, check the inbox",
+        "failed": "Not sent"
+      }
+    },
+    "venue": {
+      "label": "Venue",
+      "none": "No venue",
+      "unknown": "{{id}} (no longer on the server)",
+      "hint": "Where this installation runs. Tags its AI usage for the footprint meter and room power plugs, and decides who gets printer alert emails."
+    },
+    "installationKey": {
+      "label": "Installation key",
+      "placeholder": "Paste the installation key",
+      "save": "Save",
+      "change": "Change",
+      "cancel": "Cancel",
+      "notSaved": "Not saved",
+      "hint": "The council server's COUNCIL_INSTALLATION_KEY. The bridge keeps it for this server, for printer alert emails; it is never shown again.",
+      "status": {
+        "saved": "Saved",
+        "missing": "Not set",
+        "otherServer": "Saved for {{server}}; enter this server's key",
+        "outdated": "Update the bridge to enter it"
+      }
+    },
+    "splitAudio": {
+      "toggle": "Split audio"
+    },
+    "sidetone": {
+      "label": "Hear yourself",
+      "note": "Visitors hear their own voice while they hold the button. Headphones only: over speakers the mic howls."
+    },
+    "print": {
+      "toggle": "Print summaries",
+      "printerLabel": "Printer",
+      "pendingLabel": "Waiting to print",
+      "attentionLabel": "Needs attention",
+      "since": "since {{time}}",
+      "testPage": "Print test page",
+      "testLetter": {
+        "from": "Reindeer",
+        "fromEmail": "reindeer@council-of-forest.com",
+        "to": "Director-General",
+        "toEmail": "skogsstyrelsen@skogsstyrelsen.se",
+        "organisation": "Swedish Forest Agency",
+        "subject": "The lichen forests near Juhttátahkka",
+        "body": "Dear Director-General,\n\nI am the Reindeer, and I spoke today at Council of Forest. We talked about the old forests where the hanging lichen grows, and about the felling planned there. I write to you because those permits pass through your agency.\n\nIn the deepest winter, when the snow is hard, the lichen in the old trees is what keeps my calves alive. A clear-cut takes it for a hundred years. I am not asking you to stop all felling. I am asking you to wait, and to listen to the herders who know where we walk.\n\nWill you visit the forest with them before the next permit is decided? Write back to me and tell me what you saw.\n\nWith respect,\nThe Reindeer"
+      },
+      "testReply": {
+        "from": "Anna Andersson",
+        "fromEmail": "anna.andersson@skogsstyrelsen.se",
+        "subject": "Re: The lichen forests near Juhttátahkka",
+        "body": "Dear Reindeer,\n\nThank you for your letter. We have received it and passed it on to the officers who handle felling notifications in your area.\n\nKind regards,\nAnna Andersson\nSwedish Forest Agency"
+      },
+      "testPageResult": {
+        "sending": "Sending…",
+        "queued": "Sent to printer",
+        "rejected": "Bridge refused the page",
+        "unreachable": "Bridge not reachable"
+      },
+      "printer": {
+        "unavailable": "—",
+        "outdated": "Bridge too old — update it",
+        "disabled": "Printing off on bridge",
+        "checking": "Checking…",
+        "noDefault": "No default printer",
+        "idle": "Ready",
+        "printing": "Printing",
+        "stopped": "Stopped",
+        "unknown": "Unknown"
+      }
+    },
     "button": {
-      "title": "Button",
       "bridgeLabel": "Bridge",
       "appLabel": "App",
       "usbLabel": "USB button",
@@ -163,6 +252,19 @@
   "controls": {
     "wait": "wait for your turn to speak"
   },
+  "agent": {
+    "turnOn": "Turn on the guide",
+    "turnOff": "Turn off the guide",
+    "micHold": "Hold to talk to the guide"
+  },
+  "microphone": {
+    "title": "Microphone not available",
+    "blocked": "Allow microphone access for this site in your browser,\nthen press the microphone button again.",
+    "noDevice": "No microphone was found on this device.",
+    "inUse": "The microphone is being used by another application.\nClose it and try again.",
+    "unsupported": "This browser can't give the page a microphone.",
+    "dismiss": "Got it"
+  },
   "queryExtension": {
     "title": "Is that it?",
     "body": "This meeting is starting to get long-winded,\nis it time to come to a conclusion?",
@@ -181,11 +283,39 @@
     "goBack": "Go back",
     "startNew": "Start new meeting"
   },
+  "letterReply": {
+    "optOut": "{{name}} asked to receive no more letters."
+  },
+  "letter": {
+    "from": "From",
+    "to": "To",
+    "subject": "Subject",
+    "sent": "Sent",
+    "message": "Message",
+    "replyFrom": "Reply from",
+    "received": "Received",
+    "unsent": "This letter was written, but not sent."
+  },
   "summary": {
     "download": "Download PDF",
     "banner": {
       "pressToRestart": "Press the button to start a new meeting."
     }
+  },
+  "credits": {
+    "thankYou": "Thank You",
+    "intro": "Council of Forest is an initiative by art & design collective Nonhuman Nonsense developed in collaboration with the Vindelälven-Juhttátahkka Biosphere Reserve. It is based on interviews and conversations with local experts, and would have never been possible without the contributions of all the biosphere inhabitants we met.",
+    "biosphereCollaborator": "Biosphere Collaborator",
+    "interviews": "Based on interviews with",
+    "fisheriesConsultant": "Fisheries Consultant",
+    "forestryConsultant": "Forestry Consultant",
+    "forester": "Forester",
+    "support": "Support",
+    "filmProduction": "Film Production",
+    "animationProduction": "Animation Production",
+    "programming": "Programming",
+    "soundDesign": "Sound Design",
+    "catalogueTranslation": "Translation Catalogue"
   },
   "disclaimer": {
     "intro": "This document was created by the Council of Forest, a political arena where the forest itself speaks, through the use of artificial intelligence. While every effort has been made to generate meaningful content, please note the following:",
@@ -202,7 +332,22 @@
     "message": "Something went wrong...\nCouncil cannot continue",
     "audioLoad": "Could not load meeting audio.",
     "connection": "Connection Lost",
+    "busy": "The council is busy",
+    "busyRetrying": "Too many people are talking at once — trying again…",
+    "busyTerminal": "Too many people are talking to the council right now. Please try again in a few minutes.",
+    "elsewhere": "This meeting is happening somewhere else",
+    "notFound": "That meeting could not be found",
+    "forbidden": "This meeting is not yours to open",
+    "unauthorized": "This meeting needs a key you don't have",
+    "invalidRequest": "Something about that request was wrong",
+    "meetingComplete": "This meeting has already finished",
+    "invalidAudioId": "Could not load meeting audio.",
+    "realtimeUnavailable": "The council's voice is unavailable right now",
     "reconnecting": "Attempting to reconnect...",
-    "restartUnavailableRetrying": "Server unavailable for restart, retrying…"
+    "restartUnavailableRetrying": "Server unavailable for restart, retrying…",
+    "noInternet": "No internet",
+    "noInternetDetail": "Check the network cable or Wi‑Fi.",
+    "serverUnreachable": "Can't reach the server",
+    "serverUnreachableDetail": "Check the internet connection."
   }
 }

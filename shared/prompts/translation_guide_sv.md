@@ -7,6 +7,9 @@ Use the English files as the blueprint for meaning, structure, order, and
 function. Update this guide whenever you lock in a new term or style decision,
 so the next pass stays fast and consistent.
 
+The political facts behind the prompts, their dates and sources live in
+[`facts_and_sources.md`](facts_and_sources.md); this guide covers only the Swedish wording.
+
 ---
 
 ## 1. Guiding principles
@@ -20,9 +23,30 @@ so the next pass stays fast and consistent.
   headings, bullet lists, or stage directions in what beings say aloud. Prompt
   instructions themselves may keep their structure.
 - **Leave mechanics intact.** Do not translate placeholders (`[TOPIC]`,
-  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
-  `[VISITOR_INPUT]`), JSON keys, ids, law numbers (`1971:437`), Latin species
+  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[SINGLE_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
+  `[VISITOR_INPUT]`, `[CURRENT_DATE]`), JSON keys, ids, law numbers (`1971:437`), Latin species
   names (`Pinus contorta`, `Cladina spp.`), or numeric data.
+- **Name the parties in Swedish.** The English prompts stay structural ("the
+  government proposed", "a majority of parliamentary parties") for an
+  international audience that cannot place KD, M or SD. Swedish is for a local
+  audience who would find that evasive: name KD, M, SD, L, C, S, V, MP, and
+  ministers, as factual record. This is a deliberate divergence, not a
+  translation error — do not "correct" it in either direction.
+- **Characters never campaign.** Party politics belongs in `topics_sv.json`,
+  which is swappable per meeting. A being may react to a policy; it may not
+  endorse a party or tell anyone how to vote.
+- **Dated fact blocks.** Each topic prompt ends with a block headed
+  `AKTUELL UTVECKLING (kontrollerad i <månad år>)` mirroring the English
+  `RECENT DEVELOPMENTS (verified <month year>)`. Absolute dates only — the model
+  has no idea when now is. Never write the present date into a prompt;
+  `[CURRENT_DATE]` is injected at meeting setup.
+- **Explain names for a Swedish audience, not an international one.** Each name
+  gets a few words at its first appearance (`facts_and_sources.md` §2), but the
+  glosses differ by language. English explains *sameby*, *Ringhals* and *Rally
+  Sweden*; Swedish leaves those bare and explains what a Swedish visitor would not
+  know: *Bergsstaten, myndigheten som prövar gruvtillstånd*; *Natura
+  2000-tillstånd*; *FSC, en frivillig märkning för ansvarsfullt skogsbruk*. Party
+  abbreviations need no gloss in Swedish.
 
 ### Global conventions
 
@@ -39,15 +63,23 @@ so the next pass stays fast and consistent.
 **`topics_<lang>.json`**
 
 - `system` — council framing; contains `[TOPIC]` and `[AGENDA_POINTS]`.
-- `custom_topic` — `id`, `title`, `prompt` (with `[VISITOR_INPUT]`).
-- `topics[]` — each topic: `id`, `title`, `description`, `prompt` (context +
-  framing only), `agendaPoints[]` (numbered items injected at `[AGENDA_POINTS]`).
+- `custom_topic` — `id`, `title`, `agentBrief`, `prompt` (with `[VISITOR_INPUT]`).
+- `topics[]` — each topic: `id`, `title`, `description`, `agentBrief`, `prompt`
+  (context + framing only), `agendaPoints[]` (numbered items injected at
+  `[AGENDA_POINTS]`).
+- `description` is read on screen; `agentBrief` is what Älven speaks from, so
+  the two must say different things — a brief that paraphrases the description
+  gives the visitor the same sentence twice, and the data test rejects it.
+  Briefs are written as instructions to Älven ("Fråga…", "Pressa på…"), not as
+  lines to read aloud.
+- Every topic and the custom topic must carry a non-empty `agentBrief` in every
+  language (`ValidateTopicsData`).
 - Topic `id`s must match across languages.
 
 **`beings_<lang>.json`**
 
-- `panelWithHumans`, `addHuman`, `characters[]` (`id`, `name`, `description`,
-  `prompt`).
+- `panelWithHumans`, `singleAgendaPoint` (River's rule for a one-point agenda),
+  `addHuman`, `characters[]` (`id`, `name`, `description`, `prompt`).
 - Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
   text fields only — do not copy English Inworld voice settings.
 
@@ -76,6 +108,8 @@ Format: **English** → **Swedish** — *notes*.
 | chair / moderator | ordförande / moderator | |
 | stand-up | stand-up | kept |
 | Add Human / Human | Människa | character/option label |
+| presenter (app mode) | Presentation | staff label, alongside Webb / Museum |
+| mode switch button | Lägesbytarknapp | staff label |
 
 ### 2.2 Character names
 
@@ -117,6 +151,21 @@ Format: **English** → **Swedish** — *notes*.
 | forest continuity | skogskontinuitet | |
 | biomass | biomassa | |
 | "green desert" | "grön öken" | sterile plantation |
+| rotation (period) | omloppstid | "omloppstiderna blir allt kortare" |
+| regeneration felling | föryngringsavverkning | Sveaskog's reporting term |
+| chequered (checkerboard) felling | schackrutehuggning | trial stage only |
+| co-planning (with samebyar) | samplanering | Sveaskog Norrbotten 2023 |
+| commons (forest) | allmänning | e.g. Arjeplogs allmänning |
+| family forest owner / owners' association | enskild skogsägare / skogsägarförening | Norra Skog |
+| market-based return | marknadsmässig avkastning | Sveaskog's mission |
+| retention trees / buffer zone | hänsynsträd / kantzon | |
+| sawlogs / residues | sågtimmer / restprodukter | |
+| browsing damage | betesskador (ÄBIN) | moose on young pine; 5% target |
+| rewetting / blocking ditches | återvätning / proppa igen diken | |
+| carbon credits / greenwashing | klimatkrediter / grönmålning | |
+| summer farm / hay meadow | fäbod / slåtteräng (älväng, slåttermyr) | |
+| umbrella species | paraplyart | vitryggig hackspett |
+| red list categories | livskraftig, nära hotad, sårbar, starkt hotad, akut hotad, nationellt utdöd | Rödlistan 2025 (SLU Artdatabanken) |
 
 ### 2.4 Lichen, reindeer & grazing
 
@@ -160,6 +209,14 @@ Format: **English** → **Swedish** — *notes*.
 | (sea) trout | havsöring |
 | freshwater pearl mussel | flodpärlmussla |
 | garden lupine | blomsterlupin |
+| moose | älg |
+| red fox | rödräv |
+| mountain birch | fjällbjörk |
+| white-tailed eagle | havsörn |
+| otter | utter |
+| Tengmalm's owl | pärluggla |
+| snowy owl | fjälluggla |
+| white-backed woodpecker | vitryggig hackspett |
 
 ### 2.6 Sámi rights & culture
 
@@ -173,7 +230,7 @@ Format: **English** → **Swedish** — *notes*.
 | reindeer herding right | renskötselrätt | |
 | usufruct / right of usage | brukningsrätt (nyttjanderätt) | |
 | consultation (samråd) | samråd | |
-| Consultation Act (2022:66) | Konsultationsordningen (2022:66) | |
+| Consultation Act (2022:66) | konsultationsordningen (2022:66) | not "konsultationslagen"; capitalise only at sentence start |
 | FPIC | Fritt, informerat förhandssamtycke (FPIC) | |
 | green colonialism | grön kolonialism / grön kolonisering | |
 | "death by a thousand cuts" | "döden genom tusen snitt" | |
@@ -181,6 +238,19 @@ Format: **English** → **Swedish** — *notes*.
 | Truth Commission | Sanningskommissionen | |
 | lateral violence | lateralt våld | |
 | settler-colonial | bosättarkolonial | |
+| national interest (status) | riksintresse | the status reindeer herding holds and may lose |
+| Renmarkskommittén | Renmarkskommittén | scrapped late 2024 |
+| UN Cttee on Elimination of Racial Discrimination | FN:s rasdiskrimineringskommitté (CERD) | |
+| Council of Europe | Europarådet | |
+| cultivation boundary | odlingsgränsen | |
+| small game hunting | småviltsjakt | |
+| migration route (the last one) | flyttled | "sista flyttleden" — the 50-metre corridor |
+| Saami Council | Samerådet | pan-Sámi NGO; wrote to CERD Oct 2025 |
+| year-round land / winter grazing land | åretruntmarker / vinterbetesmarker | Forestry Act samråd covers only the former |
+| by custom (Nordmaling 2011) | grundad på sedvana | distinct from urminnes hävd |
+| redress (UNDRIP Art. 28) | gottgörelse | |
+| Rönnbäcken case | Rönnbäckenfallet | Vapsten sameby, CERD opinion |
+| "Core Question:" (agenda points) | "Kärnfråga:" | |
 
 ### 2.7 Law, policy & institutions
 
@@ -194,11 +264,25 @@ Format: **English** → **Swedish** — *notes*.
 | EU Critical Raw Materials Act | EU:s förordning om kritiska råvaror | |
 | legal person / legal personhood | juridisk person | phrase as "status som juridisk person" where natural |
 | rights of nature | naturens rättigheter | |
+| standing (legal) | talerätt | "vem har talerätt" |
+| guardian (of a legal-person ecosystem) | förmyndare / förmyndarorgan | Mar Menor, Taranaki |
+| proxy (speaking for nature) | ombud | Ombudslogiken |
+| national river | nationalälv | Vindelälven, one of four |
+| stewardship vs kinship | förvaltarskap mot släktskap | |
+| "paper park" | pappersnationalpark | rights without enforcement |
+| Instrument of Government | regeringsformen | the 278–17 vote, 11 Mar 2026 |
 | Girjas Judgment (2020) | Girjasdomen (2020) | |
 | title deed / paper title | lagfart / papperstitel | |
 | concession (exploitation) | bearbetningskoncession | |
 | fast-tracking (permits) | snabbspår / att snabba på tillståndsprocesser | |
 | FSC/PEFC certification | FSC/PEFC-certifiering | |
+| Ett tydligt regelverk för aktivt skogsbruk | (keep Swedish title) | the June 2026 forestry act |
+| felling notification | avverkningsanmälan | |
+| land and environment courts | mark- och miljödomstolarna | appeals moved here 2026 |
+| species protection | artskyddet | compensation right, prop. 2025/26:230 |
+| EU Nature Restoration Regulation | EU:s naturrestaureringsförordning | |
+| EU Deforestation Regulation (EUDR) | EU:s avskogningsförordning | |
+| land-sector carbon sink (LULUCF) | markanvändningssektorns kolsänka | |
 
 ### 2.8 Green transition, energy & climate
 
@@ -223,6 +307,21 @@ Format: **English** → **Swedish** — *notes*.
 | fish ladder | fisktrappa / fiskväg | |
 | minimum ecological flow | minimitappning | |
 | dry river bed | torrfåra | |
+| review of environmental conditions | omprövning (av miljövillkor) | the national hydropower review |
+| municipal veto / refusal | kommunalt veto / kommunalt nej | 93% of wind projects, 2025 |
+| spawning grounds | lekbottnar | |
+| incentive package (wind) | incitamentspaket | 340/370 MSEK to host municipalities |
+| national grid operator | Svenska kraftnät, det statliga affärsverk som driver stamnätet | not "the state energy utility"; that is Vattenfall |
+| bypassed reach (dried by a dam) | förbiledd sträcka / torrfåra | >70% lack minimitappning |
+| environmental flows | miljöanpassade flöden | Widén et al. 2024, Ume River |
+| throttled (turbines) | strypta | summer surplus, full grid |
+| small modular reactor | liten modulär reaktor (SMR) | Rolls-Royce SMR, Ringhals |
+| hydrogen steel / fossil-free steel | vätgasstål / fossilfritt stål | |
+| sponge iron (DRI) | järnsvamp | LKAB/HYBRIT, Gällivare |
+| steel plant (Stegra, Boden) | stålverket | "Stegra, tidigare H2 Green Steel" on first mention |
+| rescue round (financing) | räddningsrunda | Stegra, June 2026 |
+| Sweden's most powerful industrial family | Wallenbergsfären | named in Swedish, as with parties (§1) |
+| municipal loan debt | kommunal låneskuld | Boden: ~80 MSEK 2017 → ~1,8 mdr 2025 |
 
 ### 2.9 Mining
 
@@ -236,6 +335,18 @@ Format: **English** → **Swedish** — *notes*.
 | waste rock | gråberg | |
 | acid mine drainage | surt gruvvatten | |
 | sacrifice zone | offerzon | |
+| concession mineral | koncessionsmineral | uranium became one, Jan 2026 |
+| mineral compensation ("gruvpeng") | mineralersättning | 2026 inquiry, municipalities only |
+| strategic project (CRMA) | strategiskt projekt | Per Geijer, March 2026 |
+| exploration permit | undersökningstillstånd | |
+| mining authority | Bergsstaten | decides bearbetningskoncession |
+| municipal veto | kommunalt veto | uranium veto abolished 15 Jun 2026, 174–172 |
+| financial guarantee (closure) | ekonomisk säkerhet | Blaiken: 2.3 MSEK vs ≥427 MSEK clean-up |
+| settling basin | sedimenteringsbassäng | Saivastjärnen, Laisvall |
+| alum shale | alunskiffer | inquiry on municipal influence, June 2026 |
+| national river | nationalälv | Kalix, Torne, Pite, Vindel; protected from hydropower since 1993 |
+| riverbed | älvfåra | Kalix exploration area, 2026 |
+| national interest for outdoor recreation | riksintresse för friluftsliv | |
 
 ### 2.10 General framing concepts
 
@@ -253,6 +364,14 @@ Format: **English** → **Swedish** — *notes*.
 | coexistence | samexistens | |
 | depopulation | avfolkning | |
 | Right of Public Access | Allemansrätten | |
+| guest nights | gästnätter | Visit Sweden / Tillväxtverket statistics |
+| overtourism | överturism | |
+| regenerative tourism | regenerativ turism | "hållbar turism är bara ett långsammare sätt att dö" |
+| catch-and-release | fånga och släpp | |
+| fish ladder | fisktrappa | Norrfors |
+| heliskiing | heliskiing / helikopterskidåkning | unregulated; Transportstyrelsen can only issue temporary bans |
+| summer-farm clearing | fäbodvall | |
+| night train / procurement | nattåg / upphandling | Trafikverket, SJ stopgap Dec 2026–Dec 2028 |
 | "functionally unavailable" | "funktionellt otillgänglig" | land |
 
 ### 2.11 Lichen academic vocabulary
@@ -309,7 +428,8 @@ literally.
   vocabulary only — see prompt's forbidden-word list.
 - **Tallen (Pine).** Blunt, modern, systemic-reform activist. Short fragmented
   sentences, direct "ni". Concrete actions (Sveaskog, kalavverkning,
-  `avverkningskoll.se`, `Artportalen`, EU law). 5-step response structure.
+  `avverkningskoll.se`, `Artportalen`, EU law). 6-step response structure
+  (celebrate a verified good example first).
   ~400–450 chars. Not poetic/archaic.
 - **Vindkraftverket (Wind Turbine).** Fragments, technical nouns, repetition.
   Sounds: surr, humm, klick, pip. ~200 chars.

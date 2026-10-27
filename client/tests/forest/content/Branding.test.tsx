@@ -4,7 +4,7 @@ import Landing from '@newMeeting/Landing';
 import Forest from '@forest/Forest';
 
 // Mock router
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
 
 // Mock utils
 vi.mock('@/utils', () => ({
@@ -28,9 +28,15 @@ vi.mock('react-responsive', () => ({
 describe('Forest Content & Branding', () => {
 
     it('Landing page shows Council branding', () => {
+        // Landing lives in MeetingSetupShell's outlet, and reports the visitor
+        // leaving the welcome screen through its context.
         render(
             <MemoryRouter>
-                <Landing />
+                <Routes>
+                    <Route element={<Outlet context={{ setLastUserEvent: vi.fn() }} />}>
+                        <Route path="/" element={<Landing />} />
+                    </Route>
+                </Routes>
             </MemoryRouter>
         );
         expect(screen.getByText('COUNCIL OF FOREST')).toBeInTheDocument();
@@ -42,10 +48,10 @@ describe('Forest Content & Branding', () => {
             current: {
                 createGain: vi.fn(() => ({
                     gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-                    connect: vi.fn()
+                    connect: vi.fn(), disconnect: vi.fn()
                 })),
                 createBufferSource: vi.fn(() => ({
-                    buffer: null, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+                    buffer: null, loop: false, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn()
                 })),
                 destination: {},
                 currentTime: 0,
@@ -53,7 +59,7 @@ describe('Forest Content & Branding', () => {
             }
         };
 
-        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />, { wrapper: MemoryRouter });
 
         // Characters might be images or videos depending on the type/browser support mocked.
         // Easiest is to check that their source files are present in the DOM.

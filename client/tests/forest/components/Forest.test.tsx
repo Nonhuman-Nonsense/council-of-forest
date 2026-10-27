@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import Forest from '@forest/Forest';
 
 // Mock child components
@@ -25,10 +26,10 @@ describe('Forest Visual Logic', () => {
         current: {
             createGain: vi.fn(() => ({
                 gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-                connect: vi.fn()
+                connect: vi.fn(), disconnect: vi.fn()
             })),
             createBufferSource: vi.fn(() => ({
-                buffer: null, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+                buffer: null, loop: false, connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn()
             })),
             destination: {},
             currentTime: 0,
@@ -37,7 +38,7 @@ describe('Forest Visual Logic', () => {
     };
 
     it('renders Forest background', () => {
-        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />);
+        const { container } = render(<Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />, { wrapper: MemoryRouter });
         const html = container.innerHTML;
         // Forest background + characters
         expect(html).toContain('forest');
@@ -46,7 +47,7 @@ describe('Forest Visual Logic', () => {
     it('zooms in when valid speaker is active', async () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         const forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
 
@@ -68,7 +69,7 @@ describe('Forest Visual Logic', () => {
     it('stays zoomed out when currentSpeakerId is chair or empty (meta-agent)', () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         let forestContainer = container.firstChild;
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
 
@@ -79,10 +80,31 @@ describe('Forest Visual Logic', () => {
         expect(forestContainer).toHaveStyle('transform: scale(1) translate(0, 0)');
     });
 
+    it('animates the next zoom after a resize that happened while zoomed out', () => {
+        vi.useFakeTimers();
+        try {
+            const { container, rerender } = render(
+                <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
+            , { wrapper: MemoryRouter });
+            const forestContainer = container.firstChild as HTMLElement;
+
+            act(() => { window.dispatchEvent(new Event('resize')); });
+            expect(forestContainer.style.transition).toBe('');
+
+            act(() => { vi.advanceTimersByTime(1000); });
+            rerender(
+                <Forest currentSpeakerId="salmon" isPaused={false} audioContext={mockAudioContext} />
+            );
+            expect(forestContainer.style.transition).toContain('transform');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('does not zoom for unknown speaker', async () => {
         const { container, rerender } = render(
             <Forest currentSpeakerId="" isPaused={false} audioContext={mockAudioContext} />
-        );
+        , { wrapper: MemoryRouter });
         rerender(
             <Forest currentSpeakerId="unknown_blob" isPaused={false} audioContext={mockAudioContext} />
         );

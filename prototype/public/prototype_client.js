@@ -693,6 +693,7 @@ createApp({
             id: t.id || ('topic_' + Date.now() + Math.random()),
             name: t.title,
             description: t.description || "",
+            agentBrief: t.agentBrief || "",
             prompt: t.prompt,
             agendaPoints: Array.isArray(t.agendaPoints) ? [...t.agendaPoints] : [],
           }));
@@ -979,6 +980,7 @@ createApp({
         id: 'topic_' + Date.now(),
         name: "New Topic",
         description: "",
+        agentBrief: "",
         prompt: "",
         agendaPoints: [],
       };
@@ -1249,6 +1251,7 @@ createApp({
           id: canonical.id,
           title: edited.name,
           description: edited.description || (localeMatch ? localeMatch.description : edited.prompt),
+          ...(edited.agentBrief ? { agentBrief: edited.agentBrief } : {}),
           prompt: edited.prompt,
           ...(this.nonEmptyAgendaPoints(edited.agendaPoints).length > 0
             ? { agendaPoints: this.nonEmptyAgendaPoints(edited.agendaPoints) }
@@ -1268,6 +1271,7 @@ createApp({
           id: exportId,
           title: edited.name,
           description: edited.description || edited.prompt,
+          ...(edited.agentBrief ? { agentBrief: edited.agentBrief } : {}),
           prompt: edited.prompt,
           ...(this.nonEmptyAgendaPoints(edited.agendaPoints).length > 0
             ? { agendaPoints: this.nonEmptyAgendaPoints(edited.agendaPoints) }
@@ -1294,6 +1298,10 @@ createApp({
       const customTopic = {
         id: editedCustomTopic?.id || fallbackCustom.id || PROTOTYPE_CUSTOM_TOPIC_ID,
         title: editedCustomTopic?.name || fallbackCustom.title || 'Custom Topic',
+        // Not editable here (the custom topic's editor slot holds visitor
+        // input instead), but the app requires it — carry it through rather
+        // than exporting a file that fails validation.
+        ...(fallbackCustom.agentBrief ? { agentBrief: fallbackCustom.agentBrief } : {}),
         ...(editedCustomTopic?.prompt
           ? { prompt: editedCustomTopic.prompt }
           : (fallbackCustom.prompt ? { prompt: fallbackCustom.prompt } : {})),
@@ -1310,6 +1318,36 @@ createApp({
           useEnglishCanonicalIds
         ),
       };
+    },
+
+    // Zip of every topic as InDesign Tagged Text and plain text, per language (print_export.js).
+    async exportPrintFiles() {
+      const topicsByLang = {};
+      for (const lang of this.available_languages) {
+        const path = `./topics_${lang}.json`;
+        try {
+          const resp = await fetch(path);
+          if (!resp.ok) throw new Error(`${resp.status}`);
+          topicsByLang[lang] = await resp.json();
+          this.log('FILE_IN', `GET ${path} → ${resp.status}`);
+        } catch (e) {
+          this.log('ERROR', `Print export: failed to fetch ${path}`, e);
+        }
+      }
+      if (Object.keys(topicsByLang).length === 0) return;
+
+      const zip = window.PrintExport.buildZip(window.PrintExport.buildFiles(topicsByLang));
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `council-prompts-print_${stamp}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     },
 
     async exportPrompts() {
