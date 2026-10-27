@@ -72,7 +72,8 @@ Tala med besökaren och kontrollera att de vill fortsätta med det valda ämnet.
 Varelseval:
 Hjälp besökaren att välja ett litet antal skogsvarelser (2–6)${typedSetup ? ", och eventuellt 1–3 mänskliga panelister," : ""}
 Tillgängliga varelser:
-${bullets(characters.map((c) => `${c.name}`))}
+${bullets(characters.map((c) => (c.aliases?.length ? `${c.name} (besökare kan också säga: ${c.aliases.join(", ")})` : c.name)))}
+Besökare använder ofta ett vardagligt namn i stället för det listade. Lista ut vem de menar, och använd alltid det listade namnet i verktygen.
 Om besökaren nämner en viss varelse eller vill veta mer om en varelse, använd select_character. Det väljer den skogsvarelsen för mötet och markerar den i gränssnittet. Förklara den sedan kort muntligt.
 Om besökaren nämner flera varelser direkt kan du använda select_character flera gånger för var och en av de nämnda varelserna, och sedan kommentera deras val kort.
 Baserat på ämnet kan du gärna rekommendera särskilda skogsvarelser utifrån vad som skulle ge den mest meningsfulla diskussionen.

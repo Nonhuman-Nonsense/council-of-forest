@@ -68,8 +68,8 @@ function participantNames(ctx: SetupAgentToolContext): string[] {
   ].filter((name) => name.length > 0);
 }
 
-function isDuplicateParticipantName(name: string, ctx: SetupAgentToolContext): boolean {
-  const names = participantNames(ctx);
+function isDuplicateParticipantName(name: string, ctx: SetupAgentToolContext, except?: string): boolean {
+  const names = participantNames(ctx).filter((existing) => existing !== except);
   names.push(name);
   return new Set(names).size !== names.length;
 }
@@ -82,6 +82,20 @@ function isDuplicateParticipantName(name: string, ctx: SetupAgentToolContext): b
  */
 function isSelectableCharacter(character: Pick<SetupAgentCharacter, "id">): boolean {
   return !character.id.startsWith("panelist") && character.id !== "addhuman" && character.id !== CHAIR_ID;
+}
+
+/**
+ * The tools list each character by name, but visitors use everyday names ("biet"
+ * for Humlan) and the model sometimes passes their word on instead. Resolve it
+ * the same way rather than answering "unknown character" for someone on screen.
+ */
+function findCharacter(ctx: SetupAgentToolContext, name: string): SetupAgentCharacter | undefined {
+  const exact = ctx.characters.find((c) => c.name === name);
+  if (exact) return exact;
+  const wanted = name.trim().toLocaleLowerCase();
+  return ctx.characters.find((c) =>
+    [c.name, ...(c.aliases ?? [])].some((candidate) => candidate.toLocaleLowerCase() === wanted),
+  );
 }
 
 const CHAIR_ALWAYS_PRESENT = "is the chair and is always in the meeting; there is nothing to change.";
@@ -355,7 +369,7 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
       const obj = asObject(raw);
       const name = asString(obj?.name);
       if (!name) return { ok: false, error: "Missing name" };
-      const found = ctx.characters.find((c) => c.name === name);
+      const found = findCharacter(ctx, name);
       if (!found) return { ok: false, error: `Unknown character: ${name}` };
       if (found.id === CHAIR_ID) return { ok: true, data: { name: found.name, note: `${found.name} ${CHAIR_ALWAYS_PRESENT}` } };
       const success = useMeetingSetupStore.getState().handleSelectCharacterId(found.id);
@@ -372,7 +386,7 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
       const obj = asObject(raw);
       const name = asString(obj?.name);
       if (!name) return { ok: false, error: "Missing name" };
-      const found = ctx.characters.find((c) => c.name === name);
+      const found = findCharacter(ctx, name);
       if (!found) return { ok: false, error: `Unknown character: ${name}` };
       if (found.id === CHAIR_ID) return { ok: false, error: `${found.name} ${CHAIR_ALWAYS_PRESENT}` };
       useMeetingSetupStore.getState().handleDeselectCharacterId(found.id);
@@ -437,17 +451,14 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
             "Learn the visitor's name first and call remember_visitor_name before start_meeting. Ask casually until they tell you.",
         };
       }
-      const topic = ctx.buildSelectedTopic();
-      const { typedSetup, pinnedAgendaPoints } = getCapabilities();
       const built = buildMeetingCharactersPayload({
         language: ctx.setupAgentLanguage,
         selectedCharacters,
         humans,
         numberOfHumans,
         labels: ctx.meetingCharactersLabels,
-        agendaPoints: topic?.agendaPoints,
-        pinnedAgendaPoint: topic ? pinnedAgendaPoints[topic.id] : undefined,
-        typedSetup,
+        agendaPoints: ctx.buildSelectedTopic()?.agendaPoints,
+        typedSetup: getCapabilities().typedSetup,
       });
       if (!built.ok) return built;
       await Promise.resolve(ctx.startMeeting(built.characters));
@@ -471,7 +482,13 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
       if (!rawName) return { ok: false, error: "Missing name" };
       const name = normalizeVisitorName(rawName);
       if (!name) return { ok: false, error: "Name cannot be empty." };
-      if (isDuplicateParticipantName(name, ctx)) {
+      const installation = !getCapabilities().typedSetup;
+      // At an installation the visitor is panelist 0, so their own name is theirs to repeat or
+      // correct, not a collision.
+      const ownPanelistName = installation && useMeetingSetupStore.getState().numberOfHumans > 0
+        ? useMeetingSetupStore.getState().humans[0]?.name
+        : undefined;
+      if (isDuplicateParticipantName(name, ctx, ownPanelistName)) {
         return {
           ok: false,
           error: "That name is already used by a council participant. Ask for a different name.",
@@ -479,8 +496,19 @@ export function createSetupAgentToolHandlers(ctx: SetupAgentToolContext): Record
       }
       useMeetingSetupStore.getState().setVisitorName(name);
 
-      if (!getCapabilities().typedSetup) {
+      if (installation) {
         const store = useMeetingSetupStore.getState();
+        if (store.numberOfHumans > 0) {
+          // A corrected name renames the visitor's panelist too, or the meeting would address
+          // the visitor by one name while the council seats them under another.
+          store.setHumans((prev) => {
+            const next = [...prev];
+            if (next[0]) {
+              next[0] = { ...next[0], name };
+            }
+            return next;
+          });
+        }
         if (store.numberOfHumans === 0) {
           store.setHumans((prev) => {
             const next = [...prev];

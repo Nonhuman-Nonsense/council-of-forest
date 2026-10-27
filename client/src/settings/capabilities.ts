@@ -105,9 +105,9 @@ export type Capabilities = {
   installationReload: boolean;
   /**
    * Print each live meeting's protocol on the installation's printer, through
-   * the local bridge, once staff have switched printing on. A museum visitor
-   * takes the protocol home on paper; at a screening the audience is shown it,
-   * and nobody wants the printer going mid-talk.
+   * the local bridge, once staff have switched printing on. A visitor takes the
+   * protocol home on paper. Staff leave printing off at a screening that should
+   * not have the printer going mid-talk.
    */
   printSummary: boolean;
   /**
@@ -118,22 +118,10 @@ export type Capabilities = {
   kioskHeartbeat: boolean;
   /**
    * A meeting that ends in a letter may send it by email (docs/council-letters.md), when the
-   * human was there to answer. Only the museum: on the web anyone could write to real people
-   * from their sofa, and a screening's letters are a demonstration. Elsewhere the letter is
-   * still written and shown, marked unsent.
+   * human was there to answer. Only the installations: on the web anyone could write to real
+   * people from their sofa. There the letter is still written and shown, marked unsent.
    */
   sendsLetters: boolean;
-  /**
-   * TEMPORARY (screening, Sat 10 Oct 2026): topic id → the agenda point (1-based) the
-   * chair always opens with, instead of a random one. Remove after the screening.
-   */
-  pinnedAgendaPoints: Readonly<Partial<Record<string, number>>>;
-  /**
-   * Cmd+S (Ctrl+S off the Mac) opens the staff page, so staff with a keyboard plugged into an
-   * installation can reach it without a mouse. On the web a visitor saving out of habit would
-   * land on it instead.
-   */
-  staffShortcut: boolean;
   /**
    * Always load the full-size media (character videos, stage background), even when the
    * viewport is short enough to count as a phone. Installation staff zoom the page in to
@@ -165,8 +153,6 @@ const WEB: Capabilities = {
   printSummary: false,
   kioskHeartbeat: false,
   sendsLetters: false,
-  pinnedAgendaPoints: {},
-  staffShortcut: false,
   fullResolutionMedia: false,
 };
 
@@ -191,8 +177,6 @@ const MUSEUM: Capabilities = {
   printSummary: true,
   kioskHeartbeat: true,
   sendsLetters: true,
-  pinnedAgendaPoints: {},
-  staffShortcut: true,
   fullResolutionMedia: true,
 };
 
@@ -202,11 +186,9 @@ const MUSEUM: Capabilities = {
  * must wait for them. Chrome, teleprompter, meta agent, push-to-talk and
  * self-healing are the museum's.
  *
- * It doesn't print protocols either: a screening shows the protocol to the
- * room, and a printer starting up mid-talk only interrupts.
- *
- * Nor does it send letters: a screening's letter is a demonstration, not one
- * written with a visitor.
+ * It prints and sends letters like the museum, so a screening ends the same way:
+ * the letter goes out, prints, and the credits roll. Staff's Print summaries
+ * switch still decides whether this installation prints.
  *
  * Adding human panelists is the exception: a presenter has a keyboard, and
  * putting people on the council by hand is part of showing the piece off. The
@@ -220,10 +202,6 @@ const PRESENTER: Capabilities = {
   autoReturnToLanding: false,
   autoplay: false,
   typedSetup: true,
-  printSummary: false,
-  sendsLetters: false,
-  // TEMPORARY: the mining screening opens on "Who Can Say No? Uranium and the Local Veto".
-  pinnedAgendaPoints: { mining: 5 },
 };
 
 const CAPABILITIES: Record<AppMode, Capabilities> = {

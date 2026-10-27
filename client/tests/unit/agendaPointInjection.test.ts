@@ -6,9 +6,6 @@ import {
   injectRandomAgendaPoint,
   pickAgendaPoint,
 } from "@shared/agendaPointInjection";
-import { capabilitiesFor } from "@/settings/capabilities";
-import topicsEn from "@shared/prompts/topics_en.json";
-import topicsSv from "@shared/prompts/topics_sv.json";
 
 describe("agendaPointInjection", () => {
   afterEach(() => {
@@ -69,17 +66,5 @@ describe("agendaPointInjection", () => {
       const result = injectRandomAgendaPoint(`Step: ${RANDOM_AGENDA_POINT_PLACEHOLDER}`, []);
       expect(result).toBe(`Step: ${RANDOM_AGENDA_POINT_FALLBACK}`);
     });
-  });
-});
-
-// TEMPORARY (mining screening, Oct 2026): remove with the presenter's pinnedAgendaPoints.
-describe("presenter's pinned mining agenda point", () => {
-  it.each([
-    ["en", topicsEn],
-    ["sv", topicsSv],
-  ])("is the uranium point (%s)", (_lang, bundle) => {
-    const point = capabilitiesFor("presenter").pinnedAgendaPoints.mining!;
-    const mining = bundle.topics.find((topic) => topic.id === "mining");
-    expect(mining?.agendaPoints?.[point - 1]).toMatch(/uran/i);
   });
 });

@@ -61,6 +61,11 @@ export interface Character {
     name: string;
     voice: VoiceOption | string;
     description: string;
+    /**
+     * Everyday names visitors use for this character instead of `name` — "biet"
+     * for Humlan. Only the setup agent reads them, to recognise who is meant.
+     */
+    aliases?: string[];
     prompt: string;
     voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
     voiceLocale?: string;
@@ -80,6 +85,8 @@ export interface CharacterSetupData {
         last_updated: string;
     };
     panelWithHumans: string;
+    /** Chair rule injected at `[SINGLE_AGENDA_POINT]` only when the agenda has exactly one point. */
+    singleAgendaPoint?: string;
     addHuman: {
         id: string;
         name: string;

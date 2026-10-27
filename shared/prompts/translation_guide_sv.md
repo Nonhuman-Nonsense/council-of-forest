@@ -23,7 +23,7 @@ The political facts behind the prompts, their dates and sources live in
   headings, bullet lists, or stage directions in what beings say aloud. Prompt
   instructions themselves may keep their structure.
 - **Leave mechanics intact.** Do not translate placeholders (`[TOPIC]`,
-  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
+  `[AGENDA_POINTS]`, `[RANDOM_AGENDA_POINT]`, `[SINGLE_AGENDA_POINT]`, `[CHARACTERS]`, `[HUMANS]`,
   `[VISITOR_INPUT]`, `[CURRENT_DATE]`), JSON keys, ids, law numbers (`1971:437`), Latin species
   names (`Pinus contorta`, `Cladina spp.`), or numeric data.
 - **Name the parties in Swedish.** The English prompts stay structural ("the
@@ -40,6 +40,13 @@ The political facts behind the prompts, their dates and sources live in
   `RECENT DEVELOPMENTS (verified <month year>)`. Absolute dates only — the model
   has no idea when now is. Never write the present date into a prompt;
   `[CURRENT_DATE]` is injected at meeting setup.
+- **Explain names for a Swedish audience, not an international one.** Each name
+  gets a few words at its first appearance (`facts_and_sources.md` §2), but the
+  glosses differ by language. English explains *sameby*, *Ringhals* and *Rally
+  Sweden*; Swedish leaves those bare and explains what a Swedish visitor would not
+  know: *Bergsstaten, myndigheten som prövar gruvtillstånd*; *Natura
+  2000-tillstånd*; *FSC, en frivillig märkning för ansvarsfullt skogsbruk*. Party
+  abbreviations need no gloss in Swedish.
 
 ### Global conventions
 
@@ -71,8 +78,8 @@ The political facts behind the prompts, their dates and sources live in
 
 **`beings_<lang>.json`**
 
-- `panelWithHumans`, `addHuman`, `characters[]` (`id`, `name`, `description`,
-  `prompt`).
+- `panelWithHumans`, `singleAgendaPoint` (River's rule for a one-point agenda),
+  `addHuman`, `characters[]` (`id`, `name`, `description`, `prompt`).
 - Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
   text fields only — do not copy English Inworld voice settings.
 
@@ -337,6 +344,9 @@ Format: **English** → **Swedish** — *notes*.
 | financial guarantee (closure) | ekonomisk säkerhet | Blaiken: 2.3 MSEK vs ≥427 MSEK clean-up |
 | settling basin | sedimenteringsbassäng | Saivastjärnen, Laisvall |
 | alum shale | alunskiffer | inquiry on municipal influence, June 2026 |
+| national river | nationalälv | Kalix, Torne, Pite, Vindel; protected from hydropower since 1993 |
+| riverbed | älvfåra | Kalix exploration area, 2026 |
+| national interest for outdoor recreation | riksintresse för friluftsliv | |
 
 ### 2.10 General framing concepts
 
