@@ -36,7 +36,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
 import path from "node:path";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "node:crypto";
 import type { Character, HumanMessage, Message, Topic } from "@shared/ModelTypes.js";
 import type { StoredMeeting } from "@models/DBModels.js";
 import { buildMeetingSystemPrompt } from "@shared/topicPrompt.js";
@@ -197,7 +197,7 @@ const nameOf = (meeting: StoredMeeting, id: string | undefined) => meeting.chara
 /** As HumanInputHandler stores a human's words. */
 function humanMessage(meeting: StoredMeeting, humanName: string, text: string, askParticular?: string): HumanMessage {
     return {
-        id: "human-" + uuidv4(),
+        id: "human-" + randomUUID(),
         type: "human",
         speaker: humanName,
         text: humanName + (meeting.language === "en" ? " said:\xa0" : " sa:\xa0") + text,
@@ -422,7 +422,7 @@ async function runSample(run: Run, base: StoredMeeting, cut: Cut): Promise<Sampl
             const output = await run.dialogGenerator.generateResponse(speaker, meeting, meeting.characters.indexOf(speaker));
             const previous = meeting.conversation[meeting.conversation.length - 1];
             const message: Message = {
-                id: output.id || uuidv4(),
+                id: output.id || randomUUID(),
                 speaker: speaker.id,
                 text: output.response,
                 sentences: output.sentences || [],
