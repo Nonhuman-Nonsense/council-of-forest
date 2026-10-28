@@ -10,7 +10,7 @@
   },
   "landing": {
     "welcome": "welcome to",
-    "description": "A political arena where the forest itself speaks, through the use of artificial intelligence. Join the forest's inhabitants as they debate deforestation, rewilding, and the fate of their shared home.",
+    "description": "What if the forest were someone rather than something? Join a council where the river, the reindeer, the lichen and other beings of the Vindelälven biosphere area speak through AI.",
     "go": "Let's go!"
   },
   "meeting": {
@@ -320,7 +320,7 @@
     "catalogueTranslation": "Translation Catalogue"
   },
   "disclaimer": {
-    "intro": "This document was created by the Council of Forest, a political arena where the forest itself speaks, through the use of artificial intelligence. While every effort has been made to generate meaningful content, please note the following:",
+    "intro": "This document was created by the Council of Forest, where the river, the reindeer, the lichen and other beings of the Vindelälven biosphere area speak through AI. While every effort has been made to generate meaningful content, please note the following:",
     "items": {
       "misinformation": "This document may contain misinformation, outdated details, propaganda, or bad ideas.",
       "notResearch": "The discussions may provide useful insights and reflect diverse ethical positions but should not replace evidence-based research or deep contemplation.",

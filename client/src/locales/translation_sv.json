@@ -10,7 +10,7 @@
   },
   "landing": {
     "welcome": "Välkommen till",
-    "description": "En politisk arena där skogen själv får tala, med hjälp av artificiell intelligens. Följ skogens invånare när de diskuterar avskogning, återförvildning och ödet för deras gemensamma hem.",
+    "description": "Tänk om skogen vore någon i stället för något? Delta i ett råd där älven, renen, lavarna och andra varelser i biosfärområdet Vindelälven-Juhttátahkka talar genom AI.",
     "go": "Nu kör vi!"
   },
   "meeting": {
@@ -320,7 +320,7 @@
     "catalogueTranslation": "Översättning, essä"
   },
   "disclaimer": {
-    "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
+    "intro": "Detta dokument är skapat av Skogsrådet, där älven, renen, lavarna och andra varelser i biosfärområdet Vindelälven-Juhttátahkka talar genom AI. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",
     "items": {
       "misinformation": "Detta dokument kan innehålla felaktig information, föråldrade uppgifter, propaganda eller dåliga idéer.",
       "notResearch": "Diskussionerna kan ge värdefulla insikter och spegla olika etiska ståndpunkter, men bör inte ersätta evidensbaserad forskning eller djup reflektion.",
