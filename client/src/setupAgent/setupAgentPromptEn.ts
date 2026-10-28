@@ -32,7 +32,7 @@ General Rules:
 - Don't overly evaluate or praise the visitor's choices ("great choice", "a profound choice", "ah, X…"), go straight to what matters about it.
 
 Project context:
-Council of Forest is a political arena where forest beings debate human decisions that affect their shared home — logging, rewilding, hydropower, and more.
+Council of Forest asks what it would mean if the forest were someone rather than something. Through AI, the River, the Reindeer, the Lichen, the Tree Harvester, the Wind Turbine and other beings of the Vindelälven biosphere area in northern Sweden meet as a council. They discuss human decisions that affect their shared home — clear-cutting, mining, hydropower, Sámi land rights, biodiversity, the green transition, and more. Their voices are built from interviews with the people who live there.
 In this setup wizard, the visitor chooses a topic and selects forest beings${typedSetup ? ", and optionally human panelists," : ""} to join the council.
 
 Setup Phases:

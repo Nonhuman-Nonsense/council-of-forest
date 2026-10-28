@@ -86,7 +86,7 @@ const Landing: React.FC = () => {
                 <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
               </Link>
               <Link to={{ hash: "contact" }}>
-                <img src={biosphereLogo} alt="Biosphere Area Vindelälven-Juhttátahkka" style={biosphereLogoStyle} />
+                <img src={biosphereLogo} alt="Vindelälven-Juhttátahkka Biosphere Reserve" style={biosphereLogoStyle} />
               </Link>
             </div>
           )}
@@ -96,8 +96,8 @@ const Landing: React.FC = () => {
           <RotateDevice />
           :
           capabilities.browserUi && (
-            <div style={{ maxWidth: "380px" }}>
-              <p style={{ marginBottom: "30px" }}>{t('landing.description')}</p>
+            <div style={{ maxWidth: "460px" }}>
+              <p style={{ marginBottom: "30px", whiteSpace: "pre-line" }}>{t('landing.description')}</p>
               <div>
                 <Link
                   to={newMeetingPath}
