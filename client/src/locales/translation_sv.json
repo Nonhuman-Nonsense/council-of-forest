@@ -10,7 +10,7 @@
   },
   "landing": {
     "welcome": "Välkommen till",
-    "description": "En politisk arena där skogen själv får tala, med hjälp av artificiell intelligens. Följ skogens invånare när de diskuterar avskogning, återvildning och ödet för deras gemensamma hem.",
+    "description": "En politisk arena där skogen själv får tala, med hjälp av artificiell intelligens. Följ skogens invånare när de diskuterar avskogning, återförvildning och ödet för deras gemensamma hem.",
     "go": "Nu kör vi!"
   },
   "meeting": {
@@ -55,12 +55,12 @@
   },
   "about": {
     "label": "Info",
-    "body": "Vad skulle en urgammal tall säga om avskogning? Hur skulle fiskar reagera på ett vattenkraftverk? Kan AI förmedla visdomen hos en flod, ett träd eller en renhjord?\n\nGenom AI samlas icke-mänskliga varelser—träd, svampar, floder och djur—för att överlägga om ödet för deras gemensamma hem. Deras röster formas av en blandning av kunskapssystem, inklusive traditionella och ursprungliga perspektiv, ekologisk vetenskap och data. De är hämtade från intervjuer och samtal med människor som lever i och vårdar Vindelälven-Juhttátahkka biosfärområde—renskötare, skogsägare, återvildningsorganisationer, pollinator-experter och kulturarbetare—var och en med djup anknytning till naturen.\n\nSkogsrådet fungerar som ett forum där skogens invånare uttrycker sina behov och reflekterar över mänskliga aktiviteter som skogsavverkning, återvildning och klimatförändringar. Människor är inbjudna att lyssna, ställa frågor och reflektera. Varje session avslutas med ett gemensamt uttalande och en policyrekommendation från skogen. Det är ett experiment i ekologiskt tänkande och spekulativ design—som utforskar hur teknologi kan fungera som brygga mellan människor och den mer-än-mänskliga världen.\n\nVad innebär det att agera i skogens bästa intresse? Vems kunskap räknas? Och vad händer när vi tar icke-mänskliga röster på allvar?",
-    "creditLine": "ett projekt av\n<0>Nonhuman Nonsense</0>\ni samarbete med <1>Biosfärområdet Vindelälven-Juhttátahkka</1>"
+    "body": "Vad skulle en uråldrig tall säga om kalhyggen? Hur skulle laxen reagera på ett vattenkraftverk? Kan AI förkroppsliga visdomen hos en älv, ett berg eller en renhjord?\n\nMed hjälp av AI får träd, floder, lavar, djur och andra invånare i landskapet egna röster och perspektiv. Kring rådets bord möts de för att diskutera frågor som rör deras gemensamma framtid: den gröna omställningen, skogsavverkning, återförvildning och klimatförändringar. Människor är inte bara observatörer, utan går in i en dialog som utforskar vad det kan betyda att fatta beslut tillsammans med, och inte enbart för, den mer-än-mänskliga världen.\n\nSkogens röster formas av flera sammanvävda kunskapstraditioner och erfarenheter, däribland samisk och annan lokal kunskap, ekologisk forskning och miljödata. De bygger på forskningsartiklar, policydokument och samtal med människor som lever i och vårdar området kring Vindelälven: renskötare, skogsägare, rewildingorganisationer, pollinatörsexperter, forskare och kulturarbetare, var och en med sin egen relation till landskapet.\n\nEtt experiment i ekologiskt tänkande och spekulativ design som undersöker hur teknologi kan medla mellan människor och den mer-än-mänskliga världen.\n\nVad innebär det att agera i skogens bästa intresse? Vems kunskap räknas? Och vad händer när vi tar icke-mänskliga röster på allvar?",
+    "creditLine": "ett projekt av\n<0>Nonhuman Nonsense</0>\ni samarbete med <1>Biosfärområde Vindelälven-Juhttátahkka</1>"
   },
   "contact": {
     "label": "Kontakt",
-    "credits": "Projektet är ett initiativ av konst & designkollektivet <nhn>Nonhuman Nonsense</nhn> utvecklat i samarbete med <biosphere>Biosfärområdet Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, <jonas>Jonas Thunberg</jonas>, Johannes Rydinger, <albin>Albin Karlsson</albin>, med flera.",
+    "credits": "Projektet är ett initiativ av konst- och designkollektivet <nhn>Nonhuman Nonsense</nhn>, utvecklat i samarbete med <biosphere>Biosfärområde Vindelälven-Juhttátahkka</biosphere>, Daniela Nedelcheva, <gundega>Gundega Strauberga</gundega>, <jonas>Jonas Thunberg</jonas>, Johannes Rydinger, <albin>Albin Karlsson</albin>, med flera.",
     "interviews": "Baserat på intervjuer med Marja Skum, Göran Jonsson, Maidi Eira-Andersson, Anders Granér, Daniel Holmqvist, Erik Alnersson, Isak Landström, Tommy Sandström, Lisa Jonsson, Cecilia Wallinder, Angelika Schindler-Egl, Bertil Nygren.",
     "funding": "Skogsrådet är finansierat av <vinnova>Vinnova (ref. nr. 2025-00344)</vinnova> och är en fortsättning av projektet <cof>Council of Foods</cof> som har fått stöd av Europeiska Unionens <horizon>Horizon Europe forsknings- och innovationsprogram under avtal 101069990</horizon>.",
     "fundingImageAlt": "Finansierat av Vinnova",
@@ -304,18 +304,20 @@
   },
   "credits": {
     "thankYou": "Tack",
-    "intro": "Skogsrådet är ett initiativ av konst- och designkollektivet Nonhuman Nonsense, utvecklat i samarbete med Biosfärområdet Vindelälven-Juhttátahkka. Det bygger på intervjuer och samtal med lokala experter, och hade aldrig varit möjligt utan bidragen från alla de invånare i biosfärområdet som vi har mött.",
-    "biosphereCollaborator": "Samarbetspartner i biosfärområdet",
+    "intro": "Skogsrådet är ett initiativ av konst- och designkollektivet Nonhuman Nonsense, utvecklat i samarbete med Biosfärområde Vindelälven-Juhttátahkka. Verket bygger på intervjuer och samtal med lokala experter och hade aldrig blivit möjligt utan bidragen från alla de människor i biosfärområdet som vi har mött.",
+    "biosphereCollaborator": "Samarbetspartner, biosfärområdet",
     "interviews": "Baserat på intervjuer med",
-    "fisheriesConsultant": "Fiskerikonsult",
+    "granSameby": "Gran sameby",
+    "ranSameby": "Ran sameby",
+    "fisheriesConsultant": "Fiskekonsult",
     "forestryConsultant": "Skogskonsult",
-    "forester": "Skogsförvaltare",
-    "support": "Medverkande",
+    "forester": "Skogsbrukare",
+    "support": "Produktion",
     "filmProduction": "Filmproduktion",
-    "animationProduction": "Animationsproduktion",
+    "animationProduction": "Animation",
     "programming": "Programmering",
     "soundDesign": "Ljuddesign",
-    "catalogueTranslation": "Översättning, katalog"
+    "catalogueTranslation": "Översättning, essä"
   },
   "disclaimer": {
     "intro": "Detta dokument är skapat av Skogsrådet, en politisk arena där skogen själv talar, genom användning av artificiell intelligens. Trots att varje ansträngning har gjorts för att skapa meningsfullt innehåll, vänligen notera:",

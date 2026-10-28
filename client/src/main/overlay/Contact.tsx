@@ -40,7 +40,7 @@ function Contact(): React.ReactElement {
         </a>
         <a href="https://vindelalvenbiosfar.se/">
           <img
-            alt="Biosphere Area Vindelälven-Juhttátahkka"
+            alt="Vindelälven-Juhttátahkka Biosphere Reserve"
             src={biosphereLogo}
             style={{
               maxWidth: isMobile ? "80px" : "150px",

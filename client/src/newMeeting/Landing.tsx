@@ -86,7 +86,7 @@ const Landing: React.FC = () => {
                 <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
               </Link>
               <Link to={{ hash: "contact" }}>
-                <img src={biosphereLogo} alt="Biosphere Area Vindelälven-Juhttátahkka" style={biosphereLogoStyle} />
+                <img src={biosphereLogo} alt="Vindelälven-Juhttátahkka Biosphere Reserve" style={biosphereLogoStyle} />
               </Link>
             </div>
           )}

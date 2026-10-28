@@ -34,7 +34,7 @@ describe("About", () => {
       "href",
       "/#contact",
     );
-    expect(screen.getByRole("link", { name: /Biosphere Area Vindelälven-Juhttátahkka/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Vindelälven-Juhttátahkka Biosphere Reserve/ })).toHaveAttribute(
       "href",
       "/#contact",
     );
