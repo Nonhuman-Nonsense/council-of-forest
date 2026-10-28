@@ -44,7 +44,22 @@
   "replay": {
     "preamble": "Detta är en repris av möte #{{meetingId}}: {{meetingTitle}} den {{meetingDate}}. ",
     "click": "Klicka här för att starta ett nytt möte.",
-    "pressButton": "Tryck på knappen för att starta ett nytt möte."
+    "pressButton": "Tryck på knappen för att starta ett nytt möte.",
+    "intro": {
+      "meeting": "Möte #{{meetingId}}",
+      "email": "Du har fått ett mejl från {{author}}, som var med på det här mötet om {{topic}} den {{date}}.",
+      "emailAtVenue": "Du har fått ett mejl från {{author}}, som var med på det här mötet om {{topic}} den {{date}} på {{venue}}.",
+      "someBeing": "en av skogens varelser",
+      "customTopic": "en besökares egen fråga",
+      "replay": "Det här är en repris av ett möte om {{topic}} den {{date}}.",
+      "replayAtVenue": "Det här är en repris av ett möte om {{topic}} den {{date}} på {{venue}}.",
+      "topicLabel": "Ämne:",
+      "agendaLabel": "Första agendapunkten:",
+      "participantsLabel": "Deltagare:",
+      "human": "{{name}} (människa)",
+      "emailWatch": "Det här är en repris av det mötet. Titta för att se hur mejlet kom till.",
+      "emailReply": "Svara gärna på mejlet, så ser vi till att ditt svar når fram!"
+    }
   },
   "autoplay": {
     "stillThere": {

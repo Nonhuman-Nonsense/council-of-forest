@@ -1,8 +1,12 @@
 import type { Character, Meeting, Topic } from "@shared/ModelTypes";
 import { isSpeakerMessage } from "@shared/ModelTypes";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import CouncilOverlays from "./overlays/CouncilOverlays";
+import ReplayIntro from "./overlays/ReplayIntro";
+import OverlayWrapper from "@main/overlay/OverlayWrapper";
+import { replayIntroFacts, replayIntroKindOf, takeReplayIntro } from "./replayIntro";
+import { setAudioSuspended } from "@/audio/audioContext";
 import Loading from "@main/Loading";
 import Output from "./output/Output";
 import ConversationControls from "./ConversationControls";
@@ -66,6 +70,19 @@ function Council({
   // resets on unmount; MeetingMetaAgent is the consumer on Forest (scene zoom uses currentSpeakerId).
   const [metaAgentPhase, setMetaAgentPhase] = useState<MetaAgentPhase>("inactive");
   const [summaryPlayback, setSummaryPlayback] = useState<SummaryPlaybackState>(null);
+
+  // Someone landing straight on a replay first sees what it is: a hash overlay, so the meeting
+  // holds paused under it like under any other. Anywhere it does not belong, the hash goes.
+  useEffect(() => {
+    if (!meetingId) return;
+    const offersIntro = capabilities.replayIntro && !liveKey;
+    const kind = offersIntro ? takeReplayIntro(meetingId) : null;
+    if (kind) {
+      navigate({ hash: `#${kind}` }, { replace: true });
+    } else if (!offersIntro && replayIntroKindOf(location.hash)) {
+      navigate({ hash: "" }, { replace: true });
+    }
+  }, [meetingId]);
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
@@ -244,7 +261,25 @@ function Council({
   // imminent human turn during this window, not the meta-agent — see MeetingMetaAgent.
   const invitationPlaying = textMessages[playingNowIndex]?.type === "invitation";
   const isWaitingToInterject = isRaisedHand && councilState !== 'human_input';
-  const controlsVisible = (
+  const replayIntroKind = capabilities.replayIntro && !liveKey ? replayIntroKindOf(location.hash) : null;
+  const introFacts = useMemo(() => (replayManifest ? replayIntroFacts(replayManifest) : null), [replayManifest]);
+  const introOpen = replayIntroKind !== null && introFacts !== null && visibleOverlay === null;
+  // Watching closes the intro, then plays once its hash is gone: unpausing while it is still in the
+  // URL would only have the hash pause the meeting again. The audio bus wakes inside the click, so
+  // the browser lets the sound start on a page nobody touched before.
+  const resumeAfterIntro = useRef(false);
+  const watchReplay = useCallback(() => {
+    setAudioSuspended(audioContext, false);
+    resumeAfterIntro.current = true;
+    navigate({ hash: "" }, { replace: true });
+  }, [audioContext, navigate]);
+  useEffect(() => {
+    if (resumeAfterIntro.current && !replayIntroKindOf(location.hash)) {
+      resumeAfterIntro.current = false;
+      setPaused(false);
+    }
+  }, [location.hash, setPaused]);
+  const controlsVisible = !introOpen && (
     councilState === "playing" ||
     councilState === "waiting" ||
     (councilState === "summary" && tryToFindTextAndAudio())
@@ -366,6 +401,16 @@ function Council({
           )}
           <ButtonBanner inline />
         </div>
+
+        {/* The replay intro covers the footer too, unlike council overlays: nothing has played yet,
+            so the paused first subtitle and the replay banner would only talk over it. */}
+        {introOpen && replayIntroKind && introFacts && (
+          <div className="council-shell__intro blur">
+            <OverlayWrapper showX={true} cancelOverlay={watchReplay}>
+              <ReplayIntro kind={replayIntroKind} facts={introFacts} onWatch={watchReplay} />
+            </OverlayWrapper>
+          </div>
+        )}
       </div>
     </>
   );
