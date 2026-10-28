@@ -28,7 +28,7 @@ describe("About", () => {
 
     // The credit line is stable boilerplate ("who made this"), not themed copy, so it's
     // safe to assert directly.
-    expect(screen.getByText(/a project by/)).toBeInTheDocument();
+    expect(screen.getByText(/a project by/i)).toBeInTheDocument();
     expect(screen.getByText(/in collaboration with/)).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Nonhuman Nonsense" })[0]).toHaveAttribute(
       "href",

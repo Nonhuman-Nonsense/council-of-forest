@@ -20,6 +20,7 @@ function About(): React.ReactElement {
   const wrapper: React.CSSProperties = {
     width: isPortait ? "80vw" : undefined,
     maxWidth: isMobile ? "600px" : "550px",
+    textAlign: "left",
   };
 
   return (

@@ -23,6 +23,12 @@ function Contact(): React.ReactElement {
     alignItems: "center",
   };
 
+  // Logos stay centred; the text reads better left-aligned.
+  const textStyle: React.CSSProperties = {
+    alignSelf: "stretch",
+    textAlign: "left",
+  };
+
   return (
     <div style={wrapper}>
       <div style={{ display: "flex", alignItems: "center" }}>
@@ -50,11 +56,11 @@ function Contact(): React.ReactElement {
           />
         </a>
       </div>
-      <p>
+      <p style={textStyle}>
         <Trans i18nKey="contact.credits" components={externalLinks} />
       </p>
-      <p>{t("contact.interviews")}</p>
-      <p>
+      <p style={textStyle}>{t("contact.interviews")}</p>
+      <p style={textStyle}>
         <Trans i18nKey="contact.funding" components={externalLinks} />
       </p>
       <a href="https://www.vinnova.se/en/p/council-of-the-forest">
