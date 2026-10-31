@@ -7,6 +7,8 @@ import { installServerLogSink } from "@/logging/serverLogSink";
 import { installSignOfLife } from "@/signOfLife";
 import { startKioskHeartbeat } from "@/kioskHeartbeat";
 import { getCapabilities } from "@/settings/councilSettings";
+import { findMissingFeatures, type BrowserFeature } from "@/browserSupport";
+import { useErrorStore } from "@main/overlay/errorStore";
 
 applyZIndexCssVariables();
 installGlobalErrorHandlers();
@@ -16,11 +18,22 @@ installServerLogSink();
 installSignOfLife();
 startKioskHeartbeat(() => getCapabilities().kioskHeartbeat);
 
-const container = document.getElementById("root");
-if (!container) throw new Error("Failed to find the root element");
-const root = ReactDOM.createRoot(container);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// index.html already told a browser too old for the bundle; React would only paint over it.
+if (!document.documentElement.hasAttribute("data-unsupported")) {
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Failed to find the root element");
+  const root = ReactDOM.createRoot(container);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+
+  // TEMPORARY preview flag: `?unsupported=ogg-opus` (any feature names, comma-separated) shows
+  // the unsupported-browser screen on a browser that is fine. Remove once the copy is signed off.
+  const forced = new URLSearchParams(window.location.search).get("unsupported");
+  // Alongside startup, not before it: supported browsers wait for nothing.
+  void (forced ? Promise.resolve(forced.split(",") as BrowserFeature[]) : findMissingFeatures()).then((missing) => {
+    if (missing.length > 0) useErrorStore.getState().setUnsupportedBrowser(missing);
+  });
+}
