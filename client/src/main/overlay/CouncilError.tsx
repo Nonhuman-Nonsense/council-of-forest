@@ -48,16 +48,14 @@ function UnsupportedBrowser(): React.ReactElement {
       <p style={{ marginTop: "4px", whiteSpace: "pre-line" }}>{t("error.unsupportedMessage")}</p>
       {copied === false ? (
         <p style={{ userSelect: "all", wordBreak: "break-all" }}>{window.location.href}</p>
-      ) : copied ? (
-        <p role="status">{t("error.linkCopied")}</p>
       ) : (
         <button
           type="button"
           style={{ marginTop: "10px" }}
           onClick={copyLink}
-          disabled={!navigator.clipboard}
+          disabled={copied === true || !navigator.clipboard}
         >
-          {t("error.copyLink")}
+          {copied ? t("error.linkCopied") : t("error.copyLink")}
         </button>
       )}
     </div>
