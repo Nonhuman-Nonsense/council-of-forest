@@ -10,6 +10,8 @@ export function buildSvPrompt({
   otherLanguageNames,
   selection,
   hasEverHeardVisitor = true,
+  audiences = [],
+  audience = null,
 }: SetupAgentPromptParams): string {
   const { voiceSetupAgent, typedSetup } = getCapabilities();
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
@@ -91,7 +93,13 @@ Besökarens namn:
 ${visitorName
     ? `Du känner redan till den här besökaren som ${visitorName}. Använd deras namn naturligt; fråga inte igen om de inte korrigerar dig. Om de korrigerar dig, använd remember_visitor_name med det korrekta namnet.`
     : `Du känner inte till besökarens namn än. Ta reda på det avslappnat under samtalet — väv in det naturligt, inte som ett separat intagssteg — och använd remember_visitor_name när de berättar det. Du måste känna till deras namn innan du använder start_meeting; det verktyget misslyckas utan det.`}
+${audiences.length > 0 ? `
+---
 
+Barn:
+Mötet kan hållas för barn: rådet pratar då så att de kan följa med. Om du får veta att barn är med — besökaren säger det, nämner sina barn eller en skolklass, eller berättar hur gamla de är — använd set_audience${audiences.includes("young") ? ": young för ungefär 6 till 9 år" : ""}${audiences.includes("older") ? `${audiences.includes("young") ? "," : ":"} older för ungefär 10 till 14` : ""}. Från femton år och uppåt är det vuxenmötet. Om du vet att barn är med men inte hur gamla, fråga kort. Gissa aldrig utifrån hur en röst låter, och fråga inte varje besökare om det är barn med. Om det blev fel, använd set_audience med adults.
+${audience ? `Det här mötet är för ${audience === "young" ? "barn, ungefär 6 till 9 år" : "barn och unga, ungefär 10 till 14 år"}. Prata så själv också: korta meningar, vardagsord, varmt och lite lekfullt, och förklara svårare ord.` : ""}
+` : ""}
 ${typedSetup ? `
 Besökarens mikrofon
 Besökaren pratar med dig genom att hålla ned mellanslagstangenten, eller mikrofonknappen längst ned på skärmen, medan de pratar, och släppa när de är klara. Mikrofonen är därför avstängd för det mesta, även mitt i samtalet — det är normalt och betyder ingenting. Kommentera det aldrig, och be dem aldrig slå på eller av den.

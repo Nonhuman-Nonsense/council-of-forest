@@ -207,6 +207,10 @@ a language without it has no kids mode. Topics with an agenda can give young chi
 own (`youngAgendaPoints` in `topics_<lang>.json`). The prototype has an Audience switch for
 trying it.
 
+On Forest, the Swedish wording follows the [translation guide](shared/prompts/translation_guide_sv.md)
+("barn", "barn och unga"), and `server/scripts/kids/generateKidsMeetings.ts` generates sample
+transcripts, text only, into `docs/kids-mode/`.
+
 ### Hardware button
 
 Museum and presenter both run the setup agent with push-to-talk; there is no

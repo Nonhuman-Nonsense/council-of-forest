@@ -74,12 +74,23 @@ The political facts behind the prompts, their dates and sources live in
   lines to read aloud.
 - Every topic and the custom topic must carry a non-empty `agentBrief` in every
   language (`ValidateTopicsData`).
+- `youngAgendaPoints[]` — the agenda for a meeting held for young children (about
+  6–9), in place of `agendaPoints`. A question a child can picture, framed as
+  fairness or sharing, ending in `Kärnfråga:`. No new facts: only what the topic's
+  own prompt already says, in a child's words. Children of 10–14 keep the adult
+  agenda; their instructions simplify it.
 - Topic `id`s must match across languages.
 
 **`beings_<lang>.json`**
 
 - `panelWithHumans`, `singleAgendaPoint` (River's rule for a one-point agenda),
   `addHuman`, `characters[]` (`id`, `name`, `description`, `prompt`).
+- `audiences` — kids mode: for `young` (about 6–9) and `older` (about 10–14), a
+  `chair` text (Älven's opening and turn lengths) and an `everyone` text added
+  last to every council member's prompt, so it outranks their own rules on words
+  and length. Sadness is allowed and wanted where a topic is hard; despair and
+  horror are not. Both languages must offer the same audiences
+  (`ValidateFoodData`).
 - Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
   text fields only — do not copy English Inworld voice settings.
 
@@ -107,6 +118,8 @@ Format: **English** → **Swedish** — *notes*.
 | agenda point | dagordningspunkt / punkt på dagordning | |
 | chair / moderator | ordförande / moderator | |
 | stand-up | stand-up | kept |
+| young children (kids mode, about 6–9) | barn | not "små barn", which reads as under six |
+| older children (kids mode, about 10–14) | barn och unga | not "unga tonåringar" |
 | Add Human / Human | Människa | character/option label |
 | presenter (app mode) | Presentation | staff label, alongside Webb / Museum |
 | mode switch button | Lägesbytarknapp | staff label |
