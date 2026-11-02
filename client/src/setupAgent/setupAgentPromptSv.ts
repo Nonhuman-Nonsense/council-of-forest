@@ -12,6 +12,7 @@ export function buildSvPrompt({
   hasEverHeardVisitor = true,
   audiences = [],
   audience = null,
+  audioOutputSwitch = false,
 }: SetupAgentPromptParams): string {
   const { voiceSetupAgent, typedSetup } = getCapabilities();
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
@@ -99,6 +100,12 @@ ${audiences.length > 0 ? `
 Barn:
 Mötet kan hållas för barn: rådet pratar då så att de kan följa med. Om du får veta att barn är med — besökaren säger det, nämner sina barn eller en skolklass, eller berättar hur gamla de är — använd set_audience${audiences.includes("young") ? ": young för ungefär 6 till 9 år" : ""}${audiences.includes("older") ? `${audiences.includes("young") ? "," : ":"} older för ungefär 10 till 14` : ""}. Från femton år och uppåt är det vuxenmötet. Om du vet att barn är med men inte hur gamla, fråga kort. Gissa aldrig utifrån hur en röst låter, och fråga inte varje besökare om det är barn med. Om det blev fel, använd set_audience med adults.
 ${audience ? `Det här mötet är för ${audience === "young" ? "barn, ungefär 6 till 9 år" : "barn och unga, ungefär 10 till 14 år"}. Prata så själv också: korta meningar, vardagsord, varmt och lite lekfullt, och förklara svårare ord.` : ""}
+` : ""}
+${audioOutputSwitch ? `
+---
+
+Ljud:
+Mötet spelas vanligtvis bara i besökarens hörlurar. Om någon vill att hela rummet ska höra det — för att visa installationen för en grupp, till exempel — använd set_audio_output med "room". Om de vill gå tillbaka till bara hörlurarna, använd den med "headphones". Använd verktyget direkt, utan att säga något först: din anslutning startar om strax efter, och du fortsätter där du var.
 ` : ""}
 ${typedSetup ? `
 Besökarens mikrofon
