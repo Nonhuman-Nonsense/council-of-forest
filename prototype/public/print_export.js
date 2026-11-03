@@ -40,21 +40,6 @@
     return line.length <= 80 && !/[.!?]["”)]?$/.test(line) && !line.startsWith('-');
   }
 
-  // Older agenda points put the title and the text on one line: "Title: text…".
-  function splitAgendaPoint(text) {
-    const lines = text.trim().split('\n');
-    let title = lines[0].trim();
-    let rest = lines.slice(1).join('\n');
-    if (title.length > 110) {
-      const idx = title.indexOf(': ');
-      if (idx > 0 && idx < 90) {
-        rest = title.slice(idx + 2) + (rest ? '\n' + rest : '');
-        title = title.slice(0, idx);
-      }
-    }
-    return { title, body: rest.replace(/^\n+/, '') };
-  }
-
   // Prompt text as it should read on paper: no repeated title line, no "Context:" label.
   function cleanPromptText(prompt, lang) {
     const lines = prompt.trim().split('\n');
@@ -121,12 +106,14 @@
     const labels = labelsFor(lang);
     const paras = [{ style: 'title', text: topic.title }];
     paras.push(...parseBlock(cleanPromptText(topic.prompt || '', lang), lang));
+    // Each point is { title, text } (shared/ModelTypes.ts `AgendaPoint`).
     (topic.agendaPoints || []).forEach((point, index) => {
-      if (!point || !point.trim()) return;
-      const { title, body } = splitAgendaPoint(point);
+      const title = (point?.title || '').trim();
+      const text = (point?.text || '').trim();
+      if (!title && !text) return;
       paras.push({ style: 'agendaNumber', text: `${labels.agenda} ${index + 1}` });
       paras.push({ style: 'agendaTitle', text: title });
-      paras.push(...parseBlock(body, lang));
+      paras.push(...parseBlock(text, lang));
     });
     return paras;
   }
@@ -137,9 +124,10 @@
     const labels = labelsFor(lang);
     const parts = [topic.title.toUpperCase(), cleanPromptText(topic.prompt || '', lang)];
     (topic.agendaPoints || []).forEach((point, index) => {
-      if (!point || !point.trim()) return;
-      const { title, body } = splitAgendaPoint(point);
-      parts.push(`${labels.agenda} ${index + 1}\n${title}` + (body ? `\n\n${body.trim()}` : ''));
+      const title = (point?.title || '').trim();
+      const text = (point?.text || '').trim();
+      if (!title && !text) return;
+      parts.push(`${labels.agenda} ${index + 1}\n${title}` + (text ? `\n\n${text}` : ''));
     });
     return parts.join('\n\n') + '\n';
   }

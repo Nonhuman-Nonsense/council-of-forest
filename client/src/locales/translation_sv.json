@@ -365,6 +365,10 @@
     "noInternet": "Inget internet",
     "noInternetDetail": "Kontrollera nätverkskabeln eller wifi.",
     "serverUnreachable": "Når inte servern",
-    "serverUnreachableDetail": "Kontrollera internetanslutningen."
+    "serverUnreachableDetail": "Kontrollera internetanslutningen.",
+    "unsupportedTitle": "Rådet kan inte köras i den här webbläsaren",
+    "unsupportedMessage": "Rådet behöver kunna både tala och lyssna, och den här webbläsaren klarar inte båda.\nUppdatera den, eller öppna sidan i en aktuell version av Chrome, Firefox eller Safari.",
+    "copyLink": "Kopiera länk",
+    "linkCopied": "Länken är kopierad"
   }
 }

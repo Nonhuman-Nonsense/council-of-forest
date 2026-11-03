@@ -40,8 +40,9 @@ const iconWebpGlob = import.meta.glob("/src/assets/characters/icons/*.webp", {
     import: "default",
 }) as Record<string, string>;
 
-// Ogg/Opus: one file for every engine (Chromium, WebKit and Gecko all decode it via
-// decodeAudioData, so no Safari-specific CAF fallback is needed). Encoded with
+// Ogg/Opus: one file for every engine (Chromium, Gecko and WebKit from Safari 18.4 all decode
+// it via decodeAudioData, so no Safari-specific CAF fallback; older Safari is turned away by
+// browserSupport.ts). Encoded with
 // `ffmpeg -i in.mp3 -c:a libopus -b:a 64k -vbr on -application audio out.opus`
 // (96k for the ambience bed, which plays exposed on the landing page).
 const audioOpusGlob = import.meta.glob("/src/assets/characters/audio/*.opus", {

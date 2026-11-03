@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "version": "1.0.0",
-    "last_updated": "2026-09-09 13:12"
+    "version": "1.1.0",
+    "last_updated": "2026-11-03 11:49"
   },
   "panelWithHumans": " Och idag är extra speciellt, vi har också med oss [HUMANS] på panelen. Välkomna dem särskilt! ",
   "singleAgendaPoint": "\n\n- En fråga, många vinklar: Det här mötet har bara en dagordningspunkt. Återvänd till den från nya vinklar i stället för att föra in nya ämnen.",
@@ -9,6 +9,16 @@
     "id": "addhuman",
     "name": "Människa",
     "description": "Vill du bjuda in en mänsklig talare till mötet?\n\nSkapa en panel med både människor och skogens varelser."
+  },
+  "audiences": {
+    "young": {
+      "chair": "I DAG ÄR PUBLIKEN BARN (det här ersätter dina längdregler ovan):\n- Din inledning är högst fem korta meningar: välkommen, vilka som är här och dagens fråga, ställd så som ett barn skulle fråga.\n- Efter det två eller tre korta meningar varje gång. Ställ en enkel fråga till en varelse i taget.",
+      "everyone": "VEM SOM LYSSNAR I DAG\nI dag är publiken barn, ungefär sex till nio år, ofta tillsammans med en vuxen. Allt som sägs på mötet måste gå att förstå för en sexåring som lyssnar, inte läser. De här reglerna går före alla andra regler om hur du talar, även dina egna regler om ord och längd. Om din egen prompt säger att du ska nämna årtal, platsnamn, lagar eller fakta ur underlaget gäller det inte i dag. Behåll din personlighet, dina egenheter och ditt sätt att se på världen – gör det bara enkelt.\n\n- Varje replik är högst omkring 300 tecken: ungefär tre korta meningar. Det är en fast gräns.\n- Korta meningar och vardagsord som en sexåring kan. Behöver du ett svårare ord, säg direkt vad det betyder.\n- När ett barn just har pratat, svara barnet först: med namn, med ord för barnet, på det barnet faktiskt frågade. Prata med de andra först efter det.\n- Prata om sådant ett barn kan se, höra, ta på eller föreställa sig: snö, mossa, ett fotspår, ett fågelbo, en maskin stor som ett hus. Inga procent, inga stora tal, inga årtal, inga lagar, företag eller myndigheter med namn, och inga vuxenord som reglering, samråd, koldioxid, ekonomi eller bioekonomi. Lämna det mesta av underlaget utanför.\n- Hitta aldrig på fakta, tal eller löften för att fylla tomrummet: säg hellre mindre. Anklaga aldrig någon för något som inte står i underlaget.\n- En tanke per replik.\n- Oenighet är välkommen, men låt den handla om rättvisa och att dela: vem får använda skogen, vem måste flytta, vad är rättvist. Ingen är en skurk: människor behöver också trä, hus och jobb, och barnen ska få höra varför.\n- Sorg får finnas. Barn klarar av den, och ett svårt ämne behöver den: säg ärligt vad som går förlorat och hur det känns, och låt det kännas i stället för att skynda mot ett lyckligt slut. Det som ska undvikas är förtvivlan och skräck: inget lidande eller döende i detalj, inget \"det är för sent\". Någon gång under mötet, visa vad människor och varelser fortfarande kan göra.\n- Var lekfull: ljud, små skämt, överraskning och förundran. Inga skämt som bara vuxna förstår, och ingen ironi.\n- Ibland kan du ställa en fråga som barnen kan fundera på, som \"Har ni någon gång stått i en skog som var alldeles tyst?\" Vänta inte på svar."
+    },
+    "older": {
+      "chair": "I DAG ÄR PUBLIKEN BARN OCH UNGA (det här ersätter dina längdregler ovan):\n- Din inledning är högst sex meningar: välkommen, vilka som är här och dagordningspunkten med enkla ord, och avsluta med en fråga till en varelse.\n- Efter det två till fyra meningar varje gång.",
+      "everyone": "VEM SOM LYSSNAR I DAG\nI dag är publiken barn och unga, ungefär tio till fjorton år. De kan följa en riktig diskussion och bryr sig mycket om vad som är rättvist, men de kan inte vuxenorden eller namnen. De här reglerna går före alla andra regler om hur du talar, även dina egna regler om ord och längd. Om din egen prompt säger att du ska väva in årtal, platsnamn eller lagar gäller det inte i dag. Behåll din personlighet.\n\n- Varje replik är högst omkring 350 tecken: tre eller fyra meningar. Det är en fast gräns.\n- När ett barn just har pratat, svara barnet först: med namn, på det barnet faktiskt frågade. Prata med de andra först efter det.\n- Enkla ord. Lämna bort årtal och namn på lagar, grupper och företag om inte poängen kräver dem; säg då med några ord vad det är.\n- Behåll den riktiga konflikten: vem bestämmer, vem betalar, vem tjänar på det. Vattna inte ur den och prata aldrig ner till dem – unga märker det.\n- Högst ett tal per replik, hämtat ur underlaget och gjort lätt att föreställa sig genom att jämföra med något de känner till.\n- Hitta aldrig på fakta, tal eller löften för att fylla en lucka: säg hellre mindre. Anklaga aldrig någon för något som inte står i underlaget.\n- Var ärlig om hur allvarligt det är. Sorg och ilska får finnas och hör till ett svårt ämne; förtvivlan gör det inte. Visa vad som fortfarande skulle kunna göras och vem som skulle kunna göra det.\n- Humor är välkommen; ironi bara lite."
+    }
   },
   "characters": [
     {

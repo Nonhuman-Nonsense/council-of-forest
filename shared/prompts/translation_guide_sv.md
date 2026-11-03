@@ -66,7 +66,9 @@ The political facts behind the prompts, their dates and sources live in
 - `custom_topic` — `id`, `title`, `agentBrief`, `prompt` (with `[VISITOR_INPUT]`).
 - `topics[]` — each topic: `id`, `title`, `description`, `agentBrief`, `prompt`
   (context + framing only), `agendaPoints[]` (numbered items injected at
-  `[AGENDA_POINTS]`).
+  `[AGENDA_POINTS]`). Each point is `{ "title", "text" }`: the title is one short
+  line, shown on its own on the replay screen and in print, and the prompt reads
+  `1. Title` then the text. Translate both; never fold the title into the text.
 - `description` is read on screen; `agentBrief` is what Älven speaks from, so
   the two must say different things — a brief that paraphrases the description
   gives the visitor the same sentence twice, and the data test rejects it.
@@ -74,12 +76,23 @@ The political facts behind the prompts, their dates and sources live in
   lines to read aloud.
 - Every topic and the custom topic must carry a non-empty `agentBrief` in every
   language (`ValidateTopicsData`).
+- `youngAgendaPoints[]` — the agenda for a meeting held for young children (about
+  6–9), in place of `agendaPoints`, in the same `{ "title", "text" }` form. A question a child can picture, framed as
+  fairness or sharing, ending in `Kärnfråga:`. No new facts: only what the topic's
+  own prompt already says, in a child's words. Children of 10–14 keep the adult
+  agenda; their instructions simplify it.
 - Topic `id`s must match across languages.
 
 **`beings_<lang>.json`**
 
 - `panelWithHumans`, `singleAgendaPoint` (River's rule for a one-point agenda),
   `addHuman`, `characters[]` (`id`, `name`, `description`, `prompt`).
+- `audiences` — kids mode: for `young` (about 6–9) and `older` (about 10–14), a
+  `chair` text (Älven's opening and turn lengths) and an `everyone` text added
+  last to every council member's prompt, so it outranks their own rules on words
+  and length. Sadness is allowed and wanted where a topic is hard; despair and
+  horror are not. Both languages must offer the same audiences
+  (`ValidateFoodData`).
 - Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
   text fields only — do not copy English Inworld voice settings.
 
@@ -107,6 +120,8 @@ Format: **English** → **Swedish** — *notes*.
 | agenda point | dagordningspunkt / punkt på dagordning | |
 | chair / moderator | ordförande / moderator | |
 | stand-up | stand-up | kept |
+| young children (kids mode, about 6–9) | barn | not "små barn", which reads as under six |
+| older children (kids mode, about 10–14) | barn och unga | not "unga tonåringar" |
 | Add Human / Human | Människa | character/option label |
 | presenter (app mode) | Presentation | staff label, alongside Webb / Museum |
 | mode switch button | Lägesbytarknapp | staff label |
