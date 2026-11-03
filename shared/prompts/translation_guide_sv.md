@@ -66,7 +66,9 @@ The political facts behind the prompts, their dates and sources live in
 - `custom_topic` — `id`, `title`, `agentBrief`, `prompt` (with `[VISITOR_INPUT]`).
 - `topics[]` — each topic: `id`, `title`, `description`, `agentBrief`, `prompt`
   (context + framing only), `agendaPoints[]` (numbered items injected at
-  `[AGENDA_POINTS]`).
+  `[AGENDA_POINTS]`). Each point is `{ "title", "text" }`: the title is one short
+  line, shown on its own on the replay screen and in print, and the prompt reads
+  `1. Title` then the text. Translate both; never fold the title into the text.
 - `description` is read on screen; `agentBrief` is what Älven speaks from, so
   the two must say different things — a brief that paraphrases the description
   gives the visitor the same sentence twice, and the data test rejects it.
@@ -75,7 +77,7 @@ The political facts behind the prompts, their dates and sources live in
 - Every topic and the custom topic must carry a non-empty `agentBrief` in every
   language (`ValidateTopicsData`).
 - `youngAgendaPoints[]` — the agenda for a meeting held for young children (about
-  6–9), in place of `agendaPoints`. A question a child can picture, framed as
+  6–9), in place of `agendaPoints`, in the same `{ "title", "text" }` form. A question a child can picture, framed as
   fairness or sharing, ending in `Kärnfråga:`. No new facts: only what the topic's
   own prompt already says, in a child's words. Children of 10–14 keep the adult
   agenda; their instructions simplify it.

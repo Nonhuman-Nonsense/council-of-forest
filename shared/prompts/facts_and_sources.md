@@ -81,8 +81,8 @@ Swedish uranium ban lifted (Jan 2026).
   as `[CURRENT_DATE]` by `buildMeetingSystemPrompt` (`shared/topicPrompt.ts`); never write
   it into a prompt.
 - **Agenda points state both sides at their strongest.** The pattern that works (Green
-  Transition, and Sámi "Is a Culture a National Interest?"): title on its own line, one or
-  two sentences of context, two named perspectives with labelled bullets
+  Transition, and Sámi "Is a Culture a National Interest?"): a short `title` (its own field,
+  shown on the replay screen and in print), then in `text` one or two sentences of context, two named perspectives with labelled bullets
   (`- Label: explanation`), concrete dates and figures, optionally a `Core Question:`.
   River picks one agenda point and hands it to a being; two named sides give River a
   conflict to stage and give the Tree Harvester an argument to make. Agreed 28 Sept 2026:
