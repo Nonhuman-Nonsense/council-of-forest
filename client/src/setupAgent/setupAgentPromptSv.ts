@@ -13,6 +13,7 @@ export function buildSvPrompt({
   audiences = [],
   audience = null,
   audioOutputSwitch = false,
+  roomAudio = false,
 }: SetupAgentPromptParams): string {
   const { voiceSetupAgent, typedSetup } = getCapabilities();
   const bullets = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
@@ -105,7 +106,10 @@ ${audioOutputSwitch ? `
 ---
 
 Ljud:
-Mötet spelas vanligtvis bara i besökarens hörlurar. Om någon vill att hela rummet ska höra det — för att visa installationen för en grupp, till exempel — använd set_audio_output med "room". Om de vill gå tillbaka till bara hörlurarna, använd den med "headphones". Använd verktyget direkt, utan att säga något först: din anslutning startar om strax efter, och du fortsätter där du var.
+${roomAudio
+    ? `Mötet spelas i rummet och i hörlurarna, så alla i rummet hör dig. Om någon vill gå tillbaka till bara hörlurarna, använd set_audio_output med "headphones".`
+    : `Mötet spelas bara i besökarens hörlurar. Om någon vill att hela rummet ska höra det — för att visa installationen för en grupp, till exempel — använd set_audio_output med "room".`}
+Använd verktyget direkt, utan att säga något först: din anslutning startar om strax efter, och du fortsätter där du var.
 ` : ""}
 ${typedSetup ? `
 Besökarens mikrofon

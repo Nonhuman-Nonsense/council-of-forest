@@ -60,14 +60,14 @@ describe('buildSetupAgentPrompt', () => {
   });
 
   // A reconnect after set_audio_output has to know where the meeting is playing now.
-  it('tells the agent whether the room hears the meeting, over a split output', () => {
-    const base = { language: 'en', topics, characters, phase: 'topic' as const, audioOutputSwitch: true };
+  it.each(['en', 'sv'])('%s: tells the agent whether the room hears the meeting, over a split output', (language) => {
+    const base = { language, topics, characters, phase: 'topic' as const, audioOutputSwitch: true };
     expect(buildSetupAgentPrompt({ ...base, roomAudio: true }))
       .not.toBe(buildSetupAgentPrompt({ ...base, roomAudio: false }));
   });
 
-  it('leaves the audio output out without a split output', () => {
-    const base = { language: 'en', topics, characters, phase: 'topic' as const };
+  it.each(['en', 'sv'])('%s: leaves the audio output out without a split output', (language) => {
+    const base = { language, topics, characters, phase: 'topic' as const };
     expect(buildSetupAgentPrompt({ ...base, roomAudio: true })).toBe(buildSetupAgentPrompt(base));
     expect(buildSetupAgentPrompt(base)).not.toContain('set_audio_output');
   });
