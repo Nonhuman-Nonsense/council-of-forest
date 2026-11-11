@@ -16,6 +16,7 @@ import {
   type HumanDetails,
 } from "./meetingSetup";
 import { useCouncilSettings } from "@/settings/councilSettings";
+import { useCorner } from "@main/BottomBar";
 import { getCharacterSetupBundle } from "./CharacterSetup";
 
 import Lottie from "react-lottie-player";
@@ -120,6 +121,7 @@ function SelectCharacters({
 
   const isMobile = useMobile();
   const isMobileXs = useMobileXs();
+  const corner = useCorner();
   const { capabilities } = useCouncilSettings();
   const { typedSetup } = capabilities;
   const { t, i18n } = useTranslation();
@@ -425,9 +427,18 @@ function SelectCharacters({
     }
   }
 
-  const subInfoStyle: React.CSSProperties = {
-    margin: isMobile ? (isMobileXs ? "0" : "7px") : undefined,
+  // Start, the hints and the spinner take turns in one slot under the characters.
+  // The slot keeps one height and centres whichever is showing, with no margins of
+  // their own, so swapping them never moves the row above.
+  const infoSlotStyle: React.CSSProperties = {
+    height: isMobile ? (isMobileXs ? "26px" : "32px") : "48px",
+    marginTop: isMobileXs ? "2px" : "5px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   };
+
+  const subInfoStyle: React.CSSProperties = { margin: 0 };
 
   function buttonOrInfo(): React.ReactElement | null {
     if (loading) {
@@ -452,7 +463,7 @@ function SelectCharacters({
           type="button"
           disabled={loading}
           onClick={continueForward}
-          style={{ margin: isMobileXs ? "0" : "8px 0" }}
+          style={{ margin: 0 }}
         >
           {t("app.start")}
         </button>
@@ -480,7 +491,7 @@ function SelectCharacters({
         <button
           onClick={randomizeSelection}
           className="fadein"
-          style={{ margin: isMobileXs ? "0" : "8px 0", position: "absolute" }}
+          style={{ margin: 0, position: "absolute" }}
         >
           {t("meeting.characters.random")}
         </button>
@@ -489,15 +500,27 @@ function SelectCharacters({
     return null;
   }
 
+  // On a phone the page fills the frame, its characters and Start button down at
+  // the bottom, clear only of what the setup agent's bottom bar shows under them:
+  // the caption strip, or nothing on the smallest screens, where captions are hidden.
+  // Elsewhere it keeps to the middle three quarters.
+  const frameStyle: React.CSSProperties = isMobile
+    ? {
+        alignSelf: "stretch",
+        boxSizing: "border-box",
+        paddingTop: isMobileXs ? "8px" : "24px",
+        paddingBottom: isMobileXs ? `${corner.inset}px` : "45px",
+      }
+    : { height: "75%", marginBottom: "30px" };
+
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "75%",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: isMobile ? (isMobileXs ? "9px" : "20px") : "30px",
+        ...frameStyle,
       }}
     >
       <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -505,7 +528,8 @@ function SelectCharacters({
         <div
           style={{
             position: "relative",
-            height: isMobile ? (isMobileXs ? "190px" : "240px") : "380px",
+            // The smallest size keeps the whole page within the frame's 300px minimum.
+            height: isMobile ? (isMobileXs ? "165px" : "240px") : "380px",
             width: isMobile ? "587px" : "500px",
             display: "flex",
             flexDirection: "column",
@@ -515,7 +539,7 @@ function SelectCharacters({
           {infoToShow()}
         </div>
       </div>
-      <div style={{ height: isMobile ? "93px" : "110px" }}>
+      <div>
         <div style={{ display: "flex", alignItems: "center" }}>
           {characters.map((character) => (
             <CharacterButton
@@ -542,9 +566,7 @@ function SelectCharacters({
           )}
         </div>
         {capabilities.browserUi ? (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: isMobileXs ? "2px" : "5px" }}>
-            {buttonOrInfo()}
-          </div>
+          <div style={infoSlotStyle}>{buttonOrInfo()}</div>
         ) : null}
       </div>
       <MediaPreloader
