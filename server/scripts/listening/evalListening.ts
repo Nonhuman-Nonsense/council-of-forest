@@ -1,8 +1,8 @@
 /**
  * Do the beings listen to the humans? Cuts stored meetings at moments a human has just spoken,
- * generates the next replies the way a live meeting would, and writes a report to read through
- * (see docs/listening-to-humans.md). The development loop: change a prompt, run this with
- * --replay on the previous report, read what changed.
+ * generates the next replies the way a live meeting would, and writes a report to read through.
+ * The development loop: change a prompt, run this with --replay on the previous report, read what
+ * changed. Run it before and after any prompt change that touches how beings answer a human.
  *
  * Three kinds of cut, from the letters corpus (npm run letters:corpus):
  *   - corpus:   right after a human's question that is already in the meeting;

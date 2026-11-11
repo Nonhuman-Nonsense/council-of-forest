@@ -53,7 +53,6 @@ import {
 
 import HardwareButton from "@/museum/button/HardwareButton";
 import { useButtonStore } from "@/museum/button/buttonStore";
-import ButtonBanner from "@/museum/button/ButtonBanner";
 import { useMuseumCursorHide } from "@/museum/useMuseumCursorHide";
 
 const AutoplayCoordinator = lazy(() => import("@/autoplay/AutoplayCoordinator"));
@@ -225,7 +224,6 @@ export default function Main(props: MainProps) {
       {pttHardwareEnabled && <HardwareButton />}
       {capabilities.printSummary && printSummariesEnabled && <LetterReplyPrinter />}
       {ledDebugOverlay && <ButtonLedDebugOverlay />}
-      {!isMeetingPath(location.pathname) && <ButtonBanner />}
       <Forest
         currentSpeakerId={currentSpeakerId}
         isPaused={isPaused}

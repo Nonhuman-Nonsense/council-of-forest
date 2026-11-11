@@ -7,7 +7,7 @@
 //     with their europarl.europa.eu address, political group and committees.
 //
 // Both give addresses that belong to a public role, which is the only kind of personal
-// address the council writes to (see docs/council-letters.md). A person receives exactly one
+// address the council writes to (see LETTERS.md). A person receives exactly one
 // letter ever, so entries carry `limits: { once: true }`.
 //
 // Topics come from committee remit, never from party: a being picks a recipient by what they
