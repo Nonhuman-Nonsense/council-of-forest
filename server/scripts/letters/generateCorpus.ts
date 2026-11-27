@@ -21,7 +21,6 @@ import { CHARACTERS_FILE } from "@shared/prompts/characterSetupMetadata.js";
 import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages.js";
 import { injectRandomAgendaPoint } from "@shared/agendaPointInjection.js";
 import { closeDb, initDb, insertMeeting, meetingsCollection } from "@services/DbService.js";
-import { initOpenAI } from "@services/OpenAIService.js";
 import { MeetingManager } from "@logic/MeetingManager.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
 import { randomUUID } from "node:crypto";
@@ -214,7 +213,6 @@ async function runMeeting(index: number, plan: PlannedMeeting, topics: TopicsBun
 
 async function main() {
     await initDb();
-    initOpenAI();
 
     const bundles: Record<string, { topics: TopicsBundle; beings: BeingsBundle }> = Object.fromEntries(
         await Promise.all(AVAILABLE_LANGUAGES.map(async (language) => [language, {

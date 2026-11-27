@@ -37,7 +37,6 @@ describe('COUNCIL_VENUES', () => {
         const env = EnvSchema.parse({
             COUNCIL_DB_URL: 'mongodb://localhost:27017',
             COUNCIL_DB_PREFIX: 'test',
-            COUNCIL_OPENAI_API_KEY: 'x',
             INWORLD_API_KEY: 'x',
             COUNCIL_BREVO_API_KEY: '',
             COUNCIL_MAIL_FROM: '',

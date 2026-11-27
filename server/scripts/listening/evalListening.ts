@@ -43,7 +43,6 @@ import { buildMeetingSystemPrompt } from "@shared/topicPrompt.js";
 import { injectRandomAgendaPoint, RANDOM_AGENDA_POINT_PLACEHOLDER } from "@shared/agendaPointInjection.js";
 import { CHARACTERS_FILE } from "@shared/prompts/characterSetupMetadata.js";
 import { closeDb, initDb, meetingsCollection } from "@services/DbService.js";
-import { getOpenAI, initOpenAI } from "@services/OpenAIService.js";
 import { createConversationService } from "@services/ConversationService.js";
 import { DialogGenerator } from "@logic/DialogGenerator.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
@@ -622,9 +621,8 @@ ${cards}
 
 async function main() {
     await initDb();
-    initOpenAI();
     const options = getGlobalOptions();
-    const conversationService = createConversationService(getOpenAI);
+    const conversationService = createConversationService();
     const judgeModel = JUDGE_MODEL || options.letterModel;
     const run: Run = {
         options,

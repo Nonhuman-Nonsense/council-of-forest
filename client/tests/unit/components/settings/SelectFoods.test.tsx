@@ -126,7 +126,6 @@ describe('SelectCharacters Component', () => {
         expect(humanPanelist.voice).toBe(chair.voice);
         expect(humanPanelist.voiceProvider).toBe(chair.voiceProvider);
         expect(humanPanelist.voiceTemperature).toBe(chair.voiceTemperature);
-        expect(humanPanelist.voiceInstruction).toBe(chair.voiceInstruction);
         expect(humanPanelist.voiceLocale).toBe(chair.voiceLocale);
     });
 

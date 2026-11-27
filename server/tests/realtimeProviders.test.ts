@@ -10,9 +10,7 @@ const { realtimeOptions } = vi.hoisted(() => {
 
     const realtimeOptions = {
         defaultAudioSpeed: 1.25,
-        inworldVoiceModel: "inworld-tts-1.5-mini",
-        transcribeModel: "whisper-1",
-        transcribePrompt: { en: "Transcribe", sv: "Transkribera" },
+        ttsModels: { inworld: "inworld-tts-1.5-mini", elevenlabs: "eleven_flash_v2_5" },
         humanInputRealtime: {
             languages: {
                 en: {

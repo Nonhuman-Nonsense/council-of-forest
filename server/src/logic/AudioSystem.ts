@@ -11,10 +11,7 @@ import { parseBuffer } from 'music-metadata';
 import {
     generateInworldAudio,
     generateElevenLabsAudio,
-    generateOpenAIAudio,
-    getWhisperWords,
     AudioResult,
-    WHISPER_MODEL,
 } from "./audio/TTSProviders.js";
 import { recordUsage, usageTagsFor } from "@services/UsageService.js";
 import {
@@ -40,8 +37,7 @@ import type { AudioUpdatePayload } from "@shared/SocketTypes.js";
 export * from "./audio/AudioTypes.js";
 export * from "./audio/AudioUtils.js";
 
-// All providers are chunked at 2000 chars even though ElevenLabs (~40k) and OpenAI (~2k tokens)
-// allow larger inputs per request. Shorter chunks parallelise better and keep per-request
+// All providers are chunked at 2000 chars even though ElevenLabs (~40k) allows larger inputs per request. Shorter chunks parallelise better and keep per-request
 // synthesis latency down — longer messages noticeably slow down in practice.
 const TTS_CHUNK_LIMIT = 2000;
 
@@ -54,7 +50,7 @@ const TTS_CHUNK_LIMIT = 2000;
  */
 const MAX_CONSECUTIVE_CAPACITY_SKIPS = 1;
 
-const DEFAULT_SUBTITLE_TIMING_PRIORITIES: GlobalOptions["subtitleTimingPriorities"] = ['elevenlabs', 'inworld', 'estimated', 'whisper'];
+const DEFAULT_SUBTITLE_TIMING_PRIORITIES: GlobalOptions["subtitleTimingPriorities"] = ['elevenlabs', 'inworld', 'estimated'];
 
 export class AudioSystem {
     broadcaster: IMeetingBroadcaster;
@@ -275,33 +271,6 @@ export class AudioSystem {
                             break;
                         }
                     }
-
-                    if (timingType === 'whisper') {
-                        try {
-                            const chunkWordsWithTimings = await Promise.all(buffers.map(b => this.getWhisperWordsWrapper(b)));
-                            void recordUsage({
-                                feature: "subtitle-timing",
-                                provider: "openai",
-                                model: WHISPER_MODEL,
-                                measures: { audio_seconds: durations.reduce((sum, d) => sum + Math.max(d, 0), 0) },
-                                ...usageTagsFor(meeting, messageIndex),
-                            });
-                            const whisperSentences = mapSentencesToWords(
-                                sentenceTexts,
-                                this.offsetChunkWords(chunkWordsWithTimings, durations)
-                            );
-                            if (this.areSentenceTimingsUsable(whisperSentences, durations, timingType, meetingId, conversationIndex, speakerName, message.id, resolvedSpeaker.id)) {
-                                sentencesWithTimings = whisperSentences;
-                                subtitleTimingType = 'whisper';
-                                break;
-                            }
-                        } catch (error: unknown) {
-                            Logger.warn("AudioSystem", `Whisper timings failed for message ${message.id}.`, {
-                                error,
-                                from,
-                            });
-                        }
-                    }
                 }
             } else {
                 sentencesWithTimings = [];
@@ -474,26 +443,8 @@ export class AudioSystem {
             return generateInworldAudio(baseParams);
         } else if (speaker.voiceProvider === 'elevenlabs') {
             return generateElevenLabsAudio(baseParams);
-        } else {
-            // OpenAI
-            return generateOpenAIAudio({ ...baseParams, services: this.services });
         }
-    }
-
-    // Helper to get raw whisper words for a buffer
-    async getWhisperWordsWrapper(buffer: Buffer): Promise<Word[]> {
-        return getWhisperWords(buffer, this.services);
-    }
-
-    // Kept for backward compatibility if used externally
-    async getWhisperWords(buffer: Buffer): Promise<Word[]> {
-        return this.getWhisperWordsWrapper(buffer);
-    }
-
-    // Kept for signature compatibility if used elsewhere
-    async getSentenceTimings(buffer: Buffer, message: Message): Promise<MappedSentence[]> {
-        const words = await this.getWhisperWordsWrapper(buffer);
-        return mapSentencesToWords(this.getSentencesForTiming(message), words);
+        throw new Error(`Speaker ${speaker.id} has no voice provider we can use (${String(speaker.voiceProvider)})`);
     }
 
     private async getAudioDuration(buffer: Buffer): Promise<number> {
@@ -578,7 +529,7 @@ export class AudioSystem {
     ): boolean {
         const totalDuration = durations.reduce((sum, duration) => sum + Math.max(duration, 0), 0);
         // "mountain" in Council of Forest always ends its lines on a nonverbal, unmapped
-        // grunt, so its whisper timings legitimately fall short of the audio duration.
+        // grunt, so its word timings legitimately fall short of the audio duration.
         const allowedEndGapSec =
             config.COUNCIL_DB_PREFIX === "CouncilOfForest" && speakerId === "mountain"
                 ? 10

@@ -11,7 +11,6 @@ function unsetIfBlank<T extends z.ZodType>(schema: T) {
 export const EnvSchema = z.object({
     COUNCIL_DB_URL: z.url(),
     COUNCIL_DB_PREFIX: z.string(),
-    COUNCIL_OPENAI_API_KEY: z.string().min(1),
     PORT: z.string().default("3001").transform((val) => parseInt(val, 10)),
     NODE_ENV: z.enum(["development", "production", "test", "prototype"]).default("production"),
     COUNCIL_ERRORBOT: z.string().optional(),

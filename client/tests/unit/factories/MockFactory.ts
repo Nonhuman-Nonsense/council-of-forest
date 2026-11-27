@@ -6,7 +6,7 @@ export const MockFactory = {
         name: 'Participant A',
         description: 'A council participant',
         prompt: 'Speak as Participant A in the council.',
-        voice: 'alloy',
+        voice: 'Ashley',
         ...overrides,
     }),
 
@@ -17,7 +17,7 @@ export const MockFactory = {
             name: '',
             description: '',
             prompt: '',
-            voice: 'alloy',
+            voice: 'Ashley',
             ...overrides,
         });
     },

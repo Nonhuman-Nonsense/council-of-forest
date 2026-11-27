@@ -62,14 +62,6 @@ describe('AudioSystem ElevenLabs Integration', () => {
             broadcastError: vi.fn()
         };
 
-        const mockOpenAI = {
-            audio: {
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({ words: [] })
-                }
-            }
-        };
-
         mockServices = {
             audioCollection: {
                 findOne: vi.fn(),
@@ -78,7 +70,6 @@ describe('AudioSystem ElevenLabs Integration', () => {
             meetingsCollection: {
                 updateOne: vi.fn()
             },
-            getOpenAI: vi.fn(() => mockOpenAI)
         };
 
         audioSystem = new AudioSystem(mockBroadcaster, mockServices);
@@ -106,7 +97,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.15, elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions({ defaultAudioSpeed: 1.15 }),
             meeting(),
             environment
         );
@@ -147,7 +138,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'sv',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype'
         );
@@ -170,7 +161,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype'
         );
@@ -195,7 +186,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'sv',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype'
         );
@@ -224,7 +215,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype',
         );
@@ -255,7 +246,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'sv',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype',
         );
@@ -275,16 +266,10 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({
-                elevenlabsVoiceModel: 'eleven_flash_v2_5',
-                subtitleTimingPriorities: ['elevenlabs', 'estimated', 'whisper'],
-            }),
+            serverOptions({ subtitleTimingPriorities: ['elevenlabs', 'estimated'] }),
             meeting(),
             'production'
         );
-
-        const openai = mockServices.getOpenAI();
-        expect(openai.audio.transcriptions.create).not.toHaveBeenCalled();
 
         const broadcast = mockBroadcaster.broadcastAudioUpdate.mock.calls[0][0];
         expect(broadcast.sentences.length).toBe(1);
@@ -307,7 +292,7 @@ describe('AudioSystem ElevenLabs Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ elevenlabsVoiceModel: 'eleven_flash_v2_5' }),
+            serverOptions(),
             meeting(),
             'prototype'
         );
