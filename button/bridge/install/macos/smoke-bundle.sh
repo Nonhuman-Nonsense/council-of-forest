@@ -17,6 +17,7 @@ if [[ ! -f "$SOURCE_ENTRYPOINT" ]]; then
 fi
 
 TMP_DIR="$(mktemp -d /tmp/council-button-bridge-smoke.XXXXXX)"
+# shellcheck disable=SC2329 # called by the EXIT trap
 cleanup() {
   if [[ -n "${PID:-}" ]] && kill -0 "$PID" 2>/dev/null; then
     kill "$PID" 2>/dev/null || true
