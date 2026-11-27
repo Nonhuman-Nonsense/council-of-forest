@@ -229,7 +229,9 @@ open_window() {
   args+=(${extra[@]+"${extra[@]}"})
 
   # Chrome would reopen the tabs of its last run beside the new one: a tab more per restart.
-  rm -rf "$PROFILE/Default/Sessions" "$PROFILE/Default/Current Session" "$PROFILE/Default/Last Session" \
+  # Since Chrome 158 it also keeps them in Sessions_Encrypted.
+  rm -rf "$PROFILE/Default/Sessions" "$PROFILE/Default/Sessions_Encrypted" \
+    "$PROFILE/Default/Current Session" "$PROFILE/Default/Last Session" \
     "$PROFILE/Default/Current Tabs" "$PROFILE/Default/Last Tabs"
 
   # Through `open`, not the binary: macOS then treats Chrome as an app of its own, so its
