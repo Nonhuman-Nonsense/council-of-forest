@@ -38,8 +38,10 @@ CHROME_PID=$!
 
 # kiosk-window.sh's functions, for the council, pointed at this page and this Chrome.
 printf 'COUNCIL_URL=%q\nCOUNCIL_PROFILE=%q\n' "$PAGE" "$TMP/profile" >"$TMP/kiosk.env"
-# shellcheck source=kiosk-window.sh
+# Not followed: shellcheck reads the early `return` there as the end of this file.
+# shellcheck source=/dev/null
 KIOSK_CONFIG="$TMP/kiosk.env" source "$HERE/kiosk-window.sh" council
+# shellcheck disable=SC2034 # read by the sourced functions
 PORT="$DEBUG_PORT"
 log() { echo "    kiosk: $*"; }
 
@@ -78,6 +80,7 @@ sleep 1
 check "a second copy of the page is closed" "$(page_urls)" "$PAGE"
 
 # With no tab of the page's (an error page in its place), the watchdog decides, not this.
+# shellcheck disable=SC2034 # read by the sourced functions
 ORIGIN="http://127.0.0.1:1"
 open_tab "about:blank"
 close_other_tabs
