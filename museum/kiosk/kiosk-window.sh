@@ -163,6 +163,34 @@ tab_title() {
     }' "$tabs" "$ORIGIN" 2>/dev/null
 }
 
+# Closes every tab but this window's own and brings that one to the front. Chrome opens tabs of its
+# own beside the kiosk page, a "What's New" one after some updates, and in kiosk mode a tab in front
+# covers the page while the page keeps ticking behind it, so the watchdog never sees it. Leaves
+# everything alone while there is no tab of this window's: an error page in its place is the
+# watchdog's to restart.
+close_other_tabs() {
+  local tabs ids own id url
+  tabs="$(curl -fsS --max-time 5 "http://127.0.0.1:$PORT/json/list" 2>/dev/null)" || return 0
+  ids="$(osascript -l JavaScript -e '
+    function run([tabs, origin]) {
+      const pages = JSON.parse(tabs).filter((t) => t.type === "page");
+      const own = pages.find((t) => t.url.startsWith(origin));
+      if (!own) return "";
+      return [own, ...pages.filter((t) => t !== own)].map((t) => t.id + " " + t.url).join("\n");
+    }' "$tabs" "$ORIGIN" 2>/dev/null)"
+  [[ -n "$ids" ]] || return 0
+  own="$(sed -n '1s/ .*//p' <<<"$ids")"
+  # Lines after the first: "id url" of each other tab.
+  while read -r id url; do
+    [[ -n "$id" ]] || continue
+    log "Closing a tab Chrome opened beside the page ($url)."
+    curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$PORT/json/close/$id" 2>/dev/null
+  done < <(sed -n '2,$p' <<<"$ids")
+  if [[ "$(wc -l <<<"$ids")" -gt 1 ]]; then
+    curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$PORT/json/activate/$own" 2>/dev/null
+  fi
+}
+
 # Chrome is not this script's child, so stopping the agent would leave its window open. A hung
 # Chrome ignores being asked to quit, so after 10 s it is killed.
 close_window() {
@@ -248,6 +276,12 @@ wait_for_server() {
   fi
 }
 
+# Sourced (by smoke-chrome.sh), it stops here, with the functions defined and nothing opened.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  trap - TERM
+  return 0
+fi
+
 wait_for has_screen "its screen"
 if ! wait_for_server; then
   log "The screen went away or changed while waiting for the server."
@@ -307,6 +341,7 @@ while kill -0 "$opener" 2>/dev/null; do
     else
       uncovered=false
     fi
+    close_other_tabs
     now="$(tab_title)"
     if [[ "$now" != "$title" ]]; then
       title="$now"

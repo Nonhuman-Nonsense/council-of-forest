@@ -45,7 +45,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:foods": "vitest run tests/foods",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && ../scripts/lint-shell.sh",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
