@@ -16,10 +16,6 @@ function isSyntheticTurn(turn) {
   return Boolean(turn && NON_PLAYABLE_TURN_TYPES.has(turn.type));
 }
 
-function usesCustomVoiceId(character) {
-  return character?.voiceProvider === 'inworld' || character?.voiceProvider === 'elevenlabs';
-}
-
 function usesInworldTts2(character) {
   return Boolean(character?.voiceLocale?.trim());
 }
@@ -27,7 +23,6 @@ function usesInworldTts2(character) {
 const LANGUAGE_MODEL_KEYS = [
   'conversationModel',
   'conversationReasoning',
-  'voiceModel',
   'inworldVoiceModel',
   'elevenlabsVoiceModel',
 ];
@@ -35,7 +30,6 @@ const LANGUAGE_MODEL_KEYS = [
 const defaultLanguageModelProfile = {
   conversationModel: "mistral-direct/mistral-large-2512",
   conversationReasoning: "none",
-  voiceModel: "gpt-4o-mini-tts",
   inworldVoiceModel: "inworld-tts-1.5-mini",
   elevenlabsVoiceModel: "eleven_flash_v2_5",
 };
@@ -160,14 +154,11 @@ function normalizeLanguageModels(models) {
 
 const CharacterCard = {
   template: '#character-card-template',
-  props: ['character', 'isActive', 'isExpanded', 'voiceLists', 'isSorting', 'isPinned'],
+  props: ['character', 'isActive', 'isExpanded', 'isSorting', 'isPinned'],
   emits: ['toggle-active', 'toggle-expanded'],
   methods: {
     usesInworldTts2(char) {
       return usesInworldTts2(char);
-    },
-    usesCustomVoiceId(char) {
-      return usesCustomVoiceId(char);
     },
     onProviderChange() {
       const char = this.character;
@@ -178,9 +169,6 @@ const CharacterCard = {
         if (!char.voice) char.voice = "";
         if (char.voiceStability === undefined) char.voiceStability = 0.5;
         if (char.voiceStyle === undefined) char.voiceStyle = 0;
-      } else {
-        char.voice = this.voiceLists.openai[0];
-        if (char.voiceInstruction === undefined) char.voiceInstruction = "";
       }
     }
   }
@@ -211,7 +199,7 @@ createApp({
       audienceData: {},
 
       // Runtime
-      audioVoices: ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse"],
+      defaultInworldVoice: "Ashley",
       sortableInstance: null,
       isResizing: false,
 
@@ -562,13 +550,7 @@ createApp({
     },
 
     updateVoice(char) {
-      if (char.voiceProvider === 'inworld') {
-        char.voice = "";
-      } else if (char.voiceProvider === 'elevenlabs') {
-        char.voice = "";
-      } else {
-        char.voice = this.audioVoices[0];
-      }
+      char.voice = "";
     },
 
     initSortable() {
@@ -804,10 +786,13 @@ createApp({
 
       replacedCharacters.forEach(c => {
         if (!c.id && c.name) c.id = c.name;
-        if (!c.voiceProvider) c.voiceProvider = 'openai';
-        if (!c.voice) {
-          if (c.voiceProvider !== 'inworld' && c.voiceProvider !== 'elevenlabs') c.voice = this.audioVoices[0];
+        // Characters saved while OpenAI voices were offered may still name it, or no provider.
+        if (c.voiceProvider !== 'inworld' && c.voiceProvider !== 'elevenlabs') {
+          c.voiceProvider = 'inworld';
+          c.voice = this.defaultInworldVoice;
         }
+        if (!c.voice && c.voiceProvider === 'inworld') c.voice = this.defaultInworldVoice;
+        delete c.voiceInstruction;
         delete c._ui_id;
       });
 
@@ -1022,9 +1007,10 @@ createApp({
         conversationMaxLength: this.options.conversationMaxLength,
         extraMessageCount: this.options.extraMessageCount,
         meetingVeryMaxLength: this.options.meetingVeryMaxLength,
-        voiceModel: languageModels.voiceModel,
-        inworldVoiceModel: languageModels.inworldVoiceModel,
-        elevenlabsVoiceModel: languageModels.elevenlabsVoiceModel,
+        ttsModels: {
+          inworld: languageModels.inworldVoiceModel,
+          elevenlabs: languageModels.elevenlabsVoiceModel,
+        },
       };
     },
 
@@ -1145,14 +1131,11 @@ createApp({
       if (!this.currentLanguageData.characters) this.currentLanguageData.characters = [];
 
       const newId = Date.now() + Math.random();
-      const voiceIndex = this.currentLanguageData.characters.length % this.audioVoices.length;
-
       // Add at the BOTTOM (End) and maintain Inactive state
       this.currentLanguageData.characters.push({
-        voiceProvider: 'openai',
-        voiceLocale: 'en-GB',
-        voice: this.audioVoices[voiceIndex],
-        voiceInstruction: "",
+        voiceProvider: 'inworld',
+        voice: this.defaultInworldVoice,
+        voiceTemperature: 1.1,
         _ui_id: newId,
         name: "",
         description: "",
@@ -1232,7 +1215,7 @@ createApp({
     },
 
     buildCharacterExportEntry(rest, exportId) {
-      const provider = rest.voiceProvider || 'openai';
+      const provider = rest.voiceProvider === 'elevenlabs' ? 'elevenlabs' : 'inworld';
       const charExport = {
         id: exportId,
         name: rest.name,
@@ -1247,9 +1230,7 @@ createApp({
         charExport.voiceSpeed = rest.voiceSpeed;
       }
 
-      if (provider === 'openai') {
-        charExport.voiceInstruction = rest.voiceInstruction || "";
-      } else if (provider === 'inworld') {
+      if (provider === 'inworld') {
         if (rest.voiceLocale?.trim()) charExport.voiceLocale = rest.voiceLocale.trim();
         charExport.voiceTemperature = rest.voiceTemperature || 1.1;
       } else if (provider === 'elevenlabs') {

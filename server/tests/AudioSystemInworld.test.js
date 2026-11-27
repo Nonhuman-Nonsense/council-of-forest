@@ -18,7 +18,7 @@ vi.mock('@root/src/logic/GlobalOptions.js', async () => {
     return {
         ...actual,
         getGlobalOptions: vi.fn(() => ({
-            inworldVoiceModel: 'inworld-tts-1',
+            ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' },
             defaultAudioSpeed: 1.0,
             chairId: actual.CHAIR_ID
         }))
@@ -66,14 +66,6 @@ describe('AudioSystem Inworld Integration', () => {
             broadcastError: vi.fn()
         };
 
-        const mockOpenAI = {
-            audio: {
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({ words: [] })
-                }
-            }
-        };
-
         mockServices = {
             audioCollection: {
                 findOne: vi.fn(),
@@ -82,7 +74,6 @@ describe('AudioSystem Inworld Integration', () => {
             meetingsCollection: {
                 updateOne: vi.fn()
             },
-            getOpenAI: vi.fn(() => mockOpenAI)
         };
 
         audioSystem = new AudioSystem(mockBroadcaster, mockServices);
@@ -110,7 +101,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.2, inworldVoiceModel: 'inworld-tts-1' }),
+            serverOptions({ defaultAudioSpeed: 1.2, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             environment
         );
@@ -134,32 +125,9 @@ describe('AudioSystem Inworld Integration', () => {
         expect(body.audio_config.speaking_rate).toBe(1.2); // Overridden by context
     });
 
-    it('should use Whisper for timings (Phase 1)', async () => {
-        const message = { id: 'msg2', text: 'Timing Test', sentences: ['Timing Test'] };
-        const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
-
-        mockFetch.mockResolvedValue({
-            ok: true,
-            json: async () => ({ audioContent: Buffer.from('audio').toString('base64') }),
-        });
-
-        await audioSystem.generateAudio(
-            message,
-            speaker,
-            'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
-            meeting(),
-            'production'
-        );
-
-        const openai = mockServices.getOpenAI();
-        expect(openai.audio.transcriptions.create).toHaveBeenCalled();
-    });
-
-    it('should use native timings if provided (Phase 2) and bypass Whisper', async () => {
+    it('should use native timings if provided', async () => {
         const message = { id: 'msg3', text: 'Native Test', sentences: ['Native Test'] };
         const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
-        const openai = mockServices.getOpenAI();
 
         mockFetch.mockResolvedValue({
             ok: true,
@@ -180,12 +148,11 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1.5' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1.5', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );
 
-        expect(openai.audio.transcriptions.create).not.toHaveBeenCalled();
     });
 
     it('should ignore Inworld punctuation and space alignment tokens when mapping sentence timings', async () => {
@@ -229,7 +196,7 @@ describe('AudioSystem Inworld Integration', () => {
             { id: 'msg-punctuation', text: `${firstSentence} ${secondSentence}`, sentences: [firstSentence, secondSentence] },
             { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' },
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1.5' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1.5', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );
@@ -266,7 +233,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );
@@ -300,7 +267,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
             storedMeeting,
             'production'
         );
@@ -339,7 +306,7 @@ describe('AudioSystem Inworld Integration', () => {
                 { id, text: 'Hello', sentences: ['Hello'] },
                 speaker,
                 'en',
-                serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
+                serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
                 storedMeeting,
                 'production'
             );
@@ -379,7 +346,7 @@ describe('AudioSystem Inworld Integration', () => {
                 { id, text: 'Hello', sentences: ['Hello'] },
                 speaker,
                 'en',
-                serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
+                serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
                 storedMeeting,
                 'production'
             );
@@ -414,7 +381,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );
@@ -464,7 +431,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'sv',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1.5-max' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1.5-max', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );
@@ -493,7 +460,7 @@ describe('AudioSystem Inworld Integration', () => {
             message,
             speaker,
             'en',
-            serverOptions({ defaultAudioSpeed: 1.0, inworldVoiceModel: 'inworld-tts-1.5-max' }),
+            serverOptions({ defaultAudioSpeed: 1.0, ttsModels: { inworld: 'inworld-tts-1.5-max', elevenlabs: 'eleven_flash_v2_5' } }),
             meeting(),
             'production'
         );

@@ -1,4 +1,3 @@
-import type OpenAI from "openai";
 import { upstreamHttpError, withNetworkRetry } from "@utils/NetworkUtils.js";
 import { Word } from "@shared/textUtils.js";
 import { AudioSystemOptions, Speaker } from "./AudioTypes.js";
@@ -6,7 +5,6 @@ import { PronunciationUtils } from "@utils/PronunciationUtils.js";
 import { characterAlignmentToWords, type CharacterAlignment } from "@utils/ElevenLabsAlignmentUtils.js";
 
 const INWORLD_TTS_2_MODEL = "inworld-tts-2";
-export const WHISPER_MODEL = "whisper-1";
 /**
  * TTS draws on the same account-wide concurrency pool as every other provider
  * call, so a 429 here is a race we lost rather than a fault. Five attempts of
@@ -23,7 +21,6 @@ interface GenerateParams {
     text: string;
     speaker: Speaker;
     options: AudioSystemOptions;
-    services?: { getOpenAI: () => OpenAI }; // For OpenAI
     /** If true, `text` is already pronunciation-processed; skip PronunciationUtils. */
     preprocessed?: boolean;
     /** Pre-built replacement map when `preprocessed` is true, for subtitle restoration. */
@@ -41,25 +38,6 @@ function hasSpokenToken(word: string): boolean {
     return word.toLowerCase().replace(/[^\w]|_/g, "").length > 0;
 }
 
-export async function generateOpenAIAudio(params: GenerateParams): Promise<AudioResult> {
-    const { text, speaker, options, services } = params;
-    if (!services) throw new Error("Services required for OpenAI TTS");
-
-    const openai = services.getOpenAI();
-    const mp3 = await withNetworkRetry(() => openai.audio.speech.create({
-        model: options.voiceModel,
-        voice: speaker.voice as OpenAI.Audio.SpeechCreateParams["voice"],
-        speed: speaker.voiceSpeed ?? options.defaultAudioSpeed,
-        input: text,
-        instructions: speaker.voiceInstruction,
-        response_format: "opus"
-    }));
-    return {
-        audio: Buffer.from(await mp3.arrayBuffer()),
-        usage: { provider: "openai", model: options.voiceModel, characters: text.length },
-    };
-}
-
 export async function generateElevenLabsAudio(params: GenerateParams): Promise<AudioResult> {
     const { text, speaker, options } = params;
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -69,7 +47,7 @@ export async function generateElevenLabsAudio(params: GenerateParams): Promise<A
     const { processedText } = PronunciationUtils.processText(text, language, { includeIpa: false });
 
     const voiceId = speaker.voice;
-    const modelId = options.elevenlabsVoiceModel;
+    const modelId = options.ttsModels.elevenlabs;
     const url = new URL(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}/with-timestamps`);
     url.searchParams.set("output_format", ELEVENLABS_OPUS_OUTPUT_FORMAT);
 
@@ -142,7 +120,7 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
 
     const url = 'https://api.inworld.ai/tts/v1/voice';
     const locale = speaker.voiceLocale?.trim() || undefined;
-    const modelId = locale ? INWORLD_TTS_2_MODEL : options.inworldVoiceModel;
+    const modelId = locale ? INWORLD_TTS_2_MODEL : options.ttsModels.inworld;
 
     const payload: Record<string, unknown> = {
         text: processedText,
@@ -230,18 +208,4 @@ export async function generateInworldAudio(params: GenerateParams): Promise<Audi
     } else {
         throw new Error("No audio content returned from Inworld TTS");
     }
-}
-
-export async function getWhisperWords(buffer: Buffer, services: { getOpenAI: () => OpenAI }): Promise<Word[]> {
-    const openai = services.getOpenAI();
-    // All our providers (OpenAI, Inworld, ElevenLabs) return OGG/Opus.
-    // FFmpeg (used by Whisper) performs content sniffing, but correct extension helps.
-    const audioFile = new File([new Uint8Array(buffer)], "speech.ogg", { type: "audio/ogg" });
-    const transcription = await withNetworkRetry(() => openai.audio.transcriptions.create({
-        file: audioFile,
-        model: WHISPER_MODEL,
-        response_format: "verbose_json",
-        timestamp_granularities: ["word"]
-    }), "AudioSystemWhisper");
-    return (transcription.words || []) as Word[];
 }

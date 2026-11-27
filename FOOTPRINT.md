@@ -59,8 +59,8 @@ place, not watt-hours. Don't let an energy-only comparison argue that AI is harm
 | Letters: plan, draft and weave (`summary`) | `DialogGenerator.generateInCharacter` | Inworld router → `anthropic/claude-sonnet-5-5` (plan, draft, weave; `claude-opus-5-5` until October 2026) | input / output / reasoning tokens |
 | Letters: author ranking, sorting the human's words (`classifier`) | `LetterWriter` via `SpeakerClassifierBase` | Inworld router → `google-ai-studio/gemini-2.5-flash` | tokens |
 | Speaker classifier (`classifier`) | `SpeakerClassifierBase` | Inworld router → `google-ai-studio/gemini-2.5-flash` | tokens |
-| Voices (`tts`) | `AudioSystem`, per freshly generated chunk | Inworld `inworld-tts-1.5-max` / `inworld-tts-2`; ElevenLabs `eleven_flash_v2_5` (forest); OpenAI `gpt-4o-mini-tts` (unused) | `characters`, `audio_seconds`; ElevenLabs also `region` from its `x-region` header |
-| Whisper timing fallback (`subtitle-timing`) | `AudioSystem` | `whisper-1` | `audio_seconds` |
+| Voices (`tts`) | `AudioSystem`, per freshly generated chunk | Inworld `inworld-tts-1.5-max` / `inworld-tts-2`; ElevenLabs `eleven_flash_v2_5` (forest); OpenAI `gpt-4o-mini-tts` until November 2026 (never used then) | `characters`, `audio_seconds`; ElevenLabs also `region` from its `x-region` header |
+| Whisper timing fallback (`subtitle-timing`), removed November 2026 | `AudioSystem` | `whisper-1` | `audio_seconds` |
 | Setup agent, meta agent | browser ↔ Inworld realtime; the client posts each `response.done` usage to `POST /api/usage/realtime` | `chairRealtime` LLM (`anthropic/claude-sonnet-5-5`) + Inworld TTS + the session's transcription model | one event per part: LLM tokens, TTS characters + audio seconds, STT audio seconds |
 | Human input | same route; the client times how long the microphone is open (`createMicTimeCounter`) and posts it as an `stt` part every 15 s while open and on closing | the session's transcription model (`soniox/stt-rt-v4`, `inworld/inworld-stt-1`) | `audio_seconds` |
 
@@ -90,7 +90,7 @@ place, not watt-hours. Don't let an energy-only comparison argue that AI is harm
   usage and plug reading to the `/meter` socket.io namespace.
 
 Verified response shapes (probed 2026-09-16):
-- Inworld router: OpenAI-style `usage` (`prompt_tokens`, `completion_tokens`,
+- Inworld router: chat-completions `usage` (`prompt_tokens`, `completion_tokens`,
   `prompt_tokens_details.cached_tokens`, and `cache_write_tokens` when a request fills an
   Anthropic cache).
 - Inworld TTS: `usage: { processedCharactersCount, modelId }`.
@@ -201,8 +201,8 @@ projector (BenQ TH682ST) draws ≈ 244 W typical, 320 W max.
 
   **The current meeting follows playback.** Replies are generated a few messages ahead and played
   gradually, so raw usage runs ahead of what the room has heard. Usage is tagged with the
-  `messageIndex` it was for (dialogue, chair lines and summary in `DialogGenerator`, voices and
-  Whisper timing in `AudioSystem`, the handoff classifier), the snapshot splits the meeting's rows
+  `messageIndex` it was for (dialogue, chair lines and summary in `DialogGenerator`, voices in
+  `AudioSystem`, the handoff classifier), the snapshot splits the meeting's rows
   per message, and the server pushes `meeting-progress` whenever the meeting's
   `maximumPlayedIndex` advances. `playedRows` counts messages up to that index; untagged live
   usage (realtime agents, visitor questions) counts at once.

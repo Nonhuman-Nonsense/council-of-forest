@@ -78,8 +78,8 @@ interface ChatCompletionUsage {
 }
 
 /**
- * Reads an OpenAI-compatible `usage` block — what the Inworld router returns for every
- * routed model, and what OpenAI returns directly. Unknown shapes yield no measures.
+ * Reads a chat-completions `usage` block — what the Inworld router returns for every
+ * routed model, and what Mistral returns directly. Unknown shapes yield no measures.
  */
 export function parseChatCompletionUsage(usage: unknown): UsageMeasures {
     if (!usage || typeof usage !== "object") {

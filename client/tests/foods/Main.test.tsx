@@ -77,7 +77,7 @@ vi.mock('@newMeeting/SelectCharacters', () => ({
         <div data-testid="select-foods">
             <button
                 type="button"
-                onClick={() => onContinueForward({ characters: [{ id: "apple", name: "Apple", description: "", prompt: "", voice: "alloy" }] })}
+                onClick={() => onContinueForward({ characters: [{ id: "apple", name: "Apple", description: "", prompt: "", voice: "Ashley" }] })}
                 data-testid="foods-btn"
             >
                 Select Foods
@@ -85,15 +85,15 @@ vi.mock('@newMeeting/SelectCharacters', () => ({
         </div>
     ),
     createDefaultHumans: () => ([
-        { id: "panelist0", name: "", description: "", prompt: "", voice: "alloy" },
-        { id: "panelist1", name: "", description: "", prompt: "", voice: "alloy" },
-        { id: "panelist2", name: "", description: "", prompt: "", voice: "alloy" },
+        { id: "panelist0", name: "", description: "", prompt: "", voice: "Ashley" },
+        { id: "panelist1", name: "", description: "", prompt: "", voice: "Ashley" },
+        { id: "panelist2", name: "", description: "", prompt: "", voice: "Ashley" },
     ]),
     getCharacterSetupBundle: () => ({
         metadata: { version: "test", last_updated: "test" },
         panelWithHumans: "",
         addHuman: { id: "addhuman", name: "Add Human", description: "" },
-        characters: [{ id: "chair", name: "Chair", description: "", prompt: "", voice: "alloy" }],
+        characters: [{ id: "chair", name: "Chair", description: "", prompt: "", voice: "Ashley" }],
     }),
 }));
 vi.mock('@council/Council', () => ({

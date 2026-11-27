@@ -69,7 +69,7 @@ who runs it.
 
 ## The LLM and TTS boundary
 
-Tests run against mocked OpenAI/ElevenLabs/Inworld by default. Assert **orchestration** —
+Tests run against a mocked conversation model and mocked ElevenLabs/Inworld voices by default. Assert **orchestration** —
 who speaks next, which events fire, what gets persisted, how errors propagate — never prompt
 wording, message phrasing, or details of a mocked response format that only exist because the
 mock says so. Prompt content changes constantly; tests must not be the reason a prompt tweak
@@ -138,7 +138,7 @@ itself, not logic. Logic tests belong in mock mode.
 - **Server** — `server/tests/`, Vitest. `npm test` runs type-check + all tests in mock mode.
   DB-backed tests are split out (`test:unit` vs `test:integration` configs);
   `*.integration.test.*` files drive real HTTP + socket.io against `mongodb-memory-server`.
-  `TEST_MODE=fast|full` switches to the real OpenAI API — see
+  `TEST_MODE=fast|full` switches to the real providers — see
   [server/README.md](server/README.md).
 - **Client** — `client/tests/unit/` (Vitest + Testing Library, jsdom), `client/tests/foods/`
   (app-level wiring of routes/data).

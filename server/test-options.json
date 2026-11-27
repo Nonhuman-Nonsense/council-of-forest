@@ -1,8 +1,10 @@
 {
     "conversationModel": "mistral/mistral-medium-latest",
     "conversationReasoning": "none",
-    "voiceModel": "gpt-4o-mini-tts",
-    "inworldVoiceModel": "inworld-tts-1.5-mini",
+    "ttsModels": {
+        "inworld": "inworld-tts-1.5-mini",
+        "elevenlabs": "eleven_flash_v2_5"
+    },
     "maxTokens": 70,
     "chairMaxTokens": 70,
     "conversationMaxLength": 2,

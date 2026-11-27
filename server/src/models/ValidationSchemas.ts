@@ -1,6 +1,6 @@
 import { GlobalOptionsSchema } from "@logic/GlobalOptions.js";
 import { z } from "zod";
-import { type Character, AVAILABLE_VOICES, CHILD_AUDIENCES } from "@shared/ModelTypes.js";
+import { type Character, CHILD_AUDIENCES, VOICE_PROVIDERS } from "@shared/ModelTypes.js";
 import type {
     HandRaisedOptions,
     ReconnectionOptions,
@@ -16,7 +16,6 @@ import type {
 
 // Shared Sub-schemas
 const MAX_HUMAN_INPUT_LENGTH = 10000;
-const VoiceOptionSchema = z.enum(AVAILABLE_VOICES);
 
 const CharacterSchema: z.ZodType<Character> = z.object({
     id: z.string().min(1),
@@ -24,26 +23,13 @@ const CharacterSchema: z.ZodType<Character> = z.object({
     description: z.string(),
     prompt: z.string(),
     voice: z.string(),
-    voiceProvider: z.enum(['openai', 'inworld', 'elevenlabs']).optional().default('openai'),
+    voiceProvider: z.enum(VOICE_PROVIDERS),
     voiceLocale: z.string().optional(),
-    voiceInstruction: z.string().optional(),
     voiceTemperature: z.number().min(0.1).max(2.0).optional(),
     voiceStability: z.number().min(0).max(1).optional(),
     voiceStyle: z.number().min(0).max(1).optional(),
     voiceSpeed: z.number().min(0.8).max(1.5).optional(),
     size: z.number().optional(),
-}).superRefine((data, ctx) => {
-    if (!data.voiceProvider || data.voiceProvider === 'openai') {
-        if (!VoiceOptionSchema.safeParse(data.voice).success) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                params: { options: [...AVAILABLE_VOICES] },
-                path: ['voice'],
-                message: "Invalid OpenAI Voice"
-            });
-        }
-    }
-    // Inworld allows custom IDs, so no validation against the preset enum is performed.
 });
 
 // Create new meeting via API

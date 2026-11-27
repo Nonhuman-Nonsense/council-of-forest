@@ -15,36 +15,10 @@ vi.mock('@services/ConversationService.js', async () => {
         return actual;
     }
 
+    const { createMockConversationService } = await import('./mockChat.js');
     return {
         ...actual,
-        createConversationService: (getOpenAI) => ({
-            createChatCompletion: async ({
-                messages,
-                model,
-                maxCompletionTokens,
-                temperature,
-                reasoning,
-                stop,
-            }) => {
-                const request = {
-                    messages,
-                    model,
-                    max_completion_tokens: maxCompletionTokens,
-                    temperature,
-                    stop,
-                };
-                if (reasoning && reasoning !== 'none') {
-                    request.reasoning_effort = reasoning;
-                }
-                const completion = await getOpenAI().chat.completions.create(request);
-
-                return {
-                    id: completion.id ?? null,
-                    content: completion.choices?.[0]?.message?.content ?? null,
-                    finishReason: completion.choices?.[0]?.finish_reason ?? 'stop',
-                };
-            },
-        }),
+        createConversationService: () => createMockConversationService(),
     };
 });
 

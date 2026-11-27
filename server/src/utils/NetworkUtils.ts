@@ -22,7 +22,7 @@ const RETRYABLE_HTTP_STATUSES = new Set([RATE_LIMITED_STATUS, 503]);
 const HTTP_RETRY_BASE_MS = 1000;
 const HTTP_RETRY_MAX_MS = 16_000;
 
-/** Shared timeout for outbound HTTP calls to external APIs (OpenAI, Inworld, etc.). */
+/** Shared timeout for outbound HTTP calls to external APIs (Inworld, Mistral, ElevenLabs, …). */
 export const OUTBOUND_HTTP_TIMEOUT_MS = 30_000;
 
 const RETRYABLE_MESSAGES = new Set(["terminated"]);

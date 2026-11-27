@@ -1,14 +1,15 @@
 {
   "conversationModel": "mistral-direct/mistral-large-2512",
   "conversationReasoning": "none",
-  "voiceModel": "gpt-4o-mini-tts",
-  "inworldVoiceModel": "inworld-tts-1.5-max",
-  "elevenlabsVoiceModel": "eleven_flash_v2_5",
+  "ttsModels": {
+    "inworld": "inworld-tts-1.5-max",
+    "elevenlabs": "eleven_flash_v2_5"
+  },
   "temperature": 1,
   "maxTokens": 400,
   "chairMaxTokens": 400,
   "defaultAudioSpeed": 1.15,
-  "subtitleTimingPriorities": ["elevenlabs", "inworld", "whisper", "estimated"],
+  "subtitleTimingPriorities": ["elevenlabs", "inworld", "estimated"],
   "directedSpeakerRouting": true,
   "trimSentance": true,
   "trimParagraph": false,
@@ -34,11 +35,6 @@
     "en": "Please summarise the meeting held on [DATE] as a meeting protocol and policy recommendation suitable for an official body such as the European Commission. Maximum 1500 characters, DO NOT EXCEED THIS LIMIT. Do not continue the debate."
   },
   "summarizeMeetingLength": 500,
-  "transcribeModel": "gpt-4o-transcribe",
-  "transcribePrompt": {
-    "en": "Expect english input.",
-    "sv": "Förvänta dig svenskt tal."
-  },
   "audioConcurrency": 10,
   "voiceLoudness": { "targetLufs": -21, "skipBelowDb": 1.5, "truePeakDb": -1.5 },
   "meetingEnding": "protocol",

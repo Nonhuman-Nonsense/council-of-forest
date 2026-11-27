@@ -21,7 +21,7 @@ vi.mock('@council/FoodAnimation', () => ({
 const mockFood: Character = {
     id: 'banana',
     name: 'Banana',
-    voice: 'alloy',
+    voice: 'Ashley',
     description: 'A cheerful banana',
     prompt: 'You are a banana.',
     size: 1, // Standard size

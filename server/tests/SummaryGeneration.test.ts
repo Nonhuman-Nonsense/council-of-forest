@@ -52,21 +52,9 @@ describe('Inworld TTS Summary Generation Limit', () => {
             broadcastSpeakerUpdate: vi.fn()
         };
 
-        const mockOpenAI = {
-            audio: {
-                speech: {
-                    create: vi.fn().mockResolvedValue({ arrayBuffer: () => Buffer.from('openai-audio') })
-                },
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({ words: [] })
-                }
-            }
-        };
-
         mockServices = {
             audioCollection: { findOne: vi.fn(), updateOne: vi.fn() },
             meetingsCollection: { updateOne: vi.fn() },
-            getOpenAI: vi.fn(() => mockOpenAI)
         };
 
         audioSystem = new AudioSystem(mockBroadcaster, mockServices);

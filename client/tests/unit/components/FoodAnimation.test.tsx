@@ -19,7 +19,7 @@ describe('FoodAnimation', () => {
         name: sampleCharacter.name,
         description: sampleCharacter.description,
         prompt: sampleCharacter.prompt ?? '',
-        voice: 'alloy',
+        voice: 'Ashley',
     };
     const mockStyles = { width: '100px' };
 
