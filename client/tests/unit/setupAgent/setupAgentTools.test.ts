@@ -112,7 +112,7 @@ vi.mock('@newMeeting/meetingSetup', async (importOriginal) => {
         name: 'Speaker 1',
         description: 'Test speaker',
         prompt: 'Speak',
-        voice: 'alloy',
+        voice: 'Ashley',
       }],
     })),
   };

@@ -93,8 +93,9 @@ The political facts behind the prompts, their dates and sources live in
   and length. Sadness is allowed and wanted where a topic is hard; despair and
   horror are not. Both languages must offer the same audiences
   (`ValidateFoodData`).
-- Swedish characters use `voiceProvider: "openai"` + `voiceInstruction`; translate
-  text fields only — do not copy English Inworld voice settings.
+- Swedish characters have their own ElevenLabs voices (`voiceProvider: "elevenlabs"`,
+  usually `voiceLocale: "sv"`); translate text fields only — do not copy English
+  Inworld voice settings.
 
 **Code (not in JSON):** agenda section headers (`AGENDA_SECTION_HEADER` /
 `AGENDA_SECTION_HEADER_SV` in `shared/topicPrompt.ts`) are selected by the

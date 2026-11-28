@@ -214,8 +214,14 @@ describe("installGlobalErrorHandlers", () => {
   });
 
   // Host-environment noise, not bugs in our code: an in-app browser's bridge,
-  // a browser extension, and autoplay policy refusing someone's play().
+  // a browser extension, autoplay policy refusing someone's play(), the browser's
+  // masked report of an error in a script it injected, and a CefSharp host's bridge.
   it.each([
+    {
+      name: "masked error from a script we can't see",
+      type: "error" as const,
+      event: new ErrorEvent("error", { message: "Script error.", filename: "", lineno: 0 }),
+    },
     {
       name: "in-app browser webkit bridge",
       type: "error" as const,
@@ -234,6 +240,11 @@ describe("installGlobalErrorHandlers", () => {
           "The play method is not allowed by the user agent or the platform in the current context, possibly because the user denied permission.",
         ),
       },
+    },
+    {
+      name: "CefSharp host bridge (Outlook link scanner)",
+      type: "unhandledrejection" as const,
+      event: { reason: "Object Not Found Matching Id:4, MethodName:update, ParamCount:4" },
     },
   ])("drops known noise: $name", async ({ type, event }) => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));

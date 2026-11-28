@@ -1,6 +1,9 @@
 /// <reference types="node" />
-// Defines the available voice options for characters
-export const AVAILABLE_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse"] as const;
+/** Who voices a character: Inworld's TTS or ElevenLabs'. */
+export const VOICE_PROVIDERS = ["inworld", "elevenlabs"] as const;
+export type VoiceProvider = typeof VOICE_PROVIDERS[number];
+
+/** Inworld's preset voices. Inworld also takes cloned voice IDs, and ElevenLabs only takes IDs. */
 
 export const AVAILABLE_VOICES_INWORLD = [
     "Alex", "Ashley", "Blake", "Carter", "Clive", "Craig", "Deborah", "Dennis", "Dominus", "Edward",
@@ -8,7 +11,7 @@ export const AVAILABLE_VOICES_INWORLD = [
     "Sarah", "Shaun", "Theodore", "Timothy", "Wendy"
 ] as const;
 
-export type VoiceOption = typeof AVAILABLE_VOICES[number] | typeof AVAILABLE_VOICES_INWORLD[number];
+export type VoiceOption = typeof AVAILABLE_VOICES_INWORLD[number];
 
 /**
  * Children a meeting can be held for: `young` about 6–9, `older` about 10–14. A meeting without
@@ -102,9 +105,8 @@ export interface Character {
      */
     aliases?: string[];
     prompt: string;
-    voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
+    voiceProvider?: VoiceProvider;
     voiceLocale?: string;
-    voiceInstruction?: string;
     voiceTemperature?: number;
     voiceStability?: number;
     voiceStyle?: number;

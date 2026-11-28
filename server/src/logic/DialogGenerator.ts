@@ -1,6 +1,6 @@
 import type { Character, Message } from '@shared/ModelTypes.js';
 import type { IMeetingBroadcaster } from "@interfaces/MeetingInterfaces.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ChatMessage } from "@services/ChatCompletions.js";
 import type { Collection } from "mongodb";
 import type { StoredMeeting } from "@models/DBModels.js";
 
@@ -98,7 +98,7 @@ export class DialogGenerator {
      */
     private async completeWithRetry<T extends PostProcessedResponse | Pick<DocumentResponse, "response" | "trimmed">>(
         request: {
-            messages: ChatCompletionMessageParam[];
+            messages: ChatMessage[];
             maxCompletionTokens: number;
             stop?: string[];
             /** Defaults to the conversation model and its reasoning setting. */
@@ -342,7 +342,7 @@ export class DialogGenerator {
     }
 
     private async requestChatCompletion(
-        messages: ChatCompletionMessageParam[],
+        messages: ChatMessage[],
         maxCompletionTokens: number,
         stop?: string[],
         model?: { model: string; reasoning: GlobalOptions["conversationReasoning"] },
@@ -540,8 +540,8 @@ export class DialogGenerator {
         meeting: StoredMeeting,
         upToIndex?: number,
         includeCompletionPrimer = true,
-    ): ChatCompletionMessageParam[] {
-        const messages: ChatCompletionMessageParam[] = [];
+    ): ChatMessage[] {
+        const messages: ChatMessage[] = [];
 
         messages.push({
             role: "system",

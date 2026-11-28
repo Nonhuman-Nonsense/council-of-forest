@@ -24,7 +24,6 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                     updateOne: vi.fn(),
                     findOne: vi.fn().mockResolvedValue(null),
                 },
-                getOpenAI: vi.fn().mockReturnValue({ apiKey: "mock-key" }),
             },
             serverOptions: {
                 concludeMeetingPrompt: {
@@ -37,11 +36,6 @@ describe("MeetingLifecycleHandler prompts (forest / Swedish)", () => {
                     sv: "Sammanfatta [DATE]",
                 },
                 summarizeMeetingLength: 5,
-                transcribeModel: "whisper-1",
-                transcribePrompt: {
-                    en: "Transcribe",
-                    sv: "Transkribera",
-                },
             },
             dialogGenerator: {
                 chairInterjection: vi.fn()

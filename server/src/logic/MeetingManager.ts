@@ -2,7 +2,6 @@ import type { IMeetingManager, Services, IMeetingBroadcaster } from "@interfaces
 import type { Character, Message } from "@shared/ModelTypes.js";
 import type { ClientToServerEvents, ReconnectionOptions, ServerToClientEvents, SetupOptions } from "@shared/SocketTypes.js";
 
-import { getOpenAI } from "@services/OpenAIService.js";
 import { createConversationService } from "@services/ConversationService.js";
 import { meetingsCollection, audioCollection, insertMeeting } from "@services/DbService.js";
 import { AudioSystem, Message as AudioMessage } from "@logic/AudioSystem.js";
@@ -117,16 +116,13 @@ export class MeetingManager implements IMeetingManager {
         this.broadcaster = new SocketBroadcaster(socket);
         this.environment = environment;
         this.serverOptions = serverOptions || getGlobalOptions();
-        const openAIGetter = services.getOpenAI || getOpenAI;
 
         // Default Services
         this.services = {
             meetingsCollection: services.meetingsCollection || meetingsCollection,
             audioCollection: services.audioCollection || audioCollection,
             insertMeeting: services.insertMeeting || insertMeeting,
-            getOpenAI: openAIGetter,
-            // Use a live getter so tests can still spy on getOpenAI after manager construction.
-            conversationService: services.conversationService || createConversationService(() => this.services.getOpenAI())
+            conversationService: services.conversationService || createConversationService()
         };
 
         this.meeting = null;

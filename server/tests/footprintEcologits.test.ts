@@ -69,8 +69,8 @@ describe("EcoLogits footprint table", () => {
         const configured = [
             Object.values(usageIdentityFor(productionOptions.conversationModel)),
             ["inworld", productionOptions.speakerClassifierModel],
-            ["inworld", productionOptions.inworldVoiceModel],
-            ["elevenlabs", productionOptions.elevenlabsVoiceModel],
+            ["inworld", productionOptions.ttsModels.inworld],
+            ["elevenlabs", productionOptions.ttsModels.elevenlabs],
         ];
 
         const missing = configured.filter(([provider, model]) => !findEcologitsModel(provider, model));

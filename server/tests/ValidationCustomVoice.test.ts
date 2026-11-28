@@ -9,81 +9,19 @@ const topic = MockFactory.createTopic({
     prompt: 'P'
 });
 
-describe('ValidationSchemas Custom Voice Logic (CreateMeeting)', () => {
-
-    it('should allow custom voice ID for Inworld provider', () => {
+describe('ValidationSchemas voice providers (CreateMeeting)', () => {
+    it.each([
+        { voice: 'custom-cloned-voice-id-123', voiceProvider: 'inworld', accepted: true },
+        { voice: 'JBFqnCBsd6RMkjVDRZzb', voiceProvider: 'elevenlabs', accepted: true },
+        { voice: 'alloy', voiceProvider: 'openai', accepted: false },
+        { voice: 'Ashley', voiceProvider: undefined, accepted: false },
+    ])('a $voiceProvider voice is accepted: $accepted', ({ voice, voiceProvider, accepted }) => {
+        const character = MockFactory.createCharacter({ id: 'char1', name: 'Test Char', voice });
         const payload = MockFactory.createCreateMeetingBody({
             topic,
-            characters: [
-                MockFactory.createCharacter({
-                    id: 'char1',
-                    name: 'Test Char',
-                    description: 'D',
-                    prompt: 'P',
-                    voice: 'custom-cloned-voice-id-123',
-                    voiceProvider: 'inworld' as const
-                })
-            ],
+            characters: [{ ...character, voiceProvider } as never],
         });
 
-        const result = CreateMeetingSchema.safeParse(payload);
-        expect(result.success).toBe(true);
-    });
-
-    it('should allow custom voice ID for ElevenLabs provider', () => {
-        const payload = MockFactory.createCreateMeetingBody({
-            topic,
-            characters: [
-                MockFactory.createCharacter({
-                    id: 'char1',
-                    name: 'Test Char',
-                    description: 'D',
-                    prompt: 'P',
-                    voice: 'JBFqnCBsd6RMkjVDRZzb',
-                    voiceProvider: 'elevenlabs' as const
-                })
-            ],
-        });
-
-        const result = CreateMeetingSchema.safeParse(payload);
-        expect(result.success).toBe(true);
-    });
-
-    it('should validate standard OpenAI voices', () => {
-        const payload = MockFactory.createCreateMeetingBody({
-            topic,
-            characters: [
-                MockFactory.createCharacter({
-                    id: 'char1',
-                    name: 'Test Char',
-                    description: 'D',
-                    prompt: 'P',
-                    voice: 'alloy',
-                    voiceProvider: 'openai' as const
-                })
-            ],
-        });
-
-        const result = CreateMeetingSchema.safeParse(payload);
-        expect(result.success).toBe(true);
-    });
-
-    it('should reject invalid OpenAI voices', () => {
-        const payload = MockFactory.createCreateMeetingBody({
-            topic,
-            characters: [
-                MockFactory.createCharacter({
-                    id: 'char1',
-                    name: 'Test Char',
-                    description: 'D',
-                    prompt: 'P',
-                    voice: 'invalid-voice',
-                    voiceProvider: 'openai' as const
-                })
-            ],
-        });
-
-        const result = CreateMeetingSchema.safeParse(payload);
-        expect(result.success).toBe(false);
+        expect(CreateMeetingSchema.safeParse(payload).success).toBe(accepted);
     });
 });

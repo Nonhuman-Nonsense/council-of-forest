@@ -23,16 +23,7 @@ function createMockClient(response: {
         usage: response.usage,
     });
 
-    return {
-        client: {
-            chat: {
-                completions: {
-                    create,
-                },
-            },
-        },
-        create,
-    };
+    return { client: { complete: create }, create };
 }
 
 function createParams(model: string): ConversationCompletionParams {
@@ -47,40 +38,11 @@ function createParams(model: string): ConversationCompletionParams {
 }
 
 describe("ConversationService", () => {
-    it("routes openai-direct models to the direct OpenAI client and strips the prefix", async () => {
-        const direct = createMockClient({ id: "direct-id", content: "direct-response" });
-        const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
-
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
-
-        const result = await service.createChatCompletion(createParams("openai-direct/gpt-5.2"));
-
-        expect(result).toMatchObject({
-            id: "direct-id",
-            content: "direct-response",
-            finishReason: "stop",
-        });
-        expect(direct.create).toHaveBeenCalledWith(expect.objectContaining({
-            model: "gpt-5.2",
-            messages: [{ role: "user", content: "Hello there" }],
-            max_completion_tokens: 123,
-            temperature: 0.7,
-            stop: ["\n---"],
-        }));
-        expect(inworld.create).not.toHaveBeenCalled();
-    });
-
     it("routes provider/model ids through the Inworld client unchanged", async () => {
-        const direct = createMockClient({ content: "direct-response" });
         const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
+        const mistral = createMockClient();
 
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
+        const service = createConversationService(() => inworld.client, () => mistral.client);
 
         const result = await service.createChatCompletion(createParams("anthropic/claude-opus-4-6"));
 
@@ -97,19 +59,17 @@ describe("ConversationService", () => {
             stop: ["\n---"],
         }));
         expect(inworld.create.mock.calls[0][0]).not.toHaveProperty("extra_body");
-        expect(direct.create).not.toHaveBeenCalled();
+        expect(mistral.create).not.toHaveBeenCalled();
     });
 
     it.each([
-        { model: "openai-direct/gpt-5.2", provider: "openai", reportedModel: "gpt-5.2" },
         { model: "mistral/mistral-large-3", provider: "inworld", reportedModel: "mistral/mistral-large-3" },
         { model: "mistral-direct/mistral-large-4-0", provider: "mistral", reportedModel: "mistral-large-4-0" },
     ])("reports token usage for $model", async ({ model, provider, reportedModel }) => {
         const usage = { prompt_tokens: 9, completion_tokens: 12, prompt_tokens_details: { cached_tokens: 0 } };
-        const direct = createMockClient({ usage });
         const inworld = createMockClient({ usage });
         const mistral = createMockClient({ usage });
-        const service = createConversationService(() => direct.client as never, () => inworld.client, () => mistral.client);
+        const service = createConversationService(() => inworld.client, () => mistral.client);
 
         const result = await service.createChatCompletion(createParams(model));
 
@@ -125,7 +85,7 @@ describe("ConversationService", () => {
             const inworld = createMockClient();
             const mistral = createMockClient();
             mistral.create.mockResolvedValue({ id: "mistral-id", choices: [{ message: { content }, finish_reason: "stop" }] });
-            const service = createConversationService(() => { throw new Error("not used"); }, () => inworld.client, () => mistral.client);
+            const service = createConversationService(() => inworld.client, () => mistral.client);
             return { service, inworld, mistral };
         }
 
@@ -187,7 +147,7 @@ describe("ConversationService", () => {
             { name: "Anthropic without a key", model: "anthropic/claude-sonnet-5-5", cacheKey: undefined, key: undefined, messages: stack },
         ])("asks $name to cache what the next request resends", async ({ model, cacheKey, key, messages }) => {
             const inworld = createMockClient();
-            const service = createConversationService(() => createMockClient().client as never, () => inworld.client);
+            const service = createConversationService(() => inworld.client);
 
             await service.createChatCompletion({ ...createParams(model), messages: stack, cacheKey });
 
@@ -198,13 +158,8 @@ describe("ConversationService", () => {
     });
 
     it("omits reasoning params when conversation reasoning is none", async () => {
-        const direct = createMockClient({ content: "direct-response" });
         const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
-
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
+        const service = createConversationService(() => inworld.client);
 
         await service.createChatCompletion(createParams("mistral/mistral-large-3"));
 
@@ -217,7 +172,7 @@ describe("ConversationService", () => {
 
     it("turns thinking off for a model that only stops thinking when told to", async () => {
         const inworld = createMockClient();
-        const service = createConversationService(() => { throw new Error("not used"); }, () => inworld.client);
+        const service = createConversationService(() => inworld.client);
 
         await service.createChatCompletion(createParams("anthropic/claude-sonnet-5-5"));
 
@@ -226,13 +181,8 @@ describe("ConversationService", () => {
     });
 
     it("converts an all-system first-turn stack into a valid routed request", async () => {
-        const direct = createMockClient({ content: "direct-response" });
         const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
-
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
+        const service = createConversationService(() => inworld.client);
 
         await service.createChatCompletion({
             model: "anthropic/claude-opus-4-6",
@@ -253,38 +203,11 @@ describe("ConversationService", () => {
             ],
         }));
         expect(inworld.create.mock.calls[0][0]).not.toHaveProperty("extra_body");
-        expect(direct.create).not.toHaveBeenCalled();
-    });
-
-    it("passes non-none reasoning to direct OpenAI models via reasoning_effort", async () => {
-        const direct = createMockClient({ id: "direct-id", content: "direct-response" });
-        const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
-
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
-
-        await service.createChatCompletion({
-            ...createParams("openai-direct/gpt-5.2"),
-            reasoning: "low",
-        });
-
-        expect(direct.create).toHaveBeenCalledWith(expect.objectContaining({
-            model: "gpt-5.2",
-            reasoning_effort: "low",
-        }));
-        expect(inworld.create).not.toHaveBeenCalled();
     });
 
     it("passes non-none reasoning to Inworld via extra_body", async () => {
-        const direct = createMockClient({ content: "direct-response" });
         const inworld = createMockClient({ id: "inworld-id", content: "inworld-response" });
-
-        const service = createConversationService(
-            () => direct.client as never,
-            () => inworld.client,
-        );
+        const service = createConversationService(() => inworld.client);
 
         await service.createChatCompletion({
             ...createParams("google-ai-studio/gemini-2.5-flash"),
@@ -299,38 +222,16 @@ describe("ConversationService", () => {
                 },
             },
         }));
-        expect(direct.create).not.toHaveBeenCalled();
     });
 
     it("defaults the finish reason to stop when the provider omits it", async () => {
-        const direct = {
-            client: {
-                chat: {
-                    completions: {
-                        create: vi.fn().mockResolvedValue({
-                            id: "direct-id",
-                            choices: [{ message: { content: "direct-response" } }],
-                        }),
-                    },
-                },
-            },
-        };
+        const inworld = createMockClient();
+        inworld.create.mockResolvedValue({ id: "inworld-id", choices: [{ message: { content: "inworld-response" } }] });
+        const service = createConversationService(() => inworld.client);
 
-        const service = createConversationService(
-            () => direct.client as never,
-            () => createMockClient().client,
-        );
-
-        const result = await service.createChatCompletion(createParams("openai-direct/gpt-4o-mini"));
+        const result = await service.createChatCompletion(createParams("mistral/mistral-large-3"));
 
         expect(result.finishReason).toBe("stop");
-    });
-
-    it("classifies openai-direct models via the resolver", () => {
-        expect(resolveConversationModel("openai-direct/gpt-5.2")).toEqual({
-            provider: "openai-direct",
-            model: "gpt-5.2",
-        });
     });
 
     it("classifies regular provider/model ids as Inworld-routed", () => {

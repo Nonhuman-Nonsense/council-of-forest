@@ -4,16 +4,16 @@ import testOptions from '@root/test-options.json' with { type: 'json' };
 import { CHAIR_ID, validateChairRealtimeConfig, validateHumanInputRealtimeConfig } from './characterSetupBundle.js';
 
 import { z } from "zod";
+import { VOICE_PROVIDERS } from "@shared/ModelTypes.js";
 
 export { CHAIR_ID } from './characterSetupBundle.js';
 export const ConversationReasoningSchema = z.enum(["none", "minimal", "low", "medium", "high", "xhigh"]);
-export const SubtitleTimingTypeSchema = z.enum(["inworld", "elevenlabs", "estimated", "whisper"]);
+export const SubtitleTimingTypeSchema = z.enum(["inworld", "elevenlabs", "estimated"]);
 
 export const ChairVoiceProfileSchema = z.object({
     voice: z.string(),
-    voiceProvider: z.enum(["openai", "inworld", "elevenlabs"]),
+    voiceProvider: z.enum(VOICE_PROVIDERS),
     voiceLocale: z.string().optional(),
-    voiceInstruction: z.string().optional(),
     voiceTemperature: z.number().optional(),
     voiceStability: z.number().optional(),
     voiceStyle: z.number().optional(),
@@ -54,9 +54,11 @@ export const VoiceLoudnessSchema = z.object({
 export const GlobalOptionsSchema = z.object({
     conversationModel: z.string(),
     conversationReasoning: ConversationReasoningSchema,
-    voiceModel: z.string(),
-    inworldVoiceModel: z.string(),
-    elevenlabsVoiceModel: z.string(),
+    /** The TTS model each voice provider speaks with. An Inworld voice with a locale uses TTS-2 instead. */
+    ttsModels: z.object({
+        inworld: z.string(),
+        elevenlabs: z.string(),
+    }),
     temperature: z.number(),
     maxTokens: z.number(),
     chairMaxTokens: z.number(),
@@ -79,8 +81,6 @@ export const GlobalOptionsSchema = z.object({
     concludeMeetingLength: z.number(),
     summarizeMeetingPrompt: z.record(z.string(), z.string()),
     summarizeMeetingLength: z.number(),
-    transcribeModel: z.string(),
-    transcribePrompt: z.record(z.string(), z.string()),
     audioConcurrency: z.number(),
     /**
      * Every newly generated message is brought to one perceived loudness, so no being speaks

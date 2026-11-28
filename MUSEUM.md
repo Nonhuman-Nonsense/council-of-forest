@@ -89,6 +89,20 @@ still for 2 minutes has crashed (`Aw, Snap!`), hung, or been replaced by an erro
 so Chrome restarts. A page that never ticked, like the council in web mode before
 `#staff` is set up, is left alone.
 
+**Other tabs.** At each of those checks the window script also closes any tab other than
+its page and brings the page back to the front. Chrome opens tabs of its own, such as
+"What's New" after some updates, and in kiosk mode a tab in front hides the page while the
+page keeps ticking behind it, so the watchdog would never notice. This is what makes it safe
+to leave Chrome's automatic updates on: an update downloads in the background and only
+takes effect when Chrome next opens, which on a Mac that shuts down every evening is the
+next morning.
+
+**Checking a change.** `museum/kiosk/smoke-chrome.sh` runs a throwaway headless Chrome and
+checks the parts of the window script that talk to Chrome: reading the heartbeat and closing
+other tabs. A Chrome update is what would break them, so run it on a Mac with the Chrome you
+are about to install before re-installing the kiosk windows. Screens, full screen and the
+front app need the real Mac; their log lines are how to check those.
+
 **The pointer** hides once it has stood still for 3 s, on the council in museum and presenter
 mode and always on the meter, and shows again when the mouse moves. macOS only applies that
 while the window's Chrome is the app in front, so the window with the pointer on its screen
@@ -133,6 +147,10 @@ Once, in System Settings:
 - **Wallpaper:** plain black, so a window between restarts leaves the screen black.
 - **General → Software Update → Automatic updates:** off, so the Mac never restarts into
   an update during opening hours.
+- **Chrome updates:** leave them on, and install Chrome as an admin user from google.com/chrome
+  so Google's updater keeps it current. A Chrome that stops updating eventually shows
+  "Chrome couldn't update… Reinstall Chrome" over the kiosk, and nothing in the kiosk
+  windows can close it. Check under Chrome → About Google Chrome in the setup profile.
 - **Notifications:** Focus on, or notifications off, so nothing slides over the screens.
 - **General → Login Items:** nothing that opens Chrome (an old `council-meter.command`
   would open a second meter), and turn off reopening windows when logging back in.
@@ -622,6 +640,7 @@ Open the dev URL at `/#staff`, set **Museum** (or **Presenter**) +
 | Socket drop, failed generation, server restart or deploy | The app: reconnects, retries, and reloads once `/health` answers ([RESILIENCE.md](RESILIENCE.md)) |
 | Meter: deploy, crash while drawing, months of uptime | The meter: reloads on reconnect, 30 s after a crash, and nightly at 04:00 |
 | Crashed or hung tab, Chrome error page, Cloudflare 502 page | The kiosk watchdog: restarts Chrome when the heartbeat stops |
+| A tab Chrome opens over the page ("What's New" after an update) | The kiosk window: closes it within 30 s |
 | Chrome quits, crashes or hangs | The kiosk window: opens Chrome again, once the server answers |
 | Meter screen switched off or unplugged | The kiosk window: closes the meter until the screen is back |
 | Power cut, Mac restart | The Mac: starts after a power failure, logs in, opens the windows |

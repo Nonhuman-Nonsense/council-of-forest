@@ -118,7 +118,7 @@ export function buildChairRealtimeSessionFragment(language: string): Record<stri
     const languageConfig = getChairRealtimeLanguageConfig(normalizedLanguage);
     const voice = getChairAgentVoice(normalizedLanguage);
 
-    const ttsModel = languageConfig.ttsModel ?? opts.inworldVoiceModel;
+    const ttsModel = languageConfig.ttsModel ?? opts.ttsModels.inworld;
     return buildInworldChairRealtimeSession({
         language: normalizedLanguage,
         voice,

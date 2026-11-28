@@ -31,7 +31,7 @@ vi.mock("@api/realtimeProviders.js", async (importOriginal) => {
 function validCreateBody() {
     return {
         topic: { id: "t-rt", title: "Topic", description: "D", prompt: "P" },
-        characters: [{ id: "speaker1", name: "Speaker 1", description: "D", prompt: "P", voice: "alloy" }],
+        characters: [{ id: "speaker1", name: "Speaker 1", description: "D", prompt: "P", voice: "Ashley", voiceProvider: "inworld" }],
         language: "en",
     };
 }

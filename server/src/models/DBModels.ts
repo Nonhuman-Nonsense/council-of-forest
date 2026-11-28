@@ -189,6 +189,7 @@ export interface StoredRoomPowerHour extends Document {
     reports: number;
 }
 
+/** `whisper` is on audio stored before Whisper timing was dropped (November 2026); no new audio gets it. */
 export type SubtitleTimingType = 'whisper' | 'inworld' | 'elevenlabs' | 'estimated' | undefined;
 export interface StoredAudio extends Audio, Document {
     subtitleTimingType?: SubtitleTimingType;

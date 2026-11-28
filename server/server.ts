@@ -8,7 +8,6 @@ import path from 'path';
 import { Logger } from '@utils/Logger.js';
 import { initReporting } from '@utils/errorbot.js';
 import { initDb } from '@services/DbService.js';
-import { initOpenAI } from '@services/OpenAIService.js';
 import { initMail } from '@services/MailService.js';
 import { startLetterOutbox } from '@logic/letters/outboxWorker.js';
 import { SocketManager } from '@logic/SocketManager.js';
@@ -56,7 +55,6 @@ try {
   initReporting();
   initMail();
   await initDb();
-  initOpenAI();
   startLetterOutbox();
 } catch (e) {
   await Logger.error("init", "Startup failed.", { error: e });

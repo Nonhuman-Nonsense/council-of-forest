@@ -1,8 +1,7 @@
 import type { Collection } from "mongodb";
-import type { OpenAI } from "openai";
 import type { StoredMeeting, StoredAudio } from "@models/DBModels.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
-import type { VoiceOption } from "@shared/ModelTypes.js";
+import type { VoiceOption, VoiceProvider } from "@shared/ModelTypes.js";
 
 // Re-export AudioTask from AudioUtils or move here? Let's move AudioTask here if it's used across files.
 // Actually AudioTask is used in AudioQueue which is in AudioUtils. Let's keep AudioTask in AudioUtils or export it from there.
@@ -10,16 +9,14 @@ import type { VoiceOption } from "@shared/ModelTypes.js";
 export interface Services {
     audioCollection: Collection<StoredAudio>;
     meetingsCollection: Collection<StoredMeeting>;
-    getOpenAI: () => OpenAI;
 }
 
 export interface Speaker {
     id: string;
     voice: VoiceOption | string;
-    voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
+    voiceProvider?: VoiceProvider;
     voiceLocale?: string;
     name?: string;
-    voiceInstruction?: string;
     voiceTemperature?: number;
     voiceStability?: number;
     voiceStyle?: number;
@@ -35,9 +32,7 @@ export interface Message {
 
 // Redefine AudioSystemOptions to include language directly, merging concepts.
 export interface AudioSystemOptions {
-    voiceModel: string;
-    inworldVoiceModel: string;
-    elevenlabsVoiceModel: string;
+    ttsModels: GlobalOptions["ttsModels"];
     defaultAudioSpeed: number;
     subtitleTimingPriorities: GlobalOptions["subtitleTimingPriorities"];
     voiceLoudness?: GlobalOptions["voiceLoudness"];

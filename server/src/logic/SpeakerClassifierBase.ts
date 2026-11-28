@@ -1,7 +1,7 @@
 import type { Character, Message } from "@shared/ModelTypes.js";
 import type { StoredMeeting } from "@models/DBModels.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ChatMessage } from "@services/ChatCompletions.js";
 
 import { config } from "@root/src/config.js";
 import { buildInworldReasoningExtraBody } from "@services/ConversationService.js";
@@ -87,7 +87,7 @@ export function resolveClassifierTarget(
 
 export async function requestSpeakerClassifierCompletion(
     serverOptions: GlobalOptions,
-    messages: ChatCompletionMessageParam[],
+    messages: ChatMessage[],
     maxTokens: number,
     logLabel: string,
     /** The meeting to tag the call's usage with. */

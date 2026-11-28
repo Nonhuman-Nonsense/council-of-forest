@@ -3,15 +3,15 @@ import path from "node:path";
 import { chairIdFromCharacters, CHARACTERS_FILE } from "@shared/prompts/characterSetupMetadata.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
+import type { VoiceProvider } from "@shared/ModelTypes.js";
 
-export type ChairVoiceProvider = "openai" | "inworld" | "elevenlabs";
+export type ChairVoiceProvider = VoiceProvider;
 
 /** Voice fields used for council TTS and/or live chair realtime sessions. */
 export type ChairVoiceProfile = {
     voice: string;
     voiceProvider: ChairVoiceProvider;
     voiceLocale?: string;
-    voiceInstruction?: string;
     voiceTemperature?: number;
     voiceStability?: number;
     voiceStyle?: number;
@@ -25,7 +25,6 @@ type CharacterSetupCharacter = {
     id: string;
     voice: string;
     voiceProvider?: string;
-    voiceInstruction?: string;
     voiceLocale?: string;
     voiceSpeed?: number;
     voiceTemperature?: number;
@@ -66,10 +65,10 @@ function getChairCharacter(language: string): CharacterSetupCharacter {
 }
 
 function parseVoiceProvider(raw: string | undefined): ChairVoiceProvider {
-    if (raw === "inworld" || raw === "openai" || raw === "elevenlabs") {
+    if (raw === "inworld" || raw === "elevenlabs") {
         return raw;
     }
-    return "openai";
+    throw new Error(`Character setup: unknown voiceProvider ${JSON.stringify(raw)} (expected "inworld" or "elevenlabs")`);
 }
 
 function characterToVoiceProfile(character: CharacterSetupCharacter): ChairVoiceProfile {
@@ -77,7 +76,6 @@ function characterToVoiceProfile(character: CharacterSetupCharacter): ChairVoice
         voice: character.voice,
         voiceProvider: parseVoiceProvider(character.voiceProvider),
         ...(character.voiceLocale ? { voiceLocale: character.voiceLocale } : {}),
-        ...(character.voiceInstruction ? { voiceInstruction: character.voiceInstruction } : {}),
         ...(character.voiceSpeed != null ? { voiceSpeed: character.voiceSpeed } : {}),
         ...(character.voiceTemperature != null ? { voiceTemperature: character.voiceTemperature } : {}),
         ...(character.voiceStability != null ? { voiceStability: character.voiceStability } : {}),

@@ -1,5 +1,5 @@
 import {
-  AVAILABLE_VOICES,
+  AVAILABLE_VOICES_INWORLD,
   type Character,
   type CharacterSetupData,
   type VoiceOption,
@@ -54,7 +54,7 @@ const defaultChair =
   (localCharacterSetupData[AVAILABLE_LANGUAGES[0]] ?? defaultCharacterSetupBundle).characters[
     CHAIR_CHARACTER_INDEX
   ];
-const defaultVoice: VoiceOption = (defaultChair?.voice as VoiceOption | undefined) ?? AVAILABLE_VOICES[0];
+const defaultVoice: VoiceOption = (defaultChair?.voice as VoiceOption | undefined) ?? AVAILABLE_VOICES_INWORLD[0];
 
 const blankHuman: Character = {
   id: "",
@@ -64,7 +64,6 @@ const blankHuman: Character = {
   voice: defaultVoice,
   voiceProvider: defaultChair?.voiceProvider,
   voiceTemperature: defaultChair?.voiceTemperature,
-  voiceInstruction: defaultChair?.voiceInstruction,
   voiceLocale: defaultChair?.voiceLocale,
   size: 1.0,
 };

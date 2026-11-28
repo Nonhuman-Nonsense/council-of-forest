@@ -30,8 +30,7 @@ stop_launchd_service() {
 
   sudo launchctl bootout "system/$SERVICE_LABEL" 2>/dev/null || true
 
-  local attempt
-  for attempt in $(seq 1 10); do
+  for _ in $(seq 1 10); do
     if ! launchd_service_loaded; then
       return 0
     fi

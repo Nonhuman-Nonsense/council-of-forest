@@ -224,7 +224,6 @@
                   <character-card v-for="(character, index) in activeCharacters" :key="character._ui_id"
                     :character="character" :is-active="true"
                     :is-expanded="localOptions.expandedCharacters[character._ui_id]"
-                    :voice-lists="{ openai: audioVoices }"
                     :is-sorting="isResizing" :is-pinned="isCharacterPinned(character)"
                     @toggle-expanded="toggleCharacterExpanded(character._ui_id)"
                     @toggle-active="toggleCharacterActive(character)" :data-id="character._ui_id"
@@ -237,7 +236,6 @@
                   <character-card v-for="(character, index) in inactiveCharacters" :key="character._ui_id"
                     :character="character" :is-active="false"
                     :is-expanded="localOptions.expandedCharacters[character._ui_id]"
-                    :voice-lists="{ openai: audioVoices }"
                     :is-sorting="false" :is-pinned="isCharacterPinned(character)"
                     @toggle-expanded="toggleCharacterExpanded(character._ui_id)"
                     @toggle-active="toggleCharacterActive(character)">
@@ -544,12 +542,6 @@
 
         <label class="sub-label">Voice Provider</label>
         <div class="voice-selector" style="margin-bottom: 10px;">
-          <label class="voice-chip"
-            :class="{ active: character.voiceProvider === 'openai' || !character.voiceProvider }">
-            <input type="radio" value="openai" v-model="character.voiceProvider" style="display: none;"
-              @change="onProviderChange">
-            OpenAI
-          </label>
           <label class="voice-chip" :class="{ active: character.voiceProvider === 'inworld' }">
             <input type="radio" value="inworld" v-model="character.voiceProvider" style="display: none;"
               @change="onProviderChange">
@@ -607,18 +599,6 @@
           </small>
         </template>
 
-        <template v-if="!usesCustomVoiceId(character)">
-          <label class="sub-label">Voice Option</label>
-          <div class="voice-selector">
-            <template v-for="voiceName in voiceLists.openai" :key="voiceName">
-              <label class="voice-chip" :class="{ active: character.voice === voiceName }">
-                <input type="radio" :value="voiceName" v-model="character.voice" style="display: none;">
-                {{ voiceName }}
-              </label>
-            </template>
-          </div>
-        </template>
-
         <label class="sub-label" style="display: flex; align-items: center; justify-content: space-between;">
           <span>Voice Speed ({{ character.voiceSpeed || 'Global' }})</span>
           <button v-if="character.voiceSpeed" @click.stop="character.voiceSpeed = undefined" class="icon-btn"
@@ -642,11 +622,6 @@
             style="display: block; margin-bottom: 10px; color: var(--text-secondary);">
             Not available on TTS-2 (used when a language locale is set).
           </small>
-        </template>
-        <template v-else-if="character.voiceProvider === 'openai' || !character.voiceProvider">
-          <label class="sub-label">Voice Instruction</label>
-          <textarea class="input-area" placeholder="e.g. 'Excited'" v-model="character.voiceInstruction" v-auto-resize
-            rows="1" style="margin-top: 5px; min-height: 36px; height: 36px; padding: 8px;"></textarea>
         </template>
       </div>
     </div>

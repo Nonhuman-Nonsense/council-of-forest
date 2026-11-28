@@ -19,7 +19,6 @@ import type { StoredMeeting } from "@models/DBModels.js";
 import { buildMeetingSystemPrompt } from "@shared/topicPrompt.js";
 import { injectRandomAgendaPoint } from "@shared/agendaPointInjection.js";
 import { closeDb, initDb, insertMeeting } from "@services/DbService.js";
-import { initOpenAI } from "@services/OpenAIService.js";
 import { MeetingManager } from "@logic/MeetingManager.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
 import { randomUUID } from "node:crypto";
@@ -198,7 +197,6 @@ async function runMeeting(sample: Sample, topics: TopicsBundle, beings: BeingsBu
 async function main() {
     const mongod = await MongoMemoryServer.create({ instance: { ip: "127.0.0.1", args: ["--nounixsocket"] } });
     await initDb(mongod.getUri(), "kids_sample");
-    initOpenAI();
     await mkdir(OUT_DIR, { recursive: true });
 
     const bundles = Object.fromEntries(await Promise.all(LANGUAGES.map(async (language) => [language, {

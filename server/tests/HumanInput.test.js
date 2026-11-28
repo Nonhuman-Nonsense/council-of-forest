@@ -18,7 +18,7 @@ describe('HumanInputHandler (Isolated)', () => {
             _id: 42,
             characters: [
                 chair,
-                { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }
+                { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
             ],
             state: { humanName: 'Frank' },
             conversation: []

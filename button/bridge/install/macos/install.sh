@@ -59,8 +59,7 @@ PY
 
 wait_for_health() {
   local url="http://127.0.0.1:8765/health"
-  local attempt
-  for attempt in $(seq 1 20); do
+  for _ in $(seq 1 20); do
     if curl -fsS "$url" 2>/dev/null; then
       echo
       return 0

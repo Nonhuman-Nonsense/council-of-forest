@@ -1,13 +1,15 @@
-import OpenAI from "openai";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-
 import { config } from "@root/src/config.js";
-import { OUTBOUND_HTTP_TIMEOUT_MS } from "@utils/NetworkUtils.js";
+import {
+    createChatCompletionClient,
+    type ChatCompletionClient,
+    type ChatCompletionRequest,
+    type ChatMessage,
+    type ChatReasoning,
+} from "@services/ChatCompletions.js";
 import { parseChatCompletionUsage } from "@services/UsageService.js";
 import type { UsageMeasures } from "@shared/UsageTypes.js";
 
 const INWORLD_BASE_URL = "https://api.inworld.ai/v1";
-const OPENAI_DIRECT_PREFIX = "openai-direct/";
 /**
  * Mistral's own API, for when the router serves a Mistral model differently from Mistral itself.
  * In November 2026 it did: through Inworld, `mistral/mistral-large-2512` started reasoning on every
@@ -15,11 +17,11 @@ const OPENAI_DIRECT_PREFIX = "openai-direct/";
  */
 const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
 const MISTRAL_DIRECT_PREFIX = "mistral-direct/";
-type ConversationReasoning = "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
+type ConversationReasoning = ChatReasoning;
 
 export interface ConversationCompletionParams {
     model: string;
-    messages: ChatCompletionMessageParam[];
+    messages: ChatMessage[];
     maxCompletionTokens: number;
     temperature: number;
     stop?: string[];
@@ -38,7 +40,7 @@ export interface ConversationCompletionResult {
     finishReason: string | null;
     /** Who served the completion and what it consumed, for the footprint meter. */
     usage?: {
-        /** Who we called: "inworld" (router), "openai" or "mistral". */
+        /** Who we called: "inworld" (router) or "mistral". */
         provider: string;
         /** As requested, e.g. "mistral/mistral-large-3". */
         model: string;
@@ -50,78 +52,42 @@ export interface ConversationService {
     createChatCompletion(params: ConversationCompletionParams): Promise<ConversationCompletionResult>;
 }
 
-interface ChatCompletionClient {
-    chat: {
-        completions: {
-            create: (params: {
-                model: string;
-                messages: ChatCompletionMessageParam[];
-                max_completion_tokens: number;
-                temperature: number;
-                stop?: string[];
-                reasoning_effort?: ConversationReasoning;
-                /** Anthropic's own thinking switch; the router passes it through as it is. */
-                thinking?: { type: "between_tools" };
-                extra_body?: {
-                    reasoning: {
-                        effort: ConversationReasoning;
-                        max_tokens?: number;
-                        exclude?: boolean;
-                    };
-                };
-            }) => Promise<{
-                id?: string | null;
-                choices?: Array<{
-                    message?: {
-                        /** Mistral's reasoning models answer in chunks: a thinking one, then text. */
-                        content?: string | null | Array<{ type: string; text?: string }>;
-                    };
-                    finish_reason?: string | null;
-                }>;
-                usage?: unknown;
-            }>;
-        };
-    };
-}
-
 export interface ResolvedConversationModel {
-    provider: "inworld" | "openai-direct" | "mistral-direct";
+    provider: "inworld" | "mistral-direct";
     model: string;
 }
 
-let inworldClient: OpenAI | undefined;
-let mistralClient: OpenAI | undefined;
+let inworldClient: ChatCompletionClient | undefined;
+let mistralClient: ChatCompletionClient | undefined;
 
-function getMistralClient(): OpenAI {
+function getMistralClient(): ChatCompletionClient {
     if (!config.MISTRAL_API_KEY) {
         throw new Error("A mistral-direct/ model needs MISTRAL_API_KEY in the server's environment");
     }
     if (!mistralClient) {
-        mistralClient = new OpenAI({
+        mistralClient = createChatCompletionClient({
             baseURL: MISTRAL_BASE_URL,
             apiKey: config.MISTRAL_API_KEY,
-            maxRetries: 3,
-            timeout: OUTBOUND_HTTP_TIMEOUT_MS,
+            label: "Mistral",
         });
     }
 
     return mistralClient;
 }
 
-function getInworldClient(): OpenAI {
+function getInworldClient(): ChatCompletionClient {
     if (!inworldClient) {
-        inworldClient = new OpenAI({
+        inworldClient = createChatCompletionClient({
             baseURL: INWORLD_BASE_URL,
             apiKey: config.INWORLD_API_KEY,
-            maxRetries: 3,
-            timeout: OUTBOUND_HTTP_TIMEOUT_MS,
+            label: "Inworld router",
         });
     }
 
     return inworldClient;
 }
 
-function normalizeMessagesForInworldRouting(messages: ChatCompletionMessageParam[]): ChatCompletionMessageParam[] {
+function normalizeMessagesForInworldRouting(messages: ChatMessage[]): ChatMessage[] {
     if (messages.some((message) => message.role !== "system")) {
         return messages;
     }
@@ -144,13 +110,6 @@ function normalizeMessagesForInworldRouting(messages: ChatCompletionMessageParam
 }
 
 export function resolveConversationModel(model: string): ResolvedConversationModel {
-    if (model.startsWith(OPENAI_DIRECT_PREFIX)) {
-        return {
-            provider: "openai-direct",
-            model: model.slice(OPENAI_DIRECT_PREFIX.length),
-        };
-    }
-
     if (model.startsWith(MISTRAL_DIRECT_PREFIX)) {
         return {
             provider: "mistral-direct",
@@ -164,13 +123,7 @@ export function resolveConversationModel(model: string): ResolvedConversationMod
     };
 }
 
-export function buildInworldReasoningExtraBody(reasoning: ConversationReasoning): {
-    reasoning: {
-        effort: ConversationReasoning;
-        max_tokens?: number;
-        exclude?: boolean;
-    };
-} {
+export function buildInworldReasoningExtraBody(reasoning: ConversationReasoning): NonNullable<ChatCompletionRequest["extra_body"]> {
     if (reasoning === "none") {
         return {
             reasoning: {
@@ -192,7 +145,7 @@ export function buildInworldReasoningExtraBody(reasoning: ConversationReasoning)
  * Asks the provider to cache the prompt. Each provider wants it differently, and without it the
  * whole conversation is billed at the full input price on every turn:
  *
- * - Mistral (and OpenAI) cache only requests that carry a `prompt_cache_key`. Probed through
+ * - Mistral caches only requests that carry a `prompt_cache_key`. Probed through
  *   the Inworld router (October 2026): none of a repeated prompt cached without one, nearly
  *   all of it with one.
  * - Anthropic caches only up to a `cache_control` breakpoint. It goes on the last message
@@ -203,9 +156,9 @@ export function buildInworldReasoningExtraBody(reasoning: ConversationReasoning)
  */
 export function cacheRequestFields(
     model: string,
-    messages: ChatCompletionMessageParam[],
+    messages: ChatMessage[],
     cacheKey: string | undefined,
-): { messages: ChatCompletionMessageParam[]; prompt_cache_key?: string } {
+): { messages: ChatMessage[]; prompt_cache_key?: string } {
     if (!cacheKey) return { messages };
     if (!model.startsWith("anthropic/") || messages.length < 2) return { messages, prompt_cache_key: cacheKey };
 
@@ -215,11 +168,10 @@ export function cacheRequestFields(
     if (typeof content !== "string" || content.length === 0) return { messages, prompt_cache_key: cacheKey };
 
     const marked = [...messages];
-    // `cache_control` is Anthropic's, so the OpenAI types do not know it.
     marked[index] = {
         ...messages[index],
         content: [{ type: "text", text: content, cache_control: { type: "ephemeral" } }],
-    } as unknown as ChatCompletionMessageParam;
+    };
     return { messages: marked, prompt_cache_key: cacheKey };
 }
 
@@ -233,7 +185,6 @@ const THINKING_OFF_BETWEEN_TOOLS = new Set(["anthropic/claude-sonnet-5-5"]);
 
 const USAGE_PROVIDER: Record<ResolvedConversationModel["provider"], string> = {
     "inworld": "inworld",
-    "openai-direct": "openai",
     "mistral-direct": "mistral",
 };
 
@@ -255,7 +206,7 @@ async function requestChatCompletion(
     model: string,
     provider: ResolvedConversationModel["provider"],
 ): Promise<ConversationCompletionResult> {
-    const requestParams: Parameters<ChatCompletionClient["chat"]["completions"]["create"]>[0] = {
+    const request: ChatCompletionRequest = {
         model,
         ...cacheRequestFields(model, params.messages, params.cacheKey),
         max_completion_tokens: params.maxCompletionTokens,
@@ -264,14 +215,14 @@ async function requestChatCompletion(
     };
 
     if (provider === "inworld" && params.reasoning === "none" && THINKING_OFF_BETWEEN_TOOLS.has(model)) {
-        requestParams.thinking = { type: "between_tools" };
+        request.thinking = { type: "between_tools" };
     } else if (provider === "inworld" && params.reasoning !== "none") {
-        requestParams.extra_body = buildInworldReasoningExtraBody(params.reasoning);
+        request.extra_body = buildInworldReasoningExtraBody(params.reasoning);
     } else if (params.reasoning !== "none") {
-        requestParams.reasoning_effort = params.reasoning;
+        request.reasoning_effort = params.reasoning;
     }
 
-    const completion = await client.chat.completions.create(requestParams);
+    const completion = await client.complete(request);
 
     return {
         id: completion.id ?? null,
@@ -286,17 +237,12 @@ async function requestChatCompletion(
 }
 
 export function createConversationService(
-    getOpenAI: () => OpenAI,
     getInworld: () => ChatCompletionClient = getInworldClient,
     getMistral: () => ChatCompletionClient = getMistralClient,
 ): ConversationService {
     return {
         async createChatCompletion(params: ConversationCompletionParams): Promise<ConversationCompletionResult> {
             const resolvedModel = resolveConversationModel(params.model);
-
-            if (resolvedModel.provider === "openai-direct") {
-                return requestChatCompletion(getOpenAI(), params, resolvedModel.model, resolvedModel.provider);
-            }
 
             if (resolvedModel.provider === "mistral-direct") {
                 return requestChatCompletion(getMistral(), params, resolvedModel.model, resolvedModel.provider);

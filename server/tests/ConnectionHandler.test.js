@@ -167,8 +167,8 @@ describe('ConnectionHandler', () => {
                     { id: 'msg2', text: 'Missing Audio', sentences: [], speaker: 'speaker2' }
                 ],
                 characters: [
-                    { id: 'speaker1', name: 'Speaker 1', description: '', prompt: '', voice: 'alloy' },
-                    { id: 'speaker2', name: 'Speaker 2', description: '', prompt: '', voice: 'alloy' }
+                    { id: 'speaker1', name: 'Speaker 1', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' },
+                    { id: 'speaker2', name: 'Speaker 2', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
                 ],
                 audio: ['msg1']
             });

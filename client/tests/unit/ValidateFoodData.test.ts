@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { AVAILABLE_LANGUAGES } from '@shared/AvailableLanguages';
-import { AVAILABLE_VOICES, VoiceOption } from '@shared/ModelTypes';
+import { VOICE_PROVIDERS, type VoiceOption, type VoiceProvider } from '@shared/ModelTypes';
 import { CHARACTERS_FILE } from '@shared/prompts/characterSetupMetadata';
 import { SINGLE_AGENDA_POINT_PLACEHOLDER } from '@shared/agendaPointInjection';
 import fs from 'fs';
@@ -20,10 +20,9 @@ interface CharacterDataEntry {
     type?: string;
     index?: number;
     voice: VoiceOption;
-    voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
+    voiceProvider: VoiceProvider;
     voiceLocale?: string;
     size?: number;
-    voiceInstruction?: string;
 }
 
 interface CharacterSetupDataFile {
@@ -73,15 +72,10 @@ describe('Validate Food Data JSONs', () => {
                 expect(character).toHaveProperty('description');
                 expect(character).toHaveProperty('voice');
 
-                // Validate Voice Option
-                if (character.voiceProvider === 'inworld' || character.voiceProvider === 'elevenlabs') {
-                    // Custom voice providers allow arbitrary non-empty voice IDs
-                    expect(typeof character.voice).toBe('string');
-                    expect(character.voice.length).toBeGreaterThan(0);
-                } else {
-                    // Default to OpenAI if provider is missing or explicitly 'openai'
-                    expect(AVAILABLE_VOICES).toContain(character.voice);
-                }
+                // Every being names who voices it; both providers take arbitrary voice IDs
+                expect(VOICE_PROVIDERS).toContain(character.voiceProvider);
+                expect(typeof character.voice).toBe('string');
+                expect(character.voice.length).toBeGreaterThan(0);
 
                 // Ensure prompt exists for at least the first character (Chair usually)
                 if (index === 0) {

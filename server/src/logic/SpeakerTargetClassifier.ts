@@ -1,7 +1,7 @@
 import type { Character, Message } from "@shared/ModelTypes.js";
 import type { StoredMeeting } from "@models/DBModels.js";
 import type { GlobalOptions } from "@logic/GlobalOptions.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ChatMessage } from "@services/ChatCompletions.js";
 
 import { Logger } from "@utils/Logger.js";
 import {
@@ -85,7 +85,7 @@ export class SpeakerTargetClassifier {
 function buildClassifierMessages(
     meeting: StoredMeeting,
     options: ClassifierBuildOptions
-): ChatCompletionMessageParam[] {
+): ChatMessage[] {
     if (options.mode === "participantHandoff") {
         return buildParticipantHandoffClassifierMessages(meeting, options);
     }
@@ -96,7 +96,7 @@ function buildClassifierMessages(
 function buildHumanQuestionClassifierMessages(
     meeting: StoredMeeting,
     options: Pick<ClassifierBuildOptions, "text" | "allowedTargetIds">
-): ChatCompletionMessageParam[] {
+): ChatMessage[] {
     const conversationTranscript = buildConversationTranscript(meeting);
     const participantLines = meeting.characters.map(
         (character) => `- id: ${character.id} | name: ${character.name} | description: ${character.description}`
@@ -129,7 +129,7 @@ function buildHumanQuestionClassifierMessages(
 function buildParticipantHandoffClassifierMessages(
     meeting: StoredMeeting,
     options: Pick<ClassifierBuildOptions, "text" | "speakerId" | "allowedTargetIds">
-): ChatCompletionMessageParam[] {
+): ChatMessage[] {
     const latestMessageLine = renderConversationLine(
         { speaker: options.speakerId, text: options.text, type: "message" } as Message,
         meeting

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -12,48 +12,11 @@ import {
 } from '@logic/liveSessionRegistry.js';
 import { meetingsCollection } from '@services/DbService.js';
 import { ConflictError } from '@models/Errors.js';
+import { mockChat } from './mockChat.js';
 
-const { integrationGetOpenAI } = vi.hoisted(() => {
-    const integrationGetOpenAI = () => ({
-        chat: {
-            completions: {
-                create: vi.fn().mockResolvedValue({
-                    choices: [
-                        {
-                            message: {
-                                content:
-                                    'Water: This is a deterministic integration-test reply from the mocked model.',
-                            },
-                        },
-                    ],
-                }),
-            },
-        },
-        audio: {
-            speech: {
-                create: vi.fn().mockResolvedValue({
-                    arrayBuffer: async () => new ArrayBuffer(8),
-                }),
-            },
-            transcriptions: {
-                create: vi.fn().mockResolvedValue({ words: [] }),
-            },
-        },
-    });
-    return { integrationGetOpenAI };
-});
-
-vi.mock('@services/OpenAIService.js', async () => {
-    const actual = await vi.importActual('@services/OpenAIService.js');
-    const mode = process.env.TEST_MODE || 'mock';
-
-    if (mode === 'fast' || mode === 'full') {
-        return actual;
-    }
-
-    return {
-        getOpenAI: integrationGetOpenAI,
-    };
+// The mocked model's every reply (MOCK mode); FAST and FULL modes call the real one.
+mockChat.mockResolvedValue({
+    choices: [{ message: { content: 'Water: This is a deterministic integration-test reply from the mocked model.' } }],
 });
 
 function validCreateBody() {
@@ -65,14 +28,16 @@ function validCreateBody() {
                 name: 'Water',
                 description: 'Hydrating and clear-headed.',
                 prompt: 'Speak as Water in the council.',
-                voice: 'alloy',
+                voice: 'Ashley',
+                voiceProvider: 'inworld',
             },
             {
                 id: 'tomato',
                 name: 'Tomato',
                 description: 'Opinionated and juicy.',
                 prompt: 'Speak as Tomato in the council.',
-                voice: 'alloy',
+                voice: 'Ashley',
+                voiceProvider: 'inworld',
             },
         ],
         language: 'en',

@@ -1,14 +1,15 @@
 {
   "conversationModel": "mistral-direct/mistral-large-2512",
   "conversationReasoning": "none",
-  "voiceModel": "gpt-4o-mini-tts",
-  "inworldVoiceModel": "inworld-tts-1.5-max",
-  "elevenlabsVoiceModel": "eleven_flash_v2_5",
+  "ttsModels": {
+    "inworld": "inworld-tts-1.5-max",
+    "elevenlabs": "eleven_flash_v2_5"
+  },
   "temperature": 1,
   "maxTokens": 400,
   "chairMaxTokens": 400,
   "defaultAudioSpeed": 1.15,
-  "subtitleTimingPriorities": ["elevenlabs", "inworld", "whisper", "estimated"],
+  "subtitleTimingPriorities": ["elevenlabs", "inworld", "estimated"],
   "directedSpeakerRouting": true,
   "trimSentance": true,
   "trimParagraph": false,
@@ -38,11 +39,6 @@
     "sv": "Sammanfatta mötet som hölls den [DATE] och skapa ett kort dokument som kan fungera som mötesprotokoll och policerekommendation som skulle kunna skickas till Sveriges regering för övervägande. Maximalt 1500 tecken, ÖVERSKRID INTE DETTA GRÄNSVÄRDE. Fortsätt inte debatten."
   },
   "summarizeMeetingLength": 500,
-  "transcribeModel": "gpt-4o-transcribe",
-  "transcribePrompt": {
-    "en": "Expect english input.",
-    "sv": "Förvänta dig svenskt tal."
-  },
   "audioConcurrency": 10,
   "voiceLoudness": { "targetLufs": -21, "skipBelowDb": 1.5, "truePeakDb": -1.5 },
   "meetingEnding": "letter",

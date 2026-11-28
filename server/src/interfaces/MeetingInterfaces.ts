@@ -1,6 +1,5 @@
 import type { Character, Message } from "@shared/ModelTypes.js";
 import type { Collection, InsertOneResult } from "mongodb";
-import type { OpenAI } from "openai";
 import type { Socket } from "socket.io";
 import type { StoredMeeting, StoredAudio } from "@models/DBModels.js";
 import type { CouncilError } from "@models/Errors.js";
@@ -19,7 +18,6 @@ export interface Services {
     meetingsCollection: Collection<StoredMeeting>;
     audioCollection: Collection<StoredAudio>;
     insertMeeting: (meeting: Omit<StoredMeeting, "_id">) => Promise<InsertOneResult<StoredMeeting>>;
-    getOpenAI: () => OpenAI;
     conversationService: ConversationService;
 }
 
@@ -58,7 +56,6 @@ export interface IMeetingContext {
         meetingsCollection: Collection<StoredMeeting>;
         audioCollection: Collection<StoredAudio>;
         insertMeeting: (meeting: Omit<StoredMeeting, "_id">) => Promise<InsertOneResult<StoredMeeting>>;
-        getOpenAI: () => OpenAI;
         conversationService: ConversationService;
     };
     serverOptions: GlobalOptions;

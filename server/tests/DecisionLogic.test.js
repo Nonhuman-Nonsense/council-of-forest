@@ -11,7 +11,7 @@ describe('MeetingManager - State Machine (decideNextAction)', () => {
         const setup = createTestManager();
         manager = setup.manager;
         // Add a human panelist at index 3.
-        manager.meeting.characters.push({ id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' });
+        manager.meeting.characters.push({ id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' });
     });
 
     const scenarios = [
@@ -232,7 +232,7 @@ describe('MeetingManager - State Machine (decideNextAction)', () => {
                 ? createTestManager(env).manager
                 : manager;
             if (env) {
-                activeManager.meeting.characters.push({ id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' });
+                activeManager.meeting.characters.push({ id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' });
             }
             setup(activeManager);
             vi.spyOn(SpeakerSelector, 'calculateNextSpeaker').mockReturnValue(nextSpeakerIndex);
