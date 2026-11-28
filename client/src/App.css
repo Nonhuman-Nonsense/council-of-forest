@@ -39,6 +39,23 @@ html,
   z-index: var(--z-navbar);
 }
 
+/* The app owns the window and scrolls inside its own panels, not the page. `.App` is sized in
+   100vw/100dvh, which count the page's scroll bars, so where the system draws classic ones (a
+   mouse plugged in, or "Show scroll bars: Always" on macOS) any brief overflow latched: a bar
+   appeared, `.App` was then too big by its width on the other axis, that axis got a bar too,
+   and the two held each other up — 11px and 16px of overflow, the page scrolled a pixel.
+   So the page never scrolls sideways, and scrolls down only in a window shorter than `.App`'s
+   min-height, to reach its bottom. On `html` alone: overflow on `body` would clip `.App` to it. */
+html {
+  overflow-x: hidden;
+}
+
+@media (min-height: 300px) {
+  html {
+    overflow-y: hidden;
+  }
+}
+
 html.cursor-hidden,
 html.cursor-hidden * {
   cursor: none !important;
