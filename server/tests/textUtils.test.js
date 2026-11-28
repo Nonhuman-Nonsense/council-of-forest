@@ -73,7 +73,7 @@ describe('textUtils', () => {
                 { word: "Hello", start: 0, end: 0.5 },
                 { word: "world", start: 0.5, end: 1.0 }
             ];
-            // Whisper often produces clean words without punctuation
+            // Word timings often come back as clean words without punctuation
             const result = mapSentencesToWords(sentences, words);
             expect(result[0]).toEqual({ text: "Hello, world!", start: 0, end: 1.0 });
         });

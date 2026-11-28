@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MockFactory } from './factories/MockFactory.ts';
-import { createTestManager } from './commonSetup.js';
+import { createTestManager, useChatMock } from './commonSetup.js';
 
 describe('DialogGenerator - Prompt Construction', () => {
     let manager;
@@ -57,16 +57,12 @@ describe('DialogGenerator - Prompt Construction', () => {
     });
 
     it('should handle chair interjection prompts', async () => {
-        // Mock OpenAI call within this specific test if needed, or rely on global mock
         // ensuring we can capture the "messages" sent to it.
         const mockCreate = vi.fn().mockResolvedValue({
             choices: [{ message: { content: 'Chair: Hello human!' } }]
         });
 
-        // Spy on getOpenAI to return our local spy
-        vi.spyOn(manager.services, 'getOpenAI').mockReturnValue({
-            chat: { completions: { create: mockCreate } }
-        });
+        useChatMock(manager, mockCreate);
 
         const interjection = "Invite the human to speak.";
         const mockBroadcaster = {
@@ -110,9 +106,7 @@ describe('DialogGenerator - Text Cleaning & Post-Processing', () => {
                 finish_reason
             }]
         });
-        vi.spyOn(manager.services, 'getOpenAI').mockReturnValue({
-            chat: { completions: { create: mockCreate } }
-        });
+        useChatMock(manager, mockCreate);
     };
 
     beforeEach(() => {
@@ -242,9 +236,7 @@ describe('DialogGenerator - Chair Interjection Post-Processing', () => {
                 finish_reason
             }]
         });
-        vi.spyOn(manager.services, 'getOpenAI').mockReturnValue({
-            chat: { completions: { create: mockCreate } }
-        });
+        useChatMock(manager, mockCreate);
     };
 
     const mockBroadcaster = {
@@ -354,9 +346,7 @@ describe('DialogGenerator - Document Generation', () => {
                 finish_reason,
             }],
         });
-        vi.spyOn(manager.services, 'getOpenAI').mockReturnValue({
-            chat: { completions: { create: mockCreate } },
-        });
+        useChatMock(manager, mockCreate);
     };
 
     beforeEach(() => {

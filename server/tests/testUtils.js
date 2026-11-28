@@ -4,8 +4,8 @@ import { getGlobalOptions } from '@logic/GlobalOptions.js';
 /**
  * Defines the available testing modes for the application.
  * - MOCK: Basic unit tests with simulated services (Fastest, No Cost).
- * - FAST: Integration tests with Real OpenAI API but Skipped Audio (Fast, Low Cost).
- * - FULL: Full system tests with Real OpenAI API and Audio Generation (Slow, Higher Cost).
+ * - FAST: Integration tests against the real conversation model, audio skipped (Fast, Low Cost).
+ * - FULL: Full system tests against the real conversation model and voices (Slow, Higher Cost).
  */
 import { TEST_MODES } from '@interfaces/TestModes.js';
 export { TEST_MODES };
@@ -19,7 +19,7 @@ export const getTestMode = () => process.env.TEST_MODE || TEST_MODES.MOCK;
 
 /**
  * Configures global options based on the active test mode.
- * - FAST mode: Sets skipAudio=true (unless overriding) and uses gpt-4o-mini.
+ * - FAST mode: Sets skipAudio=true (unless overriding), with test-options.json's models.
  * - FULL mode: Loads production-like settings from GlobalOptions.js.
  * @returns {object} The configured options object.
  */
@@ -28,7 +28,7 @@ export const setupTestOptions = () => {
     let options = getGlobalOptions(); // Start with correctly merged options
 
     if (mode === TEST_MODES.FAST) {
-        console.log('[Test] Running in FAST mode (gpt-4o-mini, no audio)');
+        console.log('[Test] Running in FAST mode (test models, no audio)');
         options.skipAudio = true;
     } else if (mode === TEST_MODES.FULL) {
         console.log('[Test] Running in FULL mode (Production models)');

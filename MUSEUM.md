@@ -89,6 +89,20 @@ still for 2 minutes has crashed (`Aw, Snap!`), hung, or been replaced by an erro
 so Chrome restarts. A page that never ticked, like the council in web mode before
 `#staff` is set up, is left alone.
 
+**Other tabs.** At each of those checks the window script also closes any tab other than
+its page and brings the page back to the front. Chrome opens tabs of its own, such as
+"What's New" after some updates, and in kiosk mode a tab in front hides the page while the
+page keeps ticking behind it, so the watchdog would never notice. This is what makes it safe
+to leave Chrome's automatic updates on: an update downloads in the background and only
+takes effect when Chrome next opens, which on a Mac that shuts down every evening is the
+next morning.
+
+**Checking a change.** `museum/kiosk/smoke-chrome.sh` runs a throwaway headless Chrome and
+checks the parts of the window script that talk to Chrome: reading the heartbeat and closing
+other tabs. A Chrome update is what would break them, so run it on a Mac with the Chrome you
+are about to install before re-installing the kiosk windows. Screens, full screen and the
+front app need the real Mac; their log lines are how to check those.
+
 **The pointer** hides once it has stood still for 3 s, on the council in museum and presenter
 mode and always on the meter, and shows again when the mouse moves. macOS only applies that
 while the window's Chrome is the app in front, so the window with the pointer on its screen
@@ -133,6 +147,10 @@ Once, in System Settings:
 - **Wallpaper:** plain black, so a window between restarts leaves the screen black.
 - **General → Software Update → Automatic updates:** off, so the Mac never restarts into
   an update during opening hours.
+- **Chrome updates:** leave them on, and install Chrome as an admin user from google.com/chrome
+  so Google's updater keeps it current. A Chrome that stops updating eventually shows
+  "Chrome couldn't update… Reinstall Chrome" over the kiosk, and nothing in the kiosk
+  windows can close it. Check under Chrome → About Google Chrome in the setup profile.
 - **Notifications:** Focus on, or notifications off, so nothing slides over the screens.
 - **General → Login Items:** nothing that opens Chrome (an old `council-meter.command`
   would open a second meter), and turn off reopening windows when logging back in.
@@ -194,6 +212,23 @@ meeting ends on the credits while the letter prints.
 each mode does — every difference between the three is one row of that table,
 and nothing in the app branches on the mode itself.
 
+### Kids mode
+
+A meeting can be held for children: when the setup agent hears that children are taking
+part (a parent says so, a school class, an age), it calls `set_audience` with `young`
+(about 6–9) or `older` (about 10–14). It never guesses from a voice and does not ask
+every visitor. The meeting then carries that audience's instructions at the end of every
+character's prompt, voices are a little slower, the chair speaks to them that way when the
+button interrupts, and a letter says it comes from a meeting held with children. The text
+lives in the character setup bundle (`audiences` in `foods_<lang>.json` / `beings_<lang>.json`);
+a language without it has no kids mode. Topics with an agenda can give young children their
+own (`youngAgendaPoints` in `topics_<lang>.json`). The prototype has an Audience switch for
+trying it.
+
+On Forest, the Swedish wording follows the [translation guide](shared/prompts/translation_guide_sv.md)
+("barn", "barn och unga"), and `server/scripts/kids/generateKidsMeetings.ts` generates sample
+transcripts, text only, into `docs/kids-mode/`.
+
 ### Hardware button
 
 Museum and presenter both run the setup agent with push-to-talk; there is no
@@ -236,7 +271,7 @@ print here too, as they arrive: the page asks the bridge for new replies to this
 venue's letters once a minute (the bridge asks the council server with the
 installation key, so the key and the venue must be set), prints each once, and
 tells the server. Automatic replies (out of office) are never printed. See
-[docs/council-letters.md](docs/council-letters.md).
+[LETTERS.md](LETTERS.md).
 
 The **Bridge** panel on `#staff` shows the printer, how many protocols are
 waiting, and **Needs attention** with the reason when something is wrong: out of
@@ -351,7 +386,7 @@ The second screen shows what the installation costs:
   display (setup below).
 - **Methodology:** `/meter/methodology`, linked by the QR code on the meter.
 
-Design and estimation method: [docs/ai-footprint-meter.md](docs/ai-footprint-meter.md).
+Design and estimation method: [FOOTPRINT.md](FOOTPRINT.md).
 
 ### Meter screen (second display)
 
@@ -442,6 +477,15 @@ takes effect at once, without a reload; off, the output is the usual stereo mix.
 - With the split on, the microphone opens without the browser's echo canceller, which coloured
   the agents' voices. Keep speakers that play voices away from the mic, or the agents may hear
   themselves. This part follows the switch only when the mic next opens: reload the page.
+
+**Room audio for one visit.** With the split on, the setup agent can join it back for the
+current visit: ask it to play the meeting in the room too (to present the installation to a
+group, say), or to go back to headphones only. The agent reconnects straight away, so its mic
+opens with the echo canceller the speakers need. It lasts through the meeting and what follows,
+and the next visit at the landing page is back on the staff setting. Idle autoplay and a
+reload end it too.
+Nothing is stored, and flipping **Split audio** on the staff page overrides it. **Hear yourself**
+is silent while the room plays the meeting.
 
 ### Hear yourself
 
@@ -585,7 +629,7 @@ cd button/bridge && npm i && npm run dev:mock   # or npm run dev
 Open the dev URL at `/#staff`, set **Museum** (or **Presenter**) +
 **Hardware button**. With **Print summaries** on, the mock bridge "prints" into
 `button/bridge/.print-spool/mock-printed/`. See
-[button/bridge/README.md](button/bridge/README.md#printing). Playwright e2e: `cd client && npm run e2e` (starts mock bridge).
+[button/bridge/README.md](button/bridge/README.md#printing).
 
 ---
 
@@ -596,6 +640,7 @@ Open the dev URL at `/#staff`, set **Museum** (or **Presenter**) +
 | Socket drop, failed generation, server restart or deploy | The app: reconnects, retries, and reloads once `/health` answers ([RESILIENCE.md](RESILIENCE.md)) |
 | Meter: deploy, crash while drawing, months of uptime | The meter: reloads on reconnect, 30 s after a crash, and nightly at 04:00 |
 | Crashed or hung tab, Chrome error page, Cloudflare 502 page | The kiosk watchdog: restarts Chrome when the heartbeat stops |
+| A tab Chrome opens over the page ("What's New" after an update) | The kiosk window: closes it within 30 s |
 | Chrome quits, crashes or hangs | The kiosk window: opens Chrome again, once the server answers |
 | Meter screen switched off or unplugged | The kiosk window: closes the meter until the screen is back |
 | Power cut, Mac restart | The Mac: starts after a power failure, logs in, opens the windows |

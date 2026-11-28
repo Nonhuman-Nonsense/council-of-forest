@@ -32,6 +32,14 @@
             <option v-for="lang in available_languages" :key="lang" :value="lang">{{ lang }}</option>
           </select>
         </div>
+        <div class="section-group">
+          <label class="sub-label">Audience</label>
+          <select v-model="localOptions.audience" class="styled-select">
+            <option value="">Adults</option>
+            <option value="young" :disabled="!audienceData[options.language]?.audiences?.young">Young children (6–9)</option>
+            <option value="older" :disabled="!audienceData[options.language]?.audiences?.older">Older children (10–14)</option>
+          </select>
+        </div>
 
         <hr>
 
@@ -149,21 +157,45 @@
                     <div class="sidebar-section-header" style="margin-bottom: 8px;">
                       <label class="sub-label" style="margin-bottom: 0;">Agenda Points (optional)</label>
                       <div>
-                        <button class="icon-btn" type="button" @click="addAgendaPoint">+</button>
-                        <button class="icon-btn" type="button" @click="removeAgendaPoint">-</button>
+                        <button class="icon-btn" type="button" @click="addAgendaPoint()">+</button>
+                        <button class="icon-btn" type="button" @click="removeAgendaPoint()">-</button>
                       </div>
                     </div>
                     <div v-if="currentTopic.agendaPoints && currentTopic.agendaPoints.length > 0"
                       style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                       <div v-for="(point, agendaIndex) in currentTopic.agendaPoints" :key="agendaIndex">
                         <label class="sub-label">Agenda Point {{ agendaIndex + 1 }}</label>
-                        <textarea class="input-area" v-model="currentTopic.agendaPoints[agendaIndex]"
+                        <input type="text" class="input-full" v-model="currentTopic.agendaPoints[agendaIndex].title"
+                          :placeholder="'Title of agenda point ' + (agendaIndex + 1)" style="margin-bottom: 4px;">
+                        <textarea class="input-area" v-model="currentTopic.agendaPoints[agendaIndex].text"
                           :placeholder="'Agenda point ' + (agendaIndex + 1) + '...'" v-auto-resize
                           style="min-height: 60px; resize: none; overflow-y: hidden;"></textarea>
                       </div>
                     </div>
                     <small v-else style="display: block; margin-bottom: 15px; opacity: 0.75;">
                       No agenda points.
+                    </small>
+
+                    <div class="sidebar-section-header" style="margin-bottom: 8px;">
+                      <label class="sub-label" style="margin-bottom: 0;">Young Children Agenda Points (optional)</label>
+                      <div>
+                        <button class="icon-btn" type="button" @click="addAgendaPoint('youngAgendaPoints')">+</button>
+                        <button class="icon-btn" type="button" @click="removeAgendaPoint('youngAgendaPoints')">-</button>
+                      </div>
+                    </div>
+                    <div v-if="currentTopic.youngAgendaPoints && currentTopic.youngAgendaPoints.length > 0"
+                      style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;">
+                      <div v-for="(point, agendaIndex) in currentTopic.youngAgendaPoints" :key="agendaIndex">
+                        <label class="sub-label">Young Agenda Point {{ agendaIndex + 1 }}</label>
+                        <input type="text" class="input-full" v-model="currentTopic.youngAgendaPoints[agendaIndex].title"
+                          :placeholder="'Title of young agenda point ' + (agendaIndex + 1)" style="margin-bottom: 4px;">
+                        <textarea class="input-area" v-model="currentTopic.youngAgendaPoints[agendaIndex].text"
+                          :placeholder="'Young agenda point ' + (agendaIndex + 1) + '...'" v-auto-resize
+                          style="min-height: 60px; resize: none; overflow-y: hidden;"></textarea>
+                      </div>
+                    </div>
+                    <small style="display: block; margin-bottom: 15px; opacity: 0.75;">
+                      Used instead of the agenda points above when Audience is Young children{{ currentTopic.youngAgendaPoints && currentTopic.youngAgendaPoints.length > 0 ? '' : ' (none here, so the agenda points above are used)' }}.
                     </small>
                   </template>
 
@@ -192,7 +224,6 @@
                   <character-card v-for="(character, index) in activeCharacters" :key="character._ui_id"
                     :character="character" :is-active="true"
                     :is-expanded="localOptions.expandedCharacters[character._ui_id]"
-                    :voice-lists="{ openai: audioVoices }"
                     :is-sorting="isResizing" :is-pinned="isCharacterPinned(character)"
                     @toggle-expanded="toggleCharacterExpanded(character._ui_id)"
                     @toggle-active="toggleCharacterActive(character)" :data-id="character._ui_id"
@@ -205,7 +236,6 @@
                   <character-card v-for="(character, index) in inactiveCharacters" :key="character._ui_id"
                     :character="character" :is-active="false"
                     :is-expanded="localOptions.expandedCharacters[character._ui_id]"
-                    :voice-lists="{ openai: audioVoices }"
                     :is-sorting="false" :is-pinned="isCharacterPinned(character)"
                     @toggle-expanded="toggleCharacterExpanded(character._ui_id)"
                     @toggle-active="toggleCharacterActive(character)">
@@ -337,13 +367,13 @@
 
               <div v-if="localOptions.showTrimmed && turn.pretrimmed" class="trimmed"
                 style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 5px;"
-                v-html="turn.pretrimmed.split('\n').join('<br>')"></div>
+                v-html="turnHtml(turn.pretrimmed)"></div>
 
-              <div v-if="turn.text" v-html="turn.text.split('\n').join('<br>')"></div>
+              <div v-if="turn.text" v-html="turnHtml(turn.text)"></div>
 
               <div v-if="localOptions.showTrimmed && turn.trimmed" class="trimmed"
                 style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;"
-                v-html="turn.trimmed.split('\n').join('<br>')"></div>
+                v-html="turnHtml(turn.trimmed)"></div>
               </template>
             </div>
 
@@ -512,12 +542,6 @@
 
         <label class="sub-label">Voice Provider</label>
         <div class="voice-selector" style="margin-bottom: 10px;">
-          <label class="voice-chip"
-            :class="{ active: character.voiceProvider === 'openai' || !character.voiceProvider }">
-            <input type="radio" value="openai" v-model="character.voiceProvider" style="display: none;"
-              @change="onProviderChange">
-            OpenAI
-          </label>
           <label class="voice-chip" :class="{ active: character.voiceProvider === 'inworld' }">
             <input type="radio" value="inworld" v-model="character.voiceProvider" style="display: none;"
               @change="onProviderChange">
@@ -575,18 +599,6 @@
           </small>
         </template>
 
-        <template v-if="!usesCustomVoiceId(character)">
-          <label class="sub-label">Voice Option</label>
-          <div class="voice-selector">
-            <template v-for="voiceName in voiceLists.openai" :key="voiceName">
-              <label class="voice-chip" :class="{ active: character.voice === voiceName }">
-                <input type="radio" :value="voiceName" v-model="character.voice" style="display: none;">
-                {{ voiceName }}
-              </label>
-            </template>
-          </div>
-        </template>
-
         <label class="sub-label" style="display: flex; align-items: center; justify-content: space-between;">
           <span>Voice Speed ({{ character.voiceSpeed || 'Global' }})</span>
           <button v-if="character.voiceSpeed" @click.stop="character.voiceSpeed = undefined" class="icon-btn"
@@ -610,11 +622,6 @@
             style="display: block; margin-bottom: 10px; color: var(--text-secondary);">
             Not available on TTS-2 (used when a language locale is set).
           </small>
-        </template>
-        <template v-else-if="character.voiceProvider === 'openai' || !character.voiceProvider">
-          <label class="sub-label">Voice Instruction</label>
-          <textarea class="input-area" placeholder="e.g. 'Excited'" v-model="character.voiceInstruction" v-auto-resize
-            rows="1" style="margin-top: 5px; min-height: 36px; height: 36px; padding: 8px;"></textarea>
         </template>
       </div>
     </div>

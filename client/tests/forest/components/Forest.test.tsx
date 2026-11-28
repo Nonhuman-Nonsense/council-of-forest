@@ -109,7 +109,6 @@ describe('Forest Visual Logic', () => {
             <Forest currentSpeakerId="unknown_blob" isPaused={false} audioContext={mockAudioContext} />
         );
         // Should stay at default
-        const forestContainer = container.firstChild as HTMLElement;
-        expect(forestContainer.style.transform).toBe('scale(1) translate(0, 0)');
+        expect(container.firstChild).toHaveStyle('transform: scale(1) translate(0, 0)');
     });
 });

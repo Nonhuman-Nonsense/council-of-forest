@@ -1,6 +1,6 @@
 /**
  * Runs the letter steps on a set of stored meetings and writes a report to read through (see
- * docs/council-letters.md). The development loop: edit the prompts in
+ * LETTERS.md). The development loop: edit the prompts in
  * src/logic/letters/prompts, run this, read the report.
  *
  * Each meeting gets one addition from the human taking part, rotated through humanLines.ts so
@@ -30,7 +30,6 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import type { StoredMeeting } from "@models/DBModels.js";
 import { closeDb, initDb, meetingsCollection } from "@services/DbService.js";
-import { getOpenAI, initOpenAI } from "@services/OpenAIService.js";
 import { createConversationService } from "@services/ConversationService.js";
 import { DialogGenerator } from "@logic/DialogGenerator.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
@@ -354,7 +353,6 @@ ${cards}
 
 async function main() {
     await initDb();
-    initOpenAI();
     const options = {
         ...getGlobalOptions(),
         ...(LETTER_MODEL ? { letterModel: LETTER_MODEL } : {}),
@@ -375,7 +373,7 @@ async function main() {
     const additions = { en: HUMAN_ADDITIONS.filter((a) => a.language === "en"), sv: HUMAN_ADDITIONS.filter((a) => a.language === "sv") };
     const used = { en: 0, sv: 0 };
     const dialogGenerator = new DialogGenerator(
-        { conversationService: createConversationService(getOpenAI), meetingsCollection },
+        { conversationService: createConversationService(), meetingsCollection },
         options,
     );
 

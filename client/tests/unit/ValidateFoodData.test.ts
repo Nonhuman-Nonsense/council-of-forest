@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { AVAILABLE_LANGUAGES } from '@shared/AvailableLanguages';
-import { AVAILABLE_VOICES, VoiceOption } from '@shared/ModelTypes';
+import { VOICE_PROVIDERS, type VoiceOption, type VoiceProvider } from '@shared/ModelTypes';
 import { CHARACTERS_FILE } from '@shared/prompts/characterSetupMetadata';
 import { SINGLE_AGENDA_POINT_PLACEHOLDER } from '@shared/agendaPointInjection';
 import fs from 'fs';
@@ -20,10 +20,9 @@ interface CharacterDataEntry {
     type?: string;
     index?: number;
     voice: VoiceOption;
-    voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
+    voiceProvider: VoiceProvider;
     voiceLocale?: string;
     size?: number;
-    voiceInstruction?: string;
 }
 
 interface CharacterSetupDataFile {
@@ -39,6 +38,7 @@ interface CharacterSetupDataFile {
         description: string;
     };
     characters: CharacterDataEntry[];
+    audiences?: Record<string, { chair?: string; everyone?: string }>;
 }
 
 function loadCharacterData(lang: string): CharacterSetupDataFile {
@@ -72,15 +72,10 @@ describe('Validate Food Data JSONs', () => {
                 expect(character).toHaveProperty('description');
                 expect(character).toHaveProperty('voice');
 
-                // Validate Voice Option
-                if (character.voiceProvider === 'inworld' || character.voiceProvider === 'elevenlabs') {
-                    // Custom voice providers allow arbitrary non-empty voice IDs
-                    expect(typeof character.voice).toBe('string');
-                    expect(character.voice.length).toBeGreaterThan(0);
-                } else {
-                    // Default to OpenAI if provider is missing or explicitly 'openai'
-                    expect(AVAILABLE_VOICES).toContain(character.voice);
-                }
+                // Every being names who voices it; both providers take arbitrary voice IDs
+                expect(VOICE_PROVIDERS).toContain(character.voiceProvider);
+                expect(typeof character.voice).toBe('string');
+                expect(character.voice.length).toBeGreaterThan(0);
 
                 // Ensure prompt exists for at least the first character (Chair usually)
                 if (index === 0) {
@@ -118,6 +113,18 @@ describe('Validate Food Data JSONs', () => {
             const data = loadCharacterData(lang);
             if (!data.characters[0].prompt?.includes(SINGLE_AGENDA_POINT_PLACEHOLDER)) continue;
             expect(data.singleAgendaPoint?.trim(), `singleAgendaPoint missing in "${lang}"`).toBeTruthy();
+        }
+    });
+
+    /** A meeting is held for an audience only where its language has the text for it. */
+    it('offers the same audiences of children in every language, each with its chair and everyone text', () => {
+        const audiencesOf = (lang: string) => Object.keys(loadCharacterData(lang).audiences ?? {}).sort();
+        for (const lang of AVAILABLE_LANGUAGES) {
+            expect(audiencesOf(lang), `audiences in "${lang}" differ from "${AVAILABLE_LANGUAGES[0]}"`).toEqual(audiencesOf(AVAILABLE_LANGUAGES[0]));
+            for (const [audience, text] of Object.entries(loadCharacterData(lang).audiences ?? {})) {
+                expect(text.chair?.trim(), `${audience}.chair missing in "${lang}"`).toBeTruthy();
+                expect(text.everyone?.trim(), `${audience}.everyone missing in "${lang}"`).toBeTruthy();
+            }
         }
     });
 

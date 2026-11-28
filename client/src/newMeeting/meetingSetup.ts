@@ -1,6 +1,16 @@
-import type { Character, Topic } from "@shared/ModelTypes";
-import { injectRandomAgendaPoint, injectSingleAgendaPointRule } from "@shared/agendaPointInjection";
-import { buildMeetingSystemPrompt, VISITOR_INPUT_PLACEHOLDER } from "@shared/topicPrompt";
+import type { AgendaPoint, Character, ChildAudience, Topic } from "@shared/ModelTypes";
+import {
+  injectRandomAgendaPoint,
+  injectSingleAgendaPointRule,
+  pickAgendaPoint,
+  RANDOM_AGENDA_POINT_PLACEHOLDER,
+} from "@shared/agendaPointInjection";
+import {
+  agendaPointCountFromAgendaPoints,
+  agendaPointTitle,
+  buildMeetingSystemPrompt,
+  VISITOR_INPUT_PLACEHOLDER,
+} from "@shared/topicPrompt";
 import { toTitleCase } from "@/utils";
 import type { TopicsData } from "@main/topicsBundle";
 import { CHAIR_ID, getCharacterSetupBundle } from "./CharacterSetup";
@@ -10,6 +20,12 @@ export type MeetingCharactersI18n = {
 };
 
 export type MeetingSetupPhase = "landing" | "topic" | "characters";
+
+/** The audiences of children this language's prompts are written for; a meeting can be held for these. */
+export function availableAudiences(language: string): ChildAudience[] {
+  const audiences = getCharacterSetupBundle(language).audiences ?? {};
+  return (Object.keys(audiences) as ChildAudience[]).filter((audience) => audiences[audience]);
+}
 
 /**
  * How many human panelists a council can have. A product choice, not a
@@ -356,8 +372,10 @@ export function buildTopicFromSelection(params: {
   topicsBundle: TopicsData;
   selectedTopicId: string;
   customTopic: string;
+  /** Young children get the topic's own agenda for them, where it has one. */
+  audience?: ChildAudience;
 }): Topic {
-  const { topicsBundle, selectedTopicId, customTopic } = params;
+  const { topicsBundle, selectedTopicId, customTopic, audience } = params;
   const raw =
     topicsBundle.topics.find((topic: Topic) => topic.id === selectedTopicId) ??
     (selectedTopicId === topicsBundle.custom_topic.id ? topicsBundle.custom_topic : undefined);
@@ -367,12 +385,16 @@ export function buildTopicFromSelection(params: {
   }
 
   const built = structuredClone(raw);
+  if (audience === "young" && built.youngAgendaPoints?.length) {
+    built.agendaPoints = built.youngAgendaPoints;
+  }
+  delete built.youngAgendaPoints;
   if (built.id === topicsBundle.custom_topic.id) {
     built.prompt = (built.prompt || "").replace(VISITOR_INPUT_PLACEHOLDER, customTopic.trim());
     built.description = customTopic;
     // The visitor's question is the whole agenda: the chair opens on it the same
     // way it opens on a listed topic's agenda point, in either language.
-    built.agendaPoints = [customTopic.trim()];
+    built.agendaPoints = [{ title: customTopic.trim(), text: "" }];
   }
   built.prompt = buildMeetingSystemPrompt(
     topicsBundle.system,
@@ -381,6 +403,21 @@ export function buildTopicFromSelection(params: {
     topicsBundle.language,
   );
   return built;
+}
+
+/**
+ * A confirmed topic built again from its bundle — after the language or the audience changed, so
+ * its prompt and agenda follow. A topic the bundle does not know is returned as it is.
+ */
+export function rebuildTopic(topic: Topic, topicsBundle: TopicsData, audience?: ChildAudience): Topic {
+  const isCustom = topic.id === topicsBundle.custom_topic.id;
+  if (!isCustom && !topicsBundle.topics.some((t) => t.id === topic.id)) return topic;
+  return buildTopicFromSelection({
+    topicsBundle,
+    selectedTopicId: topic.id,
+    customTopic: isCustom ? (topic.description ?? "") : "",
+    audience,
+  });
 }
 
 /**
@@ -393,11 +430,13 @@ export function buildMeetingCharactersPayload(params: {
   humans: Character[];
   numberOfHumans: number;
   labels: MeetingCharactersI18n;
-  agendaPoints?: string[];
+  agendaPoints?: AgendaPoint[];
   /** The visitor can type, so each human panelist needs a written description. */
   typedSetup?: boolean;
-}): { ok: true; characters: Character[] } | { ok: false; error: string } {
-  const { language, humans, numberOfHumans, labels, agendaPoints, typedSetup = false } = params;
+  /** The children the meeting is held for: every council member's prompt gets their instructions. */
+  audience?: ChildAudience;
+}): { ok: true; characters: Character[]; openingAgendaPoint?: string } | { ok: false; error: string } {
+  const { language, humans, numberOfHumans, labels, agendaPoints, typedSetup = false, audience } = params;
   let { selectedCharacters } = params;
   const characterSetupData = getCharacterSetupBundle(language);
   // The chair prompt goes to whoever is first, so the chair always is — whatever
@@ -494,9 +533,18 @@ export function buildMeetingCharactersPayload(params: {
     humanPresentation = characterSetupData.panelWithHumans.replace("[HUMANS]", humanPresentation);
   }
 
+  // The point the chair opens on, picked here so the meeting can keep its title (the replay intro).
+  let openingAgendaPoint: string | undefined;
   if (replacedCharacters.length > 0 && replacedCharacters[0].prompt) {
     replacedCharacters[0].prompt = replacedCharacters[0].prompt.replace("[HUMANS]", humanPresentation);
-    replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints);
+    const agendaPointCount = agendaPointCountFromAgendaPoints(agendaPoints);
+    if (agendaPointCount && replacedCharacters[0].prompt.includes(RANDOM_AGENDA_POINT_PLACEHOLDER)) {
+      const point = pickAgendaPoint(agendaPointCount);
+      openingAgendaPoint = agendaPointTitle(agendaPoints, point);
+      replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints, point);
+    } else {
+      replacedCharacters[0].prompt = injectRandomAgendaPoint(replacedCharacters[0].prompt, agendaPoints);
+    }
     replacedCharacters[0].prompt = injectSingleAgendaPointRule(
       replacedCharacters[0].prompt,
       agendaPoints,
@@ -504,7 +552,17 @@ export function buildMeetingCharactersPayload(params: {
     );
   }
 
-  return { ok: true, characters: replacedCharacters };
+  // Last in every prompt, so it outranks each being's own rules on words and length.
+  const instructions = audience ? characterSetupData.audiences?.[audience] : undefined;
+  if (instructions) {
+    for (const character of replacedCharacters) {
+      if (isPanelistId(character.id)) continue;
+      const chairPart = character.id === chairId ? `\n\n${instructions.chair}` : "";
+      character.prompt = `${character.prompt}${chairPart}\n\n--\n\n${instructions.everyone}`;
+    }
+  }
+
+  return { ok: true, characters: replacedCharacters, ...(openingAgendaPoint ? { openingAgendaPoint } : {}) };
 }
 
 export type MeetingFoodsI18n = MeetingCharactersI18n;

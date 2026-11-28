@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AudioSystem } from '@root/src/logic/AudioSystem.js';
-import { Logger } from '@root/src/utils/Logger.js';
 import { MockFactory } from './factories/MockFactory.ts';
 
 vi.mock('music-metadata', () => ({
@@ -18,11 +17,20 @@ vi.mock('@root/src/utils/Logger.js', () => ({
     }
 }));
 
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+/** What Inworld's TTS endpoint answers: audio, with no word timings. */
+const inworldReply = () => ({
+    ok: true,
+    json: async () => ({ audioContent: Buffer.from('audio').toString('base64') }),
+    text: async () => '',
+});
+
 describe('AudioSystem', () => {
     let audioSystem;
     let mockBroadcaster;
     let mockServices;
-    let mockOpenAI;
 
     const meeting = () => MockFactory.createStoredMeeting({ _id: 123 });
     const serverOptions = (overrides = {}) => MockFactory.createServerOptions(overrides);
@@ -35,20 +43,9 @@ describe('AudioSystem', () => {
             broadcastError: vi.fn()
         };
 
-        mockOpenAI = {
-            audio: {
-                speech: {
-                    create: vi.fn().mockResolvedValue({
-                        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
-                    })
-                },
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({
-                        words: []
-                    })
-                }
-            }
-        };
+        process.env.INWORLD_API_KEY = 'mock-api-key';
+        mockFetch.mockReset();
+        mockFetch.mockResolvedValue(inworldReply());
 
         mockServices = {
             audioCollection: {
@@ -58,7 +55,6 @@ describe('AudioSystem', () => {
             meetingsCollection: {
                 updateOne: vi.fn()
             },
-            getOpenAI: vi.fn(() => mockOpenAI)
         };
 
         audioSystem = new AudioSystem(mockBroadcaster, mockServices);
@@ -66,19 +62,19 @@ describe('AudioSystem', () => {
 
     it('should generate audio and broadcast update', async () => {
         const message = { id: 'msg1', text: 'Hello', sentences: ['Hello'] };
-        const speaker = { id: 'char1', voice: 'alloy' };
+        const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
         const environment = 'production';
 
         await audioSystem.generateAudio(
             message,
             speaker,
             'en',
-            serverOptions({ voiceModel: 'tts-1', defaultAudioSpeed: 1 }),
+            serverOptions({ defaultAudioSpeed: 1 }),
             meeting(),
             environment
         );
 
-        expect(mockOpenAI.audio.speech.create).toHaveBeenCalled();
+        expect(mockFetch).toHaveBeenCalledTimes(1);
         expect(mockBroadcaster.broadcastAudioUpdate).toHaveBeenCalledWith(expect.objectContaining({
             id: 'msg1',
             sentences: [
@@ -93,7 +89,7 @@ describe('AudioSystem', () => {
 
     it('should skip audio generation if configured', async () => {
         const message = { id: 'msg1', text: 'Hello' };
-        const speaker = { id: 'char1', voice: 'alloy' };
+        const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
 
         await audioSystem.generateAudio(
             message,
@@ -104,7 +100,7 @@ describe('AudioSystem', () => {
             'production'
         );
 
-        expect(mockOpenAI.audio.speech.create).not.toHaveBeenCalled();
+        expect(mockFetch).not.toHaveBeenCalled();
         expect(mockBroadcaster.broadcastAudioUpdate).not.toHaveBeenCalled();
     });
 
@@ -119,45 +115,22 @@ describe('AudioSystem', () => {
         });
     });
 
-    it('should pass voiceInstruction to OpenAI API if provided', async () => {
-        const message = { id: 'msg1', text: 'Hello', sentences: ['Hello'] };
-        const speaker = { id: 'char1', voice: 'alloy', voiceInstruction: 'Speak like a pirate' };
-
-        await audioSystem.generateAudio(
-            message,
-            speaker,
-            'en',
-            serverOptions({ voiceModel: 'tts-1', defaultAudioSpeed: 1 }),
-            meeting(),
-            'production'
-        );
-
-        expect(mockOpenAI.audio.speech.create).toHaveBeenCalledWith(expect.objectContaining({
-            instructions: 'Speak like a pirate'
-        }));
-    });
-
     it('should retry on specific network errors (terminated)', async () => {
         const message = { id: 'msgRetry', text: 'Retry me', sentences: ['Retry me'] };
-        const speaker = { id: 'char1', voice: 'alloy' };
+        const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
 
-        const createMock = mockOpenAI.audio.speech.create;
-        createMock
-            .mockRejectedValueOnce(new Error('terminated'))
-            .mockResolvedValueOnce({
-                arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
-            });
+        mockFetch.mockRejectedValueOnce(new Error('terminated'));
 
         await audioSystem.generateAudio(
             message,
             speaker,
             'en',
-            serverOptions({ voiceModel: 'tts-1', defaultAudioSpeed: 1 }),
+            serverOptions({ defaultAudioSpeed: 1 }),
             meeting(),
             'production'
         );
 
-        expect(createMock).toHaveBeenCalledTimes(2);
+        expect(mockFetch).toHaveBeenCalledTimes(2);
         expect(mockBroadcaster.broadcastAudioUpdate).toHaveBeenCalledWith(expect.objectContaining({
             id: 'msgRetry'
         }));
@@ -165,13 +138,13 @@ describe('AudioSystem', () => {
 
     it('should suppress stale side effects after cancelPendingWork', async () => {
         const message = { id: 'msg-stale', text: 'Hello later', sentences: ['Hello later'] };
-        const speaker = { id: 'char1', voice: 'alloy' };
+        const speaker = { id: 'char1', voice: 'Dennis', voiceProvider: 'inworld' };
 
-        let resolveCreate;
-        mockOpenAI.audio.speech.create.mockImplementation(
+        let resolveFetch;
+        mockFetch.mockImplementation(
             () =>
                 new Promise((resolve) => {
-                    resolveCreate = resolve;
+                    resolveFetch = resolve;
                 })
         );
 
@@ -179,16 +152,14 @@ describe('AudioSystem', () => {
             message,
             speaker,
             'en',
-            serverOptions({ voiceModel: 'tts-1', defaultAudioSpeed: 1 }),
+            serverOptions({ defaultAudioSpeed: 1 }),
             meeting(),
             'production'
         );
 
-        await vi.waitFor(() => expect(mockOpenAI.audio.speech.create).toHaveBeenCalledTimes(1));
+        await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
         audioSystem.cancelPendingWork();
-        resolveCreate({
-            arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
-        });
+        resolveFetch(inworldReply());
 
         await generationPromise;
 
@@ -212,28 +183,5 @@ describe('AudioSystem', () => {
         );
 
         expect(mockBroadcaster.broadcastAudioUpdate).not.toHaveBeenCalled();
-    });
-
-    it('should not try Inworld subtitle timings for OpenAI voices', async () => {
-        const message = { id: 'msg-openai-timings', text: 'Hello', sentences: ['Hello'] };
-        const speaker = { id: 'char1', voice: 'shimmer', voiceProvider: 'openai' };
-
-        await audioSystem.generateAudio(
-            message,
-            speaker,
-            'en',
-            serverOptions({
-                subtitleTimingPriorities: ['inworld', 'estimated', 'whisper'],
-                voiceModel: 'tts-1',
-                defaultAudioSpeed: 1
-            }),
-            meeting(),
-            'production'
-        );
-
-        expect(Logger.warn).not.toHaveBeenCalledWith(
-            'AudioSystem',
-            expect.stringContaining('Rejected inworld subtitle timings'),
-        );
     });
 });

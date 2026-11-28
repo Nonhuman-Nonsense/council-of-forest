@@ -97,7 +97,7 @@ describe('MeetingManager - Speaker Selection', () => {
             manager.meeting.characters = [
                 MockFactory.createCharacter(chair),
                 MockFactory.createCharacter(firstSpeaker),
-                { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' },
+                { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' },
                 MockFactory.createCharacter(thirdSpeaker),
             ];
             manager.meeting.conversation = [
@@ -132,7 +132,7 @@ describe('MeetingManager - Speaker Selection', () => {
                 manager.meeting.characters = [
                     MockFactory.createCharacter(chair),
                     MockFactory.createCharacter(firstSpeaker),
-                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' },
+                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' },
                     MockFactory.createCharacter(thirdSpeaker)
                 ];
             });
@@ -324,7 +324,7 @@ describe('MeetingManager - Speaker Selection', () => {
                 manager.meeting.characters = [
                     MockFactory.createCharacter(chair),     // 0
                     MockFactory.createCharacter(firstSpeaker),   // 1
-                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }, // 2
+                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }, // 2
                     MockFactory.createCharacter(thirdSpeaker)    // 3
                 ];
             });
@@ -353,8 +353,8 @@ describe('MeetingManager - Speaker Selection', () => {
                 manager.meeting.characters = [
                     MockFactory.createCharacter(chair),
                     MockFactory.createCharacter(firstSpeaker),
-                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' },
-                    { id: 'panelist1', name: 'Bob', description: '', prompt: '', voice: 'alloy' },
+                    { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' },
+                    { id: 'panelist1', name: 'Bob', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' },
                     MockFactory.createCharacter(thirdSpeaker)
                 ];
 

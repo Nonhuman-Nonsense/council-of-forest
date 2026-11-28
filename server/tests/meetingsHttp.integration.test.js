@@ -5,6 +5,18 @@ import { registerMeetingRoutes } from '@api/meetingRoutes.js';
 import { meetingsCollection } from '@services/DbService.js';
 import { cacheControlPrivateNoStoreApi } from '@utils/httpCache.js';
 import { Logger } from '@utils/Logger.js';
+import { OWN_CLIENT_HEADER, OWN_CLIENT_VALUE } from '@shared/ownClient.js';
+
+const mockConfig = vi.hoisted(() => ({ venues: undefined }));
+
+vi.mock('@root/src/config.js', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        config: new Proxy(actual.config, {
+            get: (target, prop) => (prop === 'COUNCIL_VENUES' ? mockConfig.venues : Reflect.get(target, prop)),
+        }),
+    };
+});
 
 function validCreateBody() {
     return {
@@ -15,7 +27,8 @@ function validCreateBody() {
                 name: 'Speaker 1',
                 description: 'Generic integration-test speaker.',
                 prompt: 'Speak as Speaker 1 in the council.',
-                voice: 'alloy',
+                voice: 'Ashley',
+                voiceProvider: 'inworld',
             },
         ],
         language: 'en',
@@ -51,6 +64,7 @@ describe('HTTP meetings API (integration)', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        mockConfig.venues = undefined;
     });
 
     const base = () => `http://127.0.0.1:${port}`;
@@ -107,23 +121,32 @@ describe('HTTP meetings API (integration)', () => {
         expect(res.status).toBe(400);
     });
 
-    it('GET /api/meetings/:id returns 400 on invalid meeting id', async () => {
+    // A rejected request is reported (Logger.warn → ErrorBot) only when our own client sent it.
+    // Anything else — a scanner requesting `/api/meetings/${e}` straight out of the bundle — is
+    // answered the same way and stays in the console.
+    it.each([
+        { name: 'reports an invalid meeting id our own client sent', path: 'invalid-id', status: 400, ownClient: true, reported: true },
+        { name: 'keeps an invalid meeting id from anyone else in the console', path: '${e}', status: 400, ownClient: false, reported: false },
+        { name: 'keeps an unknown meeting id from anyone else in the console', path: '999999999', status: 404, ownClient: false, reported: false },
+    ])('GET /api/meetings/:id $name', async ({ path, status, ownClient, reported }) => {
         const warnSpy = vi.spyOn(Logger, 'warn');
-        const res = await fetch(`${base()}/api/meetings/invalid-id`);
-        expect(res.status).toBe(400);
+        const infoSpy = vi.spyOn(Logger, 'info');
+        const res = await fetch(`${base()}/api/meetings/${encodeURIComponent(path)}`, {
+            headers: ownClient ? { [OWN_CLIENT_HEADER]: OWN_CLIENT_VALUE } : {},
+        });
+        expect(res.status).toBe(status);
 
         // The failure log should show the real URL and raw param, not just the route pattern —
         // this is what lets you trace which request actually failed (see meetingRoutes.ts).
-        expect(warnSpy).toHaveBeenCalledWith(
-            'api',
-            expect.stringContaining('/api/meetings/invalid-id'),
-            expect.objectContaining({
-                from: { meetingId: undefined },
-                requestParams: expect.objectContaining({
-                    params: { meetingId: 'invalid-id' },
-                }),
-            }),
-        );
+        const logged = expect.objectContaining({
+            requestParams: expect.objectContaining({ params: { meetingId: path } }),
+        });
+        if (reported) {
+            expect(warnSpy).toHaveBeenCalledWith('api', expect.stringContaining('/api/meetings/'), logged);
+        } else {
+            expect(warnSpy).not.toHaveBeenCalled();
+            expect(infoSpy).toHaveBeenCalledWith('api', expect.stringContaining('not our client'), logged);
+        }
     });
 
     it('GET /api/meetings/:id on a freshly created meeting logs a warning with the meeting id', async () => {
@@ -189,6 +212,68 @@ describe('HTTP meetings API (integration)', () => {
         const full = await authRes.json();
         expect(full.conversation).toEqual(meeting.conversation);
         expect(full.liveKey).toBeUndefined();
+    });
+
+    it('GET /api/meetings/:id gives back the agenda point the meeting opened on', async () => {
+        const createRes = await fetch(`${base()}/api/meetings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...validCreateBody(), openingAgendaPoint: 'Soil Scarification' }),
+        });
+        const { meetingId } = await createRes.json();
+        const meeting = await (await fetch(`${base()}/api/meetings/${meetingId}`)).json();
+        expect(meeting.openingAgendaPoint).toBe('Soil Scarification');
+    });
+
+    it('POST /api/meetings keeps the children a meeting is for, and slows every voice the more the younger they are', async () => {
+        async function created(audience) {
+            const body = validCreateBody();
+            body.characters[0].voiceSpeed = 1;
+            const createRes = await fetch(`${base()}/api/meetings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...body, ...(audience ? { audience } : {}) }),
+            });
+            const { meetingId } = await createRes.json();
+            return (await fetch(`${base()}/api/meetings/${meetingId}`)).json();
+        }
+        const [adults, older, young] = await Promise.all([created(undefined), created('older'), created('young')]);
+        expect([adults.audience, older.audience, young.audience]).toEqual([undefined, 'older', 'young']);
+        expect(adults.characters[0].voiceSpeed).toBe(1);
+        expect(older.characters[0].voiceSpeed).toBeLessThan(1);
+        expect(young.characters[0].voiceSpeed).toBeLessThan(older.characters[0].voiceSpeed);
+    });
+
+    it('POST /api/meetings refuses an audience it does not know', async () => {
+        const res = await fetch(`${base()}/api/meetings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...validCreateBody(), audience: 'teens' }),
+        });
+        expect(res.status).toBe(400);
+    });
+
+    it('GET /api/meetings/:id names the venue a meeting ran at, and no other', async () => {
+        mockConfig.venues = [{
+            id: 'havremagasinet',
+            name: 'Havremagasinet',
+            alertEmails: ['staff@example.org'],
+            timezone: 'Europe/Stockholm',
+            openingHours: { days: ['wed'], from: '12:00', to: '16:00' },
+        }];
+        async function venueNameOf(venueId) {
+            const createRes = await fetch(`${base()}/api/meetings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...validCreateBody(), ...(venueId ? { venueId } : {}) }),
+            });
+            const { meetingId } = await createRes.json();
+            const meeting = await (await fetch(`${base()}/api/meetings/${meetingId}`)).json();
+            return meeting.venueName;
+        }
+
+        expect(await venueNameOf('havremagasinet')).toBe('Havremagasinet');
+        expect(await venueNameOf(undefined)).toBeUndefined();
     });
 
     it('GET /api/autoplay returns a random completed meeting id', async () => {

@@ -1,8 +1,12 @@
-import type { Character, Meeting, Topic } from "@shared/ModelTypes";
+import type { Character, ChildAudience, Meeting, Topic } from "@shared/ModelTypes";
 import { isSpeakerMessage } from "@shared/ModelTypes";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import CouncilOverlays from "./overlays/CouncilOverlays";
+import ReplayIntro from "./overlays/ReplayIntro";
+import OverlayWrapper from "@main/overlay/OverlayWrapper";
+import { replayIntroFacts, replayIntroKindOf, takeReplayIntro } from "./replayIntro";
+import { setAudioSuspended } from "@/audio/audioContext";
 import Loading from "@main/Loading";
 import Output from "./output/Output";
 import ConversationControls from "./ConversationControls";
@@ -24,6 +28,7 @@ import { CHAIR_ID } from "@/prompts/characterSetupBundles";
 import { notifyAutoplay } from "@/autoplay/autoplayStore";
 import type { SummaryPlaybackState } from "@council/summaryScrollSync";
 import { useErrorStore, setUnrecoverableError } from "@main/overlay/errorStore";
+import BottomBar from "@main/BottomBar";
 
 interface CouncilProps {
   liveKey: string | null;
@@ -61,11 +66,25 @@ function Council({
   const [participants, setParticipants] = useState<Character[]>([]);
   const [replayManifest, setReplayManifest] = useState<Meeting | null>(null);
   const [humanName, setHumanName] = useState("");
+  const [audience, setAudience] = useState<ChildAudience | null>(null);
   const [agentSpeaking, setAgentSpeaking] = useState(false);
   // Meta-agent lifecycle (inactive | interruption | extension). Stays in Council so it
   // resets on unmount; MeetingMetaAgent is the consumer on Forest (scene zoom uses currentSpeakerId).
   const [metaAgentPhase, setMetaAgentPhase] = useState<MetaAgentPhase>("inactive");
   const [summaryPlayback, setSummaryPlayback] = useState<SummaryPlaybackState>(null);
+
+  // Someone landing straight on a replay first sees what it is: a hash overlay, so the meeting
+  // holds paused under it like under any other. Anywhere it does not belong, the hash goes.
+  useEffect(() => {
+    if (!meetingId) return;
+    const offersIntro = capabilities.replayIntro && !liveKey;
+    const kind = offersIntro ? takeReplayIntro(meetingId) : null;
+    if (kind) {
+      navigate({ hash: `#${kind}` }, { replace: true });
+    } else if (!offersIntro && replayIntroKindOf(location.hash)) {
+      navigate({ hash: "" }, { replace: true });
+    }
+  }, [meetingId]);
 
   // Abort in-flight GET when deps change or on unmount (StrictMode-safe); same pattern as TanStack Query/SWR cancellation.
   useEffect(() => {
@@ -89,6 +108,7 @@ function Council({
         }
         setTopic(meeting.topic);
         setParticipants(meeting.characters);
+        setAudience(meeting.audience ?? null);
         const storedName = meeting.state?.humanName?.trim();
         if (storedName && storedName.length > 0) {
           setHumanName(storedName);
@@ -244,7 +264,25 @@ function Council({
   // imminent human turn during this window, not the meta-agent — see MeetingMetaAgent.
   const invitationPlaying = textMessages[playingNowIndex]?.type === "invitation";
   const isWaitingToInterject = isRaisedHand && councilState !== 'human_input';
-  const controlsVisible = (
+  const replayIntroKind = capabilities.replayIntro && !liveKey ? replayIntroKindOf(location.hash) : null;
+  const introFacts = useMemo(() => (replayManifest ? replayIntroFacts(replayManifest) : null), [replayManifest]);
+  const introOpen = replayIntroKind !== null && introFacts !== null && visibleOverlay === null;
+  // Watching closes the intro, then plays once its hash is gone: unpausing while it is still in the
+  // URL would only have the hash pause the meeting again. The audio bus wakes inside the click, so
+  // the browser lets the sound start on a page nobody touched before.
+  const resumeAfterIntro = useRef(false);
+  const watchReplay = useCallback(() => {
+    setAudioSuspended(audioContext, false);
+    resumeAfterIntro.current = true;
+    navigate({ hash: "" }, { replace: true });
+  }, [audioContext, navigate]);
+  useEffect(() => {
+    if (resumeAfterIntro.current && !replayIntroKindOf(location.hash)) {
+      resumeAfterIntro.current = false;
+      setPaused(false);
+    }
+  }, [location.hash, setPaused]);
+  const controlsVisible = !introOpen && (
     councilState === "playing" ||
     councilState === "waiting" ||
     (councilState === "summary" && tryToFindTextAndAudio())
@@ -276,6 +314,7 @@ function Council({
           participants={participants}
           currentSpeakerName={participants.find((p) => p.id === currentSpeakerId)?.name ?? ""}
           humanName={humanName}
+          audience={audience}
         />
       )}
       {liveKey && capabilities.printSummary && printSummariesEnabled && (
@@ -327,45 +366,63 @@ function Council({
           )}
         </div>
 
-        {/* Footer — Output, controls, and banner in the bottom flex column. */}
-        <div className="council-shell__footer" style={{ pointerEvents: "auto" }}>
-          {/* Stays mounted while the meta agent has the floor: unmounting would
-              discard the interrupted message's place, so it is held instead. */}
-          <Output
-            textMessages={textMessages}
-            audioMessages={audioMessages}
-            playingNowIndex={playingNowIndex}
-            councilState={councilState}
-            isMuted={isMuted}
-            isPaused={isPaused}
-            currentSnippetIndex={currentSnippetIndex}
-            setCurrentSnippetIndex={setCurrentSnippetIndex}
-            audioContext={audioContext}
-            handleOnFinishedPlaying={handleOnFinishedPlaying}
-            onSummaryPlaybackChange={setSummaryPlayback}
-            held={metaAgentPhase !== "inactive"}
-          />
-          {controlsVisible && metaAgentPhase === "inactive" && (
-            <ConversationControls
-              hidden={!capabilities.browserUi}
-              onSkipBackward={handleOnSkipBackward}
-              onSkipForward={handleOnSkipForward}
-              onRaiseHand={handleOnRaiseHand}
-              isRaisedHand={isRaisedHand}
-              isWaitingToInterject={isWaitingToInterject}
-              isMuted={isMuted}
-              onMuteUnmute={toggleMute}
-              isPaused={isPaused}
-              onPausePlay={() => setPaused(!isPaused)}
-              canGoBack={canGoBack}
-              canGoForward={canGoForward}
-              canRaiseHand={canRaiseHand}
-              onTopOfOverlay={visibleOverlay === "summary" && location.hash === ""}
-              humanName={humanName}
-            />
-          )}
-          <ButtonBanner inline />
-        </div>
+        {/* Footer — Output and controls in the centre of the bottom bar, the banner
+            under them, in the shell's flow, so the overlay region above stops short
+            of it. Above the backdrop, so they stay visible while a council overlay is open. */}
+        <BottomBar
+          placement="footer"
+          zIndex={z.councilShellFooter}
+          centre={
+            <>
+              {/* Stays mounted while the meta agent has the floor: unmounting would
+                  discard the interrupted message's place, so it is held instead. */}
+              <Output
+                textMessages={textMessages}
+                audioMessages={audioMessages}
+                playingNowIndex={playingNowIndex}
+                councilState={councilState}
+                isMuted={isMuted}
+                isPaused={isPaused}
+                currentSnippetIndex={currentSnippetIndex}
+                setCurrentSnippetIndex={setCurrentSnippetIndex}
+                audioContext={audioContext}
+                handleOnFinishedPlaying={handleOnFinishedPlaying}
+                onSummaryPlaybackChange={setSummaryPlayback}
+                held={metaAgentPhase !== "inactive"}
+              />
+              {controlsVisible && metaAgentPhase === "inactive" && (
+                <ConversationControls
+                  hidden={!capabilities.browserUi}
+                  onSkipBackward={handleOnSkipBackward}
+                  onSkipForward={handleOnSkipForward}
+                  onRaiseHand={handleOnRaiseHand}
+                  isRaisedHand={isRaisedHand}
+                  isWaitingToInterject={isWaitingToInterject}
+                  isMuted={isMuted}
+                  onMuteUnmute={toggleMute}
+                  isPaused={isPaused}
+                  onPausePlay={() => setPaused(!isPaused)}
+                  canGoBack={canGoBack}
+                  canGoForward={canGoForward}
+                  canRaiseHand={canRaiseHand}
+                  onTopOfOverlay={visibleOverlay === "summary" && location.hash === ""}
+                  humanName={humanName}
+                />
+              )}
+            </>
+          }
+          banner={<ButtonBanner />}
+        />
+
+        {/* The replay intro covers the footer too, unlike council overlays: nothing has played yet,
+            so the paused first subtitle and the replay banner would only talk over it. */}
+        {introOpen && replayIntroKind && introFacts && (
+          <div className="council-shell__intro blur">
+            <OverlayWrapper showX={true} cancelOverlay={watchReplay}>
+              <ReplayIntro kind={replayIntroKind} facts={introFacts} onWatch={watchReplay} />
+            </OverlayWrapper>
+          </div>
+        )}
       </div>
     </>
   );

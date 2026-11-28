@@ -17,11 +17,9 @@ import { measureLoudness, normalizeLoudness } from "@logic/audio/AudioUtils.js";
 import {
     generateElevenLabsAudio,
     generateInworldAudio,
-    generateOpenAIAudio,
     type AudioResult,
 } from "@logic/audio/TTSProviders.js";
 import type { AudioSystemOptions, Speaker } from "@logic/audio/AudioTypes.js";
-import { getOpenAI, initOpenAI } from "@services/OpenAIService.js";
 import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages.js";
 
 function arg(name: string, fallback: string): string {
@@ -51,7 +49,7 @@ function synthesize(text: string, speaker: Speaker, audioOptions: AudioSystemOpt
     const params = { text, speaker, options: audioOptions };
     if (speaker.voiceProvider === "inworld") return generateInworldAudio(params);
     if (speaker.voiceProvider === "elevenlabs") return generateElevenLabsAudio(params);
-    return generateOpenAIAudio({ ...params, services: { getOpenAI } });
+    throw new Error(`${speaker.id}: no voice provider we can use (${String(speaker.voiceProvider)})`);
 }
 
 const median = (values: number[]): number => {
@@ -64,7 +62,6 @@ const fmt = (value: number, signed = false): string => `${signed && value > 0 ? 
 interface Row { language: string; id: string; takes: number[] }
 
 async function main(): Promise<void> {
-    initOpenAI();
     await mkdir(OUT, { recursive: true });
     const rows: Row[] = [];
 

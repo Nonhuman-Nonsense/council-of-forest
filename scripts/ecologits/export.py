@@ -2,7 +2,7 @@
 Export EcoLogits impact coefficients for the models the council uses.
 
 Run through `npm run footprint:update` (server/), which picks the EcoLogits version and
-runs this with uv. Writes shared/footprint/ecologits.json — see docs/ai-footprint-meter.md.
+runs this with uv. Writes shared/footprint/ecologits.json — see FOOTPRINT.md.
 
 EcoLogits' LLM model is linear per request:
 
@@ -82,6 +82,26 @@ MODELS = {
         "assumptions": [
             "Routed through Inworld to Mistral's own API (Inworld reports the attempt as mistral/mistral-large-3 on its own credentials); EcoLogits' Mistral data-centre profile applies.",
             "Mistral's API runs in Sweden by default and in the US on its US endpoint; which Inworld uses is not published, so the range spans both electricity mixes.",
+            "EcoLogits listed Mistral Large 3 with Mistral Large 2's size until 0.11.2, which took Mistral's published 675B total / 41B active mixture-of-experts after we reported it.",
+            "Served with 8-bit (FP8, published) to 16-bit weights: EcoLogits sizes the GPU fleet by memory, so this halves or doubles the GPUs a request occupies (16 to 32 H100-class GPUs). EcoLogits itself assumes 16-bit.",
+        ],
+        "sources": [
+            "https://help.mistral.ai/en/articles/156206-when-using-mistral-ai-s-api-where-is-my-data-stored",
+            "https://github.com/mlco2/ecologits/pull/262",
+            "https://huggingface.co/mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4",
+        ],
+    },
+    # Called on Mistral's API directly since November 2026, when the Inworld route above started
+    # serving a reasoning model under the same name. Same model; only the data centre is known.
+    "mistral|mistral-large-2512": {
+        "ecologits": ("mistralai", "mistral-large-2512"),
+        "quantizationBits": (8, 16),
+        # api.mistral.ai, Mistral's default endpoint, serves from Sweden.
+        "zones": ("SWE",),
+        "role": "writing",
+        "basis": "ecologits",
+        "assumptions": [
+            "Called on Mistral's own API at its default endpoint, which Mistral says runs in Sweden; EcoLogits' Mistral data-centre profile with the Swedish electricity mix applies.",
             "EcoLogits listed Mistral Large 3 with Mistral Large 2's size until 0.11.2, which took Mistral's published 675B total / 41B active mixture-of-experts after we reported it.",
             "Served with 8-bit (FP8, published) to 16-bit weights: EcoLogits sizes the GPU fleet by memory, so this halves or doubles the GPUs a request occupies (16 to 32 H100-class GPUs). EcoLogits itself assumes 16-bit.",
         ],

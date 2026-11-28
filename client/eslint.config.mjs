@@ -10,9 +10,10 @@
  *
  * `typescript` in package.json is aliased to `@typescript/typescript6` (the TS 6.0 API
  * compat shim) because typescript-eslint doesn't support the TS 7 API yet — see
- * https://github.com/typescript-eslint/typescript-eslint/issues/10940. `tsc` itself still
- * resolves to real TS 7 via the `@typescript/native` alias; drop both aliases once that
- * issue lands.
+ * https://github.com/typescript-eslint/typescript-eslint/issues/10940. The npm scripts
+ * run real TS 7 by path (`node_modules/@typescript/native/bin/tsc`): both packages ship a
+ * `tsc` bin and npm links whichever it installs last. Drop both aliases, and go back to a
+ * bare `tsc`, once that issue lands.
  */
 import eslint from '@eslint/js';
 import eslintReact from '@eslint-react/eslint-plugin';
@@ -25,7 +26,6 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'node_modules/**',
-      'playwright-report/**',
       'coverage/**',
       // Generated font bundles
       'src/Tinos.ts',
@@ -86,7 +86,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['playwright.config.ts', 'scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs'],
     languageOptions: {
       globals: globals.node,
     },

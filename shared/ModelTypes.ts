@@ -1,6 +1,9 @@
 /// <reference types="node" />
-// Defines the available voice options for characters
-export const AVAILABLE_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse"] as const;
+/** Who voices a character: Inworld's TTS or ElevenLabs'. */
+export const VOICE_PROVIDERS = ["inworld", "elevenlabs"] as const;
+export type VoiceProvider = typeof VOICE_PROVIDERS[number];
+
+/** Inworld's preset voices. Inworld also takes cloned voice IDs, and ElevenLabs only takes IDs. */
 
 export const AVAILABLE_VOICES_INWORLD = [
     "Alex", "Ashley", "Blake", "Carter", "Clive", "Craig", "Deborah", "Dennis", "Dominus", "Edward",
@@ -8,7 +11,34 @@ export const AVAILABLE_VOICES_INWORLD = [
     "Sarah", "Shaun", "Theodore", "Timothy", "Wendy"
 ] as const;
 
-export type VoiceOption = typeof AVAILABLE_VOICES[number] | typeof AVAILABLE_VOICES_INWORLD[number];
+export type VoiceOption = typeof AVAILABLE_VOICES_INWORLD[number];
+
+/**
+ * Children a meeting can be held for: `young` about 6–9, `older` about 10–14. A meeting without
+ * one is for adults. The setup agent sets it when it learns children are taking part; the meeting
+ * prompts then carry the audience's instructions from the character setup bundle.
+ */
+export const CHILD_AUDIENCES = ["young", "older"] as const;
+export type ChildAudience = typeof CHILD_AUDIENCES[number];
+
+/** What a character setup bundle adds to the meeting prompts for one audience of children. */
+export interface AudienceInstructions {
+    /** Appended to the chair's prompt, before {@link everyone}: its opening and turn lengths. */
+    chair: string;
+    /** Appended last to every council member's prompt, the chair's included, so it outranks their own rules. */
+    everyone: string;
+}
+
+/**
+ * One point on a topic's agenda. The title is kept apart from the text, because it is shown on
+ * its own — on the replay screen and in print — while the prompt gets both, as `Title` then `text`.
+ */
+export interface AgendaPoint {
+    /** One short line, the point's name. */
+    title: string;
+    /** What the point is about: the sides, the facts, often a closing `Core question:`. May be empty. */
+    text: string;
+}
 
 export interface Topic {
     id: string;
@@ -24,7 +54,9 @@ export interface Topic {
     agentBrief?: string;
     prompt: string;
     /** Optional agenda items; rendered via [AGENDA_POINTS] in the system prompt at meeting setup. */
-    agendaPoints?: string[];
+    agendaPoints?: AgendaPoint[];
+    /** Agenda items for a meeting held for young children, in place of {@link agendaPoints}. */
+    youngAgendaPoints?: AgendaPoint[];
 }
 
 export interface BaseMeeting {
@@ -40,11 +72,17 @@ export interface BaseMeeting {
     conversationExtraSlots: number;
     /** True once conclude audio barrier finished and replay is autoplay-eligible. */
     meetingComplete: boolean;
+    /** Title of the agenda point the chair opened on; missing before it was kept. */
+    openingAgendaPoint?: string;
+    /** The children the meeting was held for; absent for adults. */
+    audience?: ChildAudience;
 }
 
 export interface Meeting extends BaseMeeting {
     /** This property must NOT exist on a public Meeting object */
     liveKey?: never; 
+    /** Name of the venue the meeting ran at, when it ran at a configured one. */
+    venueName?: string;
 }
 
 export interface PlaybackState {
@@ -67,9 +105,8 @@ export interface Character {
      */
     aliases?: string[];
     prompt: string;
-    voiceProvider?: 'openai' | 'inworld' | 'elevenlabs';
+    voiceProvider?: VoiceProvider;
     voiceLocale?: string;
-    voiceInstruction?: string;
     voiceTemperature?: number;
     voiceStability?: number;
     voiceStyle?: number;
@@ -93,6 +130,8 @@ export interface CharacterSetupData {
         description: string;
     };
     characters: Character[];
+    /** The prompts' additions for each audience of children; an audience missing here cannot be chosen. */
+    audiences?: Partial<Record<ChildAudience, AudienceInstructions>>;
 }
 
 // For Zod validation
@@ -138,7 +177,7 @@ type GeneratedTurnType =
     | "interjection"
     | "skipped"
     /**
-     * The chair's last words when an installation prints its letters (docs/council-letters.md):
+     * The chair's last words when an installation prints its letters (LETTERS.md):
      * thanks to the author and the human, and where the letter went — or why it was not sent.
      * Live only: replay drops it, with the `credits` after it, and shows the letter instead.
      */
@@ -148,7 +187,7 @@ export interface GeneratedTurnMessage
     extends BaseMessage, SpeakerFields, TextFields, IdentifiedFields, SentenceFields, GeneratedDebugFields {
     type: GeneratedTurnType;
     askParticular?: string;
-    /** On a `summary` that is a letter (see docs/council-letters.md): the letter as written. */
+    /** On a `summary` that is a letter (see LETTERS.md): the letter as written. */
     letter?: LetterView;
 }
 
@@ -337,7 +376,7 @@ export function isSpeakerMessage(message: Message): message is SpeakerMessage {
 }
 
 /**
- * A reply to one of the letters, as an installation prints it (docs/council-letters.md →
+ * A reply to one of the letters, as an installation prints it (LETTERS.md →
  * Receiving): who wrote back by name — never their address — and the letter it answers.
  */
 export interface PrintableLetterReply {

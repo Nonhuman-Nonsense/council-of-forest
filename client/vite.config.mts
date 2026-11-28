@@ -84,7 +84,7 @@ export default defineConfig(async ({ command, mode }) => {
     },
     build: {
       rollupOptions: {
-        // The footprint meter is its own page and bundle (docs/ai-footprint-meter.md).
+        // The footprint meter is its own page and bundle (FOOTPRINT.md).
         input: {
           main: path.resolve(import.meta.dirname, 'index.html'),
           meter: path.resolve(import.meta.dirname, 'meter.html'),
@@ -92,7 +92,6 @@ export default defineConfig(async ({ command, mode }) => {
       },
       chunkSizeWarningLimit: 1600,
       assetsInlineLimit: 10240,
-      sourcemap: mode === 'analyze',
     },
   }
 })

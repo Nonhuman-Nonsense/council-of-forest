@@ -17,8 +17,8 @@ export const CREDIT_GROUPS: CreditGroup[] = [
   {
     headingKey: "credits.interviews",
     credits: [
-      { role: { name: "Gran Sameby" }, names: ["Marja Skum"] },
-      { role: { name: "Ran Sameby" }, names: ["Göran Jonsson", "Maidi Eira-Andersson"] },
+      { role: { key: "credits.granSameby" }, names: ["Marja Skum"] },
+      { role: { key: "credits.ranSameby" }, names: ["Göran Jonsson", "Maidi Eira-Andersson"] },
       { role: { name: "Rewilding Sweden" }, names: ["Anders Granér"] },
       { role: { key: "credits.fisheriesConsultant" }, names: ["Daniel Holmqvist"] },
       { role: { key: "credits.forestryConsultant" }, names: ["Erik Alnersson"] },
@@ -45,7 +45,7 @@ export const CREDIT_GROUPS: CreditGroup[] = [
 export const CREDIT_LOGOS: CreditLogo[][] = [
   [
     { src: nonhumanLogo, alt: { name: "Nonhuman Nonsense" }, maxWidth: 120, height: 61 },
-    { src: biosphereLogo, alt: { name: "Biosphere Area Vindelälven-Juhttátahkka" }, maxWidth: 150, height: 100 },
+    { src: biosphereLogo, alt: { name: "Vindelälven-Juhttátahkka Biosphere Reserve" }, maxWidth: 150, height: 100 },
   ],
   [{ src: vinnovaLogo, alt: { key: "contact.fundingImageAlt" }, maxWidth: 200, height: 50 }],
 ];

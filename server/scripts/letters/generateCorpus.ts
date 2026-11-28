@@ -1,6 +1,6 @@
 /**
  * Generates a set of full-length meetings to develop the letters against (see
- * docs/council-letters.md). Text only, with today's topic and being prompts and production
+ * LETTERS.md). Text only, with today's topic and being prompts and production
  * settings, written to the database in .env and tagged so evalLetters.ts can find them.
  *
  * Every meeting runs through the server's real MeetingManager — speaker selection, directed
@@ -21,10 +21,9 @@ import { CHARACTERS_FILE } from "@shared/prompts/characterSetupMetadata.js";
 import { AVAILABLE_LANGUAGES } from "@shared/AvailableLanguages.js";
 import { injectRandomAgendaPoint } from "@shared/agendaPointInjection.js";
 import { closeDb, initDb, insertMeeting, meetingsCollection } from "@services/DbService.js";
-import { initOpenAI } from "@services/OpenAIService.js";
 import { MeetingManager } from "@logic/MeetingManager.js";
 import { getGlobalOptions } from "@logic/GlobalOptions.js";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "node:crypto";
 import { HUMAN_QUESTIONS, type HumanLine } from "./humanLines.js";
 
 const PROMPTS_DIR = path.join(process.cwd(), "../shared/prompts");
@@ -151,7 +150,7 @@ function buildMeetingDoc(plan: PlannedMeeting, topics: TopicsBundle, beings: Bei
         language: plan.language,
         audio: [],
         conversation: [],
-        liveKey: uuidv4(),
+        liveKey: randomUUID(),
         date: new Date().toISOString(),
         state: { alreadyInvited: false, humanName: plan.humanName },
         maximumPlayedIndex: 0,
@@ -214,7 +213,6 @@ async function runMeeting(index: number, plan: PlannedMeeting, topics: TopicsBun
 
 async function main() {
     await initDb();
-    initOpenAI();
 
     const bundles: Record<string, { topics: TopicsBundle; beings: BeingsBundle }> = Object.fromEntries(
         await Promise.all(AVAILABLE_LANGUAGES.map(async (language) => [language, {

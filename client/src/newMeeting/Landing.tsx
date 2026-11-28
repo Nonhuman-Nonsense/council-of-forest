@@ -1,6 +1,6 @@
 import RotateDevice from "@main/overlay/RotateDevice";
 import { useMediaQuery } from 'react-responsive'
-import { Link, useOutletContext } from "react-router";
+import { Link, useNavigate, useOutletContext } from "react-router";
 import type { MeetingSetupOutletContext } from "./MeetingSetupShell";
 import { useMobile, dvh } from "@/utils";
 import { useTranslation } from 'react-i18next';
@@ -26,6 +26,7 @@ const Landing: React.FC = () => {
   const isMobile = useMobile();
   const { capabilities } = useCouncilSettings();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const wrapper: React.CSSProperties = {
     position: "absolute",
@@ -86,7 +87,7 @@ const Landing: React.FC = () => {
                 <img alt="Nonhuman Nonsense" src={nonhumanLogo} style={nonhumanLogoStyle} />
               </Link>
               <Link to={{ hash: "contact" }}>
-                <img src={biosphereLogo} alt="Biosphere Area Vindelälven-Juhttátahkka" style={biosphereLogoStyle} />
+                <img src={biosphereLogo} alt="Vindelälven-Juhttátahkka Biosphere Reserve" style={biosphereLogoStyle} />
               </Link>
             </div>
           )}
@@ -96,20 +97,21 @@ const Landing: React.FC = () => {
           <RotateDevice />
           :
           capabilities.browserUi && (
-            <div style={{ maxWidth: "380px" }}>
-              <p style={{ marginBottom: "30px" }}>{t('landing.description')}</p>
+            <div style={{ maxWidth: "460px" }}>
+              <p style={{ marginBottom: "30px", whiteSpace: "pre-line" }}>{t('landing.description')}</p>
               <div>
-                <Link
-                  to={newMeetingPath}
-                  className="button"
+                <button
                   data-testid="landing-go"
-                  // The agent has no other way to notice this step change: with
-                  // the microphone off it cannot be told, and it is not the one
-                  // driving the navigation.
-                  onClick={() => setLastUserEvent({ type: "setup_started" })}
+                  onClick={() => {
+                    // The agent has no other way to notice this step change: with
+                    // the microphone off it cannot be told, and it is not the one
+                    // driving the navigation.
+                    setLastUserEvent({ type: "setup_started" });
+                    navigate(newMeetingPath);
+                  }}
                 >
                   {t('landing.go')}
-                </Link>
+                </button>
               </div>
             </div>
           )

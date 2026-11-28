@@ -46,8 +46,8 @@ describe('Forest audio loops', () => {
             currentTime: 0,
             destination: {},
             state: 'running',
-            resume: vi.fn(),
-            suspend: vi.fn(),
+            resume: vi.fn().mockResolvedValue(undefined),
+            suspend: vi.fn().mockResolvedValue(undefined),
         };
 
         // The components take the shared bus as a ref, the way Main owns it.

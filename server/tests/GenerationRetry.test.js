@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createTestManager } from './commonSetup.js';
+import { createTestManager, useChatMock } from './commonSetup.js';
 import { Logger } from '@utils/Logger.js';
 
 vi.mock('@utils/Logger.js', () => ({
@@ -39,9 +39,7 @@ describe('DialogGenerator - generation retry', () => {
                 choices: [{ message: { content }, finish_reason: 'stop' }],
             };
         });
-        vi.spyOn(manager.services, 'getOpenAI').mockReturnValue({
-            chat: { completions: { create: mockCreate } },
-        });
+        useChatMock(manager, mockCreate);
     };
 
     beforeEach(() => {

@@ -21,8 +21,7 @@ EOF
 }
 
 wait_for_bridge_stop() {
-  local attempt
-  for attempt in $(seq 1 15); do
+  for _ in $(seq 1 15); do
     if ! curl -fsS "http://127.0.0.1:8765/health" >/dev/null 2>&1; then
       return 0
     fi

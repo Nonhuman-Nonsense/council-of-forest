@@ -5,6 +5,7 @@ import {
 import { hasSignOfLife } from "@/signOfLife";
 import { getLogPageId, isServerLogOn, pushServerLogLine } from "@/logging/serverLogSink";
 import { LOG_CATEGORIES, type LogCategory } from "@shared/ClientLogTypes";
+import { OWN_CLIENT_HEADER, OWN_CLIENT_VALUE } from "@shared/ownClient";
 
 /** Shared with the server, which accepts only these categories in a stored log. */
 export const DEV_LOG_CATEGORIES = LOG_CATEGORIES;
@@ -232,7 +233,8 @@ function postClientReport(
 
   void fetch("/api/client-report", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // Plain fetch, not councilFetch: that logs through this module.
+    headers: { "Content-Type": "application/json", [OWN_CLIENT_HEADER]: OWN_CLIENT_VALUE },
     body: JSON.stringify({
       message,
       source,
@@ -273,6 +275,9 @@ const WINDOW_ERROR_NOISE_PATTERNS: RegExp[] = [
   /No Listener: tabs:/i,
   // Safari's autoplay policy refusing someone's play() — ours all handle it; never actionable.
   /play method is not allowed by the user agent/i,
+  // A CefSharp host (Outlook/Defender's Safe Links link scanner, other Windows apps) calling
+  // a .NET bridge object our page doesn't have.
+  /Object Not Found Matching Id:\d+, MethodName:/i,
 ];
 
 // Caps how many distinct window-level errors get reported per page load, and skips exact
@@ -282,6 +287,21 @@ const WINDOW_ERROR_NOISE_PATTERNS: RegExp[] = [
 const MAX_WINDOW_ERROR_REPORTS = 10;
 let windowErrorReportCount = 0;
 const reportedWindowErrorMessages = new Set<string>();
+
+/**
+ * "Script error." is what a browser reports in place of an error from a classic script the page
+ * may not inspect — one the browser itself injects (Firefox on iOS does, at page load) or one
+ * loaded from another origin without CORS — with an empty filename and no stack, so there is
+ * nothing to act on. Our own scripts are never masked: the bundle is a module script, which is
+ * always fetched with CORS (from another origin it either loads with full errors or not at all),
+ * and the classic scripts in index.html are inline. One exception, in WebKit only: a function of
+ * ours that a foreign script calls directly, throwing back into it, is masked as the caller's
+ * error. Nothing calls our code that way — we patch no globals, and listeners for events a
+ * foreign script dispatches are reported in full — and the masked report would hold nothing.
+ */
+function isMaskedForeignScriptError(event: ErrorEvent): boolean {
+  return event.message === "Script error.";
+}
 
 function shouldReportWindowError(message: string): boolean {
   if (WINDOW_ERROR_NOISE_PATTERNS.some((pattern) => pattern.test(message))) return false;
@@ -302,6 +322,7 @@ export function installGlobalErrorHandlers(): void {
   if (typeof window === "undefined") return;
 
   window.addEventListener("error", (event) => {
+    if (isMaskedForeignScriptError(event)) return;
     const message = event.message || "Uncaught error";
     if (!shouldReportWindowError(message)) return;
     reportTerminalError("window.onerror", message, event.error, {

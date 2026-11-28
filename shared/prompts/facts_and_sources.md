@@ -23,7 +23,9 @@ How to use this file:
 
 ## 1. Why this exists: the model knows nothing after 2024
 
-`server/global-options.json` sets `"conversationModel": "mistral/mistral-large-3"`.
+`server/global-options.json` sets `"conversationModel": "mistral-direct/mistral-large-2512"`: the
+same Mistral Large 3 the table below was probed on, called on Mistral's own API since 13 November
+2026, when the Inworld route started serving a reasoning model under the old name.
 Mistral publishes no knowledge cutoffs, so on 9 September 2026 we probed the endpoint
 (`api.inworld.ai/v1/chat/completions`, temperature 0):
 
@@ -81,8 +83,8 @@ Swedish uranium ban lifted (Jan 2026).
   as `[CURRENT_DATE]` by `buildMeetingSystemPrompt` (`shared/topicPrompt.ts`); never write
   it into a prompt.
 - **Agenda points state both sides at their strongest.** The pattern that works (Green
-  Transition, and Sámi "Is a Culture a National Interest?"): title on its own line, one or
-  two sentences of context, two named perspectives with labelled bullets
+  Transition, and Sámi "Is a Culture a National Interest?"): a short `title` (its own field,
+  shown on the replay screen and in print), then in `text` one or two sentences of context, two named perspectives with labelled bullets
   (`- Label: explanation`), concrete dates and figures, optionally a `Core Question:`.
   River picks one agenda point and hands it to a being; two named sides give River a
   conflict to stage and give the Tree Harvester an argument to make. Agreed 28 Sept 2026:

@@ -1,6 +1,6 @@
 import type { Character, Message } from '@shared/ModelTypes.js';
 import type { IMeetingBroadcaster } from "@interfaces/MeetingInterfaces.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ChatMessage } from "@services/ChatCompletions.js";
 import type { Collection } from "mongodb";
 import type { StoredMeeting } from "@models/DBModels.js";
 
@@ -98,11 +98,18 @@ export class DialogGenerator {
      */
     private async completeWithRetry<T extends PostProcessedResponse | Pick<DocumentResponse, "response" | "trimmed">>(
         request: {
-            messages: ChatCompletionMessageParam[];
+            messages: ChatMessage[];
             maxCompletionTokens: number;
             stop?: string[];
             /** Defaults to the conversation model and its reasoning setting. */
             model?: { model: string; reasoning: GlobalOptions["conversationReasoning"] };
+            /**
+             * Cache the prompt under the meeting, for the next request that resends it — on by
+             * default, since nearly every generation is followed by another on the same
+             * conversation. Off for a one-off, where an Anthropic cache write would cost more
+             * than it ever saves.
+             */
+            cache?: boolean;
         },
         postProcess: (completion: ConversationCompletionResult) => T,
         ctx: {
@@ -132,6 +139,7 @@ export class DialogGenerator {
                 request.maxCompletionTokens,
                 request.stop,
                 request.model,
+                request.cache === false ? undefined : `meeting-${meeting._id}`,
             );
 
             // Every attempt is paid for, including the empty ones.
@@ -334,10 +342,11 @@ export class DialogGenerator {
     }
 
     private async requestChatCompletion(
-        messages: ChatCompletionMessageParam[],
+        messages: ChatMessage[],
         maxCompletionTokens: number,
         stop?: string[],
         model?: { model: string; reasoning: GlobalOptions["conversationReasoning"] },
+        cacheKey?: string,
     ): Promise<ConversationCompletionResult> {
         return withNetworkRetry(() => this.services.conversationService.createChatCompletion({
             model: model?.model ?? this.serverOptions.conversationModel,
@@ -346,6 +355,7 @@ export class DialogGenerator {
             reasoning: model?.reasoning ?? this.serverOptions.conversationReasoning,
             stop,
             messages,
+            cacheKey,
         }), "DialogGenerator");
     }
 
@@ -458,6 +468,8 @@ export class DialogGenerator {
                 messages,
                 maxCompletionTokens: maxTokens,
                 model: options.model ?? { model: this.serverOptions.letterModel, reasoning: this.serverOptions.letterReasoning },
+                // A letter's plan and draft resend the same conversation; a rewrite without it is a one-off.
+                cache: options.withConversation !== false,
             },
             (completion) => {
                 finishReason = completion.finishReason;
@@ -528,8 +540,8 @@ export class DialogGenerator {
         meeting: StoredMeeting,
         upToIndex?: number,
         includeCompletionPrimer = true,
-    ): ChatCompletionMessageParam[] {
-        const messages: ChatCompletionMessageParam[] = [];
+    ): ChatMessage[] {
+        const messages: ChatMessage[] = [];
 
         messages.push({
             role: "system",

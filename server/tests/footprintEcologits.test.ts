@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { usageIdentityFor } from "@services/ConversationService.js";
 import {
     ecologitsSamples,
     estimateEcologitsImpacts,
@@ -66,10 +67,10 @@ describe("EcoLogits footprint table", () => {
 
     it("has an entry for every model production is configured to call", () => {
         const configured = [
-            ["inworld", productionOptions.conversationModel],
+            Object.values(usageIdentityFor(productionOptions.conversationModel)),
             ["inworld", productionOptions.speakerClassifierModel],
-            ["inworld", productionOptions.inworldVoiceModel],
-            ["elevenlabs", productionOptions.elevenlabsVoiceModel],
+            ["inworld", productionOptions.ttsModels.inworld],
+            ["elevenlabs", productionOptions.ttsModels.elevenlabs],
         ];
 
         const missing = configured.filter(([provider, model]) => !findEcologitsModel(provider, model));

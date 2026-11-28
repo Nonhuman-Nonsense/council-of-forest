@@ -1,14 +1,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTestManager } from './commonSetup.js';
+import { createMockConversationService } from './mockChat.js';
 import { setupTestOptions } from './testUtils.js';
 import { SpeakerSelector } from '@logic/SpeakerSelector.js';
 import { MockFactory } from './factories/MockFactory.ts';
 
-// Mock dependencies
-// vi.mock('@services/OpenAIService.js', () => ({
-//     getOpenAI: vi.fn(() => mockOpenAI),
-// }));
 vi.mock('@logic/SpeakerSelector.js', () => ({
     SpeakerSelector: {
         calculateNextSpeaker: vi.fn().mockReturnValue(0),
@@ -139,31 +136,14 @@ describe('MeetingManager - Conversation Flow', () => {
     });
 
     it('should handle conversation turns (single turn verification) using DI', async () => {
-        // Create a mock OpenAI service
-        const mockOpenAI = {
-            chat: {
-                completions: {
-                    create: vi.fn().mockResolvedValue({
-                        id: 'gpt_id',
-                        choices: [{ message: { content: 'Hello from DI Tomato' } }]
-                    })
-                }
-            },
-            audio: {
-                speech: {
-                    create: vi.fn().mockResolvedValue({ arrayBuffer: () => new ArrayBuffer(0) })
-                },
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({ words: [] })
-                }
-            }
-        };
-
-        const mockGetOpenAI = () => mockOpenAI;
+        const complete = vi.fn().mockResolvedValue({
+            id: 'completion_id',
+            choices: [{ message: { content: 'Hello from DI Tomato' } }]
+        });
 
         // Re-create manager with injected service
         const { manager: diManager, mockSocket: diSocket } = createTestManager('test', null, {
-            getOpenAI: mockGetOpenAI
+            conversationService: createMockConversationService(complete)
         });
         diManager.meeting._id = 1;
         diManager.isActive = true;
@@ -183,8 +163,7 @@ describe('MeetingManager - Conversation Flow', () => {
         expect(diManager.meeting.conversation).toHaveLength(1);
         expect(diManager.meeting.conversation[0].text).toBe('Hello from DI Tomato');
 
-        // Verify OpenAI usage
-        expect(mockOpenAI.chat.completions.create).toHaveBeenCalled();
+        expect(complete).toHaveBeenCalled();
 
         // Verify Socket Emit
         expect(diSocket.emit).toHaveBeenCalledWith('conversation_update', expect.any(Array));
@@ -196,7 +175,7 @@ describe('MeetingManager - Conversation Flow', () => {
     it('should set awaiting_human_panelist state when current speaker is a panelist', async () => {
         manager.meeting.characters = [
             MockFactory.createChair(),
-            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }
+            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
         ];
         const panelistId = 1;
 
@@ -227,7 +206,7 @@ describe('MeetingManager - Conversation Flow', () => {
     it('should pass trimmed content through on panelist invitation', async () => {
         manager.meeting.characters = [
             MockFactory.createChair(),
-            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }
+            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
         ];
         const panelistId = 1;
 
@@ -249,7 +228,7 @@ describe('MeetingManager - Conversation Flow', () => {
     it('should not replay panelist invitation after a skipped panelist turn', async () => {
         manager.meeting.characters = [
             MockFactory.createChair(),
-            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }
+            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
         ];
         manager.meeting.conversation = [
             { speaker: 'panelist0', type: 'skipped', text: '', id: 'skip-1' },
@@ -274,7 +253,7 @@ describe('MeetingManager - Conversation Flow', () => {
     it('should skip the panelist welcome invitation when the previous message directly addressed that panelist', async () => {
         manager.meeting.characters = [
             MockFactory.createChair(),
-            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'alloy' }
+            { id: 'panelist0', name: 'Alice', description: '', prompt: '', voice: 'Ashley', voiceProvider: 'inworld' }
         ];
         manager.meeting.conversation = [
             { speaker: 'food1', type: 'message', text: 'Alice, what do you grow?', id: 'msg-1', askParticular: 'panelist0' },
@@ -297,33 +276,18 @@ describe('MeetingManager - Conversation Flow', () => {
     });
 
     it('should successfully conclude meeting without ReferenceError (Regression Test)', async () => {
-        // Setup mock OpenAI with audio capability
-        const mockOpenAI = {
-            chat: {
-                completions: {
-                    create: vi.fn().mockResolvedValue({
-                        id: 'gpt_id',
-                        choices: [{ message: { content: 'This is a summary.' } }]
-                    })
-                }
-            },
-            audio: {
-                speech: {
-                    create: vi.fn().mockResolvedValue({ arrayBuffer: () => new ArrayBuffer(0) })
-                },
-                transcriptions: {
-                    create: vi.fn().mockResolvedValue({ words: [] })
-                }
-            }
-        };
-
-        const mockGetOpenAI = () => mockOpenAI;
-        const { manager: diManager } = createTestManager('test', null, { getOpenAI: mockGetOpenAI });
+        const complete = vi.fn().mockResolvedValue({
+            id: 'completion_id',
+            choices: [{ message: { content: 'This is a summary.' } }]
+        });
+        const { manager: diManager } = createTestManager('test', null, {
+            conversationService: createMockConversationService(complete)
+        });
         diManager.meeting._id = 1;
         const generateAudioSpy = vi.spyOn(diManager.audioSystem, 'generateAudio').mockResolvedValue();
 
         if (!diManager.meeting.characters[0].voice) {
-            diManager.meeting.characters[0].voice = 'alloy';
+            diManager.meeting.characters[0].voice = 'Ashley';
         }
 
         diManager.meeting.conversation = [
@@ -336,7 +300,7 @@ describe('MeetingManager - Conversation Flow', () => {
         // Verify audio generation was attempted regardless of the chair's current voice provider.
         if (!diManager.serverOptions.skipAudio) {
             expect(generateAudioSpy).toHaveBeenCalled();
-            expect(generateAudioSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ id: 'gpt_id' }));
+            expect(generateAudioSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ id: 'completion_id' }));
         }
     });
 

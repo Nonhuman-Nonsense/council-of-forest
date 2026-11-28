@@ -18,7 +18,7 @@ describe("Contact", () => {
       creditsParagraph!.querySelector('a[href="https://nonhuman-nonsense.com"]'),
     ).toHaveTextContent("Nonhuman Nonsense");
 
-    const biosphereLinks = screen.getAllByRole("link", { name: /Biosphere Area Vindelälven-Juhttátahkka/ });
+    const biosphereLinks = screen.getAllByRole("link", { name: /Vindelälven-Juhttátahkka Biosphere Reserve/ });
     expect(biosphereLinks.some((link) => link.getAttribute("href") === "https://vindelalvenbiosfar.se/")).toBe(true);
 
     expect(

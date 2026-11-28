@@ -11,7 +11,6 @@ function unsetIfBlank<T extends z.ZodType>(schema: T) {
 export const EnvSchema = z.object({
     COUNCIL_DB_URL: z.url(),
     COUNCIL_DB_PREFIX: z.string(),
-    COUNCIL_OPENAI_API_KEY: z.string().min(1),
     PORT: z.string().default("3001").transform((val) => parseInt(val, 10)),
     NODE_ENV: z.enum(["development", "production", "test", "prototype"]).default("production"),
     COUNCIL_ERRORBOT: z.string().optional(),
@@ -19,13 +18,15 @@ export const EnvSchema = z.object({
     TEST_MODE: z.enum(TEST_MODES).optional(),
     USE_TEST_OPTIONS: z.enum(["true", "false"]).transform((val) => val === "true").optional(),
     INWORLD_API_KEY: z.string().min(1),
+    /** Only for `mistral-direct/` models, which call Mistral's API instead of the Inworld router. */
+    MISTRAL_API_KEY: unsetIfBlank(z.string()),
     ELEVENLABS_API_KEY: z.string().min(1).optional(),
     // Email (Brevo transactional API). Without both, nothing is emailed.
     COUNCIL_BREVO_API_KEY: unsetIfBlank(z.string()),
     /** e.g. `Council of Foods <council@council-of-foods.com>`; the name also titles emails. */
     COUNCIL_MAIL_FROM: unsetIfBlank(z.string().regex(/^.+<[^<>\s]+@[^<>\s]+>$/, "expected Name <address>")),
     /**
-     * Whether meetings' letters go out (docs/council-letters.md): `off` queues them and sends
+     * Whether meetings' letters go out (LETTERS.md): `off` queues them and sends
      * nothing (the default, and the kill switch), `test` sends every letter to
      * COUNCIL_LETTERS_TEST_TO instead of its recipient, `live` sends to the recipient.
      */

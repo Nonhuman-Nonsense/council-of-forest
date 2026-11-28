@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "node:crypto";
 import type { Character, Message, Topic, Audio, Meeting } from "@shared/ModelTypes.js";
 import type { StoredMeeting } from "@models/DBModels.js";
 import { CHAIR_ID, defaultCharacterSetupBundle } from "@logic/characterSetupBundle.js";
@@ -24,7 +24,8 @@ export const MockFactory = {
         name: "Speaker 1",
         description: "A generic participant used for tests where identity is irrelevant.",
         prompt: "Speak as Speaker 1 in the council.",
-        voice: "alloy",
+        voice: "Ashley",
+        voiceProvider: "inworld",
         ...overrides,
     }),
 
@@ -42,7 +43,8 @@ export const MockFactory = {
             name: "",
             description: "",
             prompt: "",
-            voice: "alloy",
+            voice: "Ashley",
+            voiceProvider: "inworld",
             ...overrides,
         });
     },
@@ -52,7 +54,7 @@ export const MockFactory = {
 
     createMessage: (overrides: Partial<Message> = {}): Message =>
         ({
-            id: uuidv4(),
+            id: randomUUID(),
             speaker: "speaker1",
             text: "Hello from speaker1.",
             type: "message",
@@ -92,14 +94,12 @@ export const MockFactory = {
         ({
             conversationModel: "mistral/mistral-small-3-2",
             conversationReasoning: "none",
-            voiceModel: "gpt-4o-mini-tts",
-            inworldVoiceModel: "inworld-tts-1.5-mini",
-            elevenlabsVoiceModel: "eleven_flash_v2_5",
+            ttsModels: { inworld: "inworld-tts-1.5-mini", elevenlabs: "eleven_flash_v2_5" },
             temperature: 1,
             maxTokens: 100,
             chairMaxTokens: 50,
             defaultAudioSpeed: 1.25,
-            subtitleTimingPriorities: ["elevenlabs", "inworld", "estimated", "whisper"],
+            subtitleTimingPriorities: ["elevenlabs", "inworld", "estimated"],
             trimSentance: false,
             trimParagraph: true,
             chairId: CHAIR_ID,
@@ -117,8 +117,6 @@ export const MockFactory = {
             summarizeMeetingPrompt: { en: "Summarize" },
             summarizeMeetingLength: 5,
             extraMessageCount: 2,
-            transcribeModel: "whisper-1",
-            transcribePrompt: { en: "Transcribe" },
             audioConcurrency: 2,
             voiceLoudness: { targetLufs: -18, skipBelowDb: 1.5, truePeakDb: -1.5 },
             chairRealtime: {
@@ -204,7 +202,7 @@ export const MockFactory = {
     },
 
     createAudio: (overrides: Partial<Audio> = {}): Audio => ({
-        _id: uuidv4(),
+        _id: randomUUID(),
         meeting_id: 123,
         date: new Date().toISOString(),
         audio: Buffer.from([]),

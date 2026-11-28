@@ -4,10 +4,9 @@ A second screen in the installation that shows what the council costs the planet
 speaks for the forest — energy, water, carbon and minerals — and makes visible that most of
 that cost lands somewhere else, on someone else.
 
-**Status (2026-09-30):** built and running — recording, estimation, meter screen, methodology
-page, training block and room power plugs. To do: tune the screen on the real display, and the
-open items at the end. Installation setup lives in [MUSEUM.md](../MUSEUM.md) ("Venue and
-footprint meter", "Meter screen", "Room power plugs").
+Installation setup lives in [MUSEUM.md](MUSEUM.md) ("Venue and footprint meter", "Meter
+screen", "Room power plugs"); the server side of the plugs and the usage routes in
+[server/README.md](server/README.md).
 
 ---
 
@@ -56,12 +55,12 @@ place, not watt-hours. Don't let an energy-only comparison argue that AI is harm
 
 | Feature | Where it is recorded | Provider → model (current config) | Measures |
 |---|---|---|---|
-| Council dialogue, chair (`dialogue`), summary (`summary`) | `DialogGenerator.completeWithRetry`, every attempt | Inworld router → `mistral/mistral-large-3` | input / output / cached / reasoning tokens |
+| Council dialogue, chair (`dialogue`), summary (`summary`) | `DialogGenerator.completeWithRetry`, every attempt | Mistral's API → `mistral-large-2512` (`mistral-direct/` in `global-options.json`; through the Inworld router as `mistral/mistral-large-3` until November 2026) | input / output / cached / cache-write / reasoning tokens |
 | Letters: plan, draft and weave (`summary`) | `DialogGenerator.generateInCharacter` | Inworld router → `anthropic/claude-sonnet-5-5` (plan, draft, weave; `claude-opus-5-5` until October 2026) | input / output / reasoning tokens |
 | Letters: author ranking, sorting the human's words (`classifier`) | `LetterWriter` via `SpeakerClassifierBase` | Inworld router → `google-ai-studio/gemini-2.5-flash` | tokens |
 | Speaker classifier (`classifier`) | `SpeakerClassifierBase` | Inworld router → `google-ai-studio/gemini-2.5-flash` | tokens |
-| Voices (`tts`) | `AudioSystem`, per freshly generated chunk | Inworld `inworld-tts-1.5-max` / `inworld-tts-2`; ElevenLabs `eleven_flash_v2_5` (forest); OpenAI `gpt-4o-mini-tts` (unused) | `characters`, `audio_seconds`; ElevenLabs also `region` from its `x-region` header |
-| Whisper timing fallback (`subtitle-timing`) | `AudioSystem` | `whisper-1` | `audio_seconds` |
+| Voices (`tts`) | `AudioSystem`, per freshly generated chunk | Inworld `inworld-tts-1.5-max` / `inworld-tts-2`; ElevenLabs `eleven_flash_v2_5` (forest); OpenAI `gpt-4o-mini-tts` until November 2026 (never used then) | `characters`, `audio_seconds`; ElevenLabs also `region` from its `x-region` header |
+| Whisper timing fallback (`subtitle-timing`), removed November 2026 | `AudioSystem` | `whisper-1` | `audio_seconds` |
 | Setup agent, meta agent | browser ↔ Inworld realtime; the client posts each `response.done` usage to `POST /api/usage/realtime` | `chairRealtime` LLM (`anthropic/claude-sonnet-5-5`) + Inworld TTS + the session's transcription model | one event per part: LLM tokens, TTS characters + audio seconds, STT audio seconds |
 | Human input | same route; the client times how long the microphone is open (`createMicTimeCounter`) and posts it as an `stt` part every 15 s while open and on closing | the session's transcription model (`soniox/stt-rt-v4`, `inworld/inworld-stt-1`) | `audio_seconds` |
 
@@ -91,8 +90,9 @@ place, not watt-hours. Don't let an energy-only comparison argue that AI is harm
   usage and plug reading to the `/meter` socket.io namespace.
 
 Verified response shapes (probed 2026-09-16):
-- Inworld router: OpenAI-style `usage` (`prompt_tokens`, `completion_tokens`,
-  `prompt_tokens_details.cached_tokens`).
+- Inworld router: chat-completions `usage` (`prompt_tokens`, `completion_tokens`,
+  `prompt_tokens_details.cached_tokens`, and `cache_write_tokens` when a request fills an
+  Anthropic cache).
 - Inworld TTS: `usage: { processedCharactersCount, modelId }`.
 - ElevenLabs: no usage body; an `x-region` header (e.g. `europe-west4`, Google Cloud Netherlands).
 - Inworld realtime `response.done`: `{ input_tokens, output_tokens, input_token_details,
@@ -170,7 +170,7 @@ projector (BenQ TH682ST) draws ≈ 244 W typical, 320 W max.
 
 - **URLs** (same in dev and production): `/meter?venue=<id>` and `/meter/methodology`, served
   from `client/dist/meter.html` by `registerMeterPage` (in dev, a plugin in
-  `client/vite.config.mts`). `?demo` fakes a feed (TEMPORARY, marked on screen);
+  `client/vite.config.mts`). `?demo` fakes a feed, marked "DEMO DATA" on screen;
   `?rotate=90|-90` turns the meter for a display the OS cannot rotate.
 - **Data:** `GET /api/meter?venue=<id>` returns a `MeterSnapshot` (`shared/MeterTypes.ts`):
   usage totals for all councils, the venue and its latest meeting, plus the room's plugs.
@@ -201,8 +201,8 @@ projector (BenQ TH682ST) draws ≈ 244 W typical, 320 W max.
 
   **The current meeting follows playback.** Replies are generated a few messages ahead and played
   gradually, so raw usage runs ahead of what the room has heard. Usage is tagged with the
-  `messageIndex` it was for (dialogue, chair lines and summary in `DialogGenerator`, voices and
-  Whisper timing in `AudioSystem`, the handoff classifier), the snapshot splits the meeting's rows
+  `messageIndex` it was for (dialogue, chair lines and summary in `DialogGenerator`, voices in
+  `AudioSystem`, the handoff classifier), the snapshot splits the meeting's rows
   per message, and the server pushes `meeting-progress` whenever the meeting's
   `maximumPlayedIndex` advances. `playedRows` counts messages up to that index; untagged live
   usage (realtime agents, visitor questions) counts at once.
@@ -228,8 +228,7 @@ projector (BenQ TH682ST) draws ≈ 244 W typical, 320 W max.
   audio, assumptions, sources), training, and all councils.
 - **Mining places** (`MINERAL_PLACES`): tantalum at Rubaya (DR Congo), cobalt around Kolwezi
   (DR Congo), gallium in China, copper at Escondida (Chile) — documented places in each
-  mineral's supply, never a claim about which mine fed our hardware. Wording to be reviewed
-  before the opening.
+  mineral's supply, never a claim about which mine fed our hardware.
 
 ---
 
@@ -256,7 +255,7 @@ cooling only. That difference is itself worth showing.
 |---|---|
 | Inworld (router, TTS, STT, realtime) | Runs on Google Cloud; the default deployment we call is in the US (EU and India on enterprise contracts), cloud region not published |
 | Google AI Studio (Gemini) | Google's global fleet; no per-request region |
-| Mistral | Its API runs in Sweden by default, or the US on its US endpoint; which one Inworld calls is not published (Inworld does call Mistral's own API: the router reports the attempt as `mistral/mistral-large-3` on its own credentials). The meter's range spans both electricity mixes (`zones` in `export.py`) |
+| Mistral | Its API runs in Sweden by default, or the US on its US endpoint. The council calls the default endpoint directly, so Sweden is assumed. Through Inworld (until November 2026) which one was called is not published, so those calls span both electricity mixes (`zones` in `export.py`) |
 | ElevenLabs | `x-region` header per response; US by default, EU/India/Singapore on enterprise plans |
 | Soniox | US by default; EU and Japan available |
 
@@ -273,14 +272,12 @@ documented, citable impacts on local communities, and without claiming which min
 
 ## Open items
 
-- Tune layout and copy on the real display; then remove `?demo`.
-- Review the mining places' wording (`shared/footprint/counting.ts`) before the opening.
+- Review the mining places' wording (`shared/footprint/counting.ts`).
 - Comparisons that make numbers tangible (one per metric, true at both small and large scale).
 - Minerals and places content, with reviewed wording about affected communities.
 - Human input's speech to text is counted by microphone time, since Inworld reports none for
   transcription-only sessions; switch to their figure if they start reporting it.
 - Input (prefill) tokens are not modelled (EcoLogits limitation).
-- Drop the unused `usage_totals` collection left from the first version.
 - Later: a live map of probable data-centre regions; a mining-sites layer; backfilling past
   meetings; asking providers for regions and per-request data.
 - Open question: should "All councils" combine Foods and Forest, or stay per deployment?

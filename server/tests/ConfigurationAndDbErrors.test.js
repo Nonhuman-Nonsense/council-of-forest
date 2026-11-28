@@ -16,7 +16,6 @@ describe('Configuration & DB Error Handling', () => {
         it('should fail if COUNCIL_DB_URL is missing', () => {
             const result = EnvSchema.safeParse({
                 COUNCIL_DB_PREFIX: 'TestDB',
-                COUNCIL_OPENAI_API_KEY: 'sk-test',
             });
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -27,7 +26,6 @@ describe('Configuration & DB Error Handling', () => {
         it('should fail if COUNCIL_DB_PREFIX is missing', () => {
             const result = EnvSchema.safeParse({
                 COUNCIL_DB_URL: 'mongodb://localhost:27017',
-                COUNCIL_OPENAI_API_KEY: 'sk-test',
             });
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -39,7 +37,6 @@ describe('Configuration & DB Error Handling', () => {
             const result = EnvSchema.safeParse({
                 COUNCIL_DB_URL: 'mongodb://localhost:27017',
                 COUNCIL_DB_PREFIX: 'TestDB',
-                COUNCIL_OPENAI_API_KEY: 'sk-test',
                 INWORLD_API_KEY: 'test'
             });
             expect(result.success).toBe(true);

@@ -94,10 +94,12 @@ class MockAudioContext {
 
     suspend() {
         this.state = 'suspended';
+        return Promise.resolve();
     }
 
     resume() {
         this.state = 'running';
+        return Promise.resolve();
     }
 }
 // @ts-expect-error - test double, not a real AudioContext

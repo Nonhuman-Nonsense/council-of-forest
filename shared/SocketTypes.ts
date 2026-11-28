@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import type { Character, Sentence, Topic, Message, Meeting } from "./ModelTypes.js";
+import type { Character, ChildAudience, Sentence, Topic, Message, Meeting } from "./ModelTypes.js";
 
 // Re-defining or importing types that are passed over the socket
 
@@ -38,9 +38,13 @@ export interface CreateMeetingBody {
     /**
      * The installation prints this meeting's letter: its `printSummary` capability with staff's
      * printing switched on. The meeting then ends on the chair's farewell and the credits, and
-     * the letter is read from the paper (docs/council-letters.md).
+     * the letter is read from the paper (LETTERS.md).
      */
     printsLetters?: boolean;
+    /** Title of the agenda point the chair opens the meeting on, for the replay intro. */
+    openingAgendaPoint?: string;
+    /** The children the meeting is held for; left out for adults. */
+    audience?: ChildAudience;
 }
 
 export interface ResumeMeetingResponse {

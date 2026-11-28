@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useButton } from "@museum/button/useButton";
 import { useButtonBanner } from "@museum/button/useButtonBanner";
 import RealtimeCaptionOverlay from "@realtime/RealtimeCaptionOverlay";
+import { z } from "@/zIndexLayers";
+import BottomBar from "@main/BottomBar";
 import RisingMic from "@council/humanInput/RisingMic";
 import Loading from "@main/Loading";
 import { BUSY_NOTICE_DELAY_MS } from "@main/overlay/Reconnecting";
@@ -30,7 +32,7 @@ import type { RealtimeFunctionTool, ToolHandler } from "@realtime/realtimeTools"
 import { log } from "@/logger";
 import type { ParticipationPhase } from "@council/humanInput/participationPhase";
 import type { CouncilState } from "@council/hooks/useCouncilMachine";
-import type { Character, Topic } from "@shared/ModelTypes";
+import type { Character, ChildAudience, Topic } from "@shared/ModelTypes";
 import { useCouncilSettings } from "@/settings/councilSettings";
 
 export type { MetaAgentPhase } from "./useMetaAgent";
@@ -56,6 +58,8 @@ export interface MeetingMetaAgentProps {
   participants: Character[];
   currentSpeakerName: string;
   humanName: string;
+  /** The children the meeting is held for; null or absent for adults. */
+  audience?: ChildAudience | null;
 }
 
 /**
@@ -141,6 +145,7 @@ export default function MeetingMetaAgent({
   participants,
   currentSpeakerName,
   humanName,
+  audience,
 }: MeetingMetaAgentProps) {
   const connectionError = useErrorStore((s) => s.connectionError);
   const button = useButton("meta-agent");
@@ -188,8 +193,9 @@ export default function MeetingMetaAgent({
       currentSpeakerName,
       humanName,
       participationPhase,
+      audience,
     }),
-    [councilState, topic, participants, currentSpeakerName, humanName, participationPhase],
+    [councilState, topic, participants, currentSpeakerName, humanName, participationPhase, audience],
   );
 
   const toolHandlers = useMemo(() => {
@@ -421,14 +427,19 @@ export default function MeetingMetaAgent({
     <>
       {showExtensionLoader && <Loading />}
       {showMic && <RisingMic />}
-      <RealtimeCaptionOverlay
-        notice={showBusyNotice ? t("error.busyRetrying") : null}
-        lastCaption={lastCaption}
-        lastUserTranscript={lastUserTranscript}
-        subtitleLayout="council"
-        showMicRow
-        micStream={micStream}
-        micActive={button.pressed}
+      <BottomBar
+        zIndex={z.realtimeCaption}
+        centre={
+          <RealtimeCaptionOverlay
+            notice={showBusyNotice ? t("error.busyRetrying") : null}
+            lastCaption={lastCaption}
+            lastUserTranscript={lastUserTranscript}
+            subtitleLayout="council"
+            showMicRow
+            micStream={micStream}
+            micActive={button.pressed}
+          />
+        }
       />
     </>
   );

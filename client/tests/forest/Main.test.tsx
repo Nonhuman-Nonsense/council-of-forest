@@ -154,8 +154,8 @@ class MockAudioContext {
     decodeAudioData() {
         return Promise.resolve({});
     }
-    suspend() { }
-    resume() { }
+    suspend() { return Promise.resolve(); }
+    resume() { return Promise.resolve(); }
 }
 window.AudioContext = MockAudioContext as unknown as typeof AudioContext;
 

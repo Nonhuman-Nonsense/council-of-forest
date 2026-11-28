@@ -13,8 +13,8 @@ vi.mock("@/utils", () => ({
 describe("Name Overlay", () => {
   const mockOnContinueForward = vi.fn();
   const mockParticipants: Character[] = [
-    { id: "banana", name: "Banana", voice: "alloy", description: "", prompt: "" },
-    { id: "apple", name: "Apple", voice: "alloy", description: "", prompt: "" },
+    { id: "banana", name: "Banana", voice: "Ashley", description: "", prompt: "" },
+    { id: "apple", name: "Apple", voice: "Ashley", description: "", prompt: "" },
   ];
 
   beforeEach(() => {
